@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vacancies - HireSloth</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireSloth - Vacancies</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo">
-      <img src="logo.jpg" alt="HireSloth Logo">
-    </a>
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
     <nav>
       <a href="index.html">Home</a>
-      <a href="jobs.html">Vacancies</a>
+      <a href="jobs.html" class="active">Vacancies</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <a href="#">Sign In</a>
@@ -24,29 +22,26 @@
     <h1>Find Your Next Job 🦥</h1>
     <p>Search by title, keyword, or location</p>
     <div class="search-bar">
-      <input type="text" placeholder="Job title or keyword" id="searchKeyword" />
-      <input type="text" placeholder="Location" id="searchLocation" />
+      <input type="text" placeholder="Job title or keyword" id="searchKeyword">
+      <input type="text" placeholder="Location" id="searchLocation">
       <button onclick="loadJobs()">Find Jobs</button>
     </div>
   </div>
 
   <section>
     <h2>Featured Jobs</h2>
-    <div class="jobs">
-      <p>Loading jobs...</p>
-    </div>
+    <div class="jobs"><p>Loading jobs...</p></div>
   </section>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
   </footer>
 
-  <!-- Supabase client -->
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace with your Supabase URL
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace with your anon key
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     async function loadJobs() {
@@ -54,12 +49,10 @@
       const location = document.getElementById("searchLocation").value;
 
       let query = supabase.from("jobs").select("*").eq("is_active", true);
-
       if (keyword) query = query.ilike("title", `%${keyword}%`);
       if (location) query = query.ilike("location", `%${location}%`);
 
       const { data: jobs, error } = await query.order("created_at", { ascending: false });
-
       const jobsContainer = document.querySelector(".jobs");
       jobsContainer.innerHTML = "";
 
@@ -92,4 +85,3 @@
   </script>
 </body>
 </html>
-
