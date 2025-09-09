@@ -91,6 +91,28 @@
       padding: 2rem 1rem;
       margin-top: 3rem;
     }
+
+    /* Responsive adjustments for mobile */
+    @media (max-width: 600px) {
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+      .hero p {
+        font-size: 1rem;
+      }
+      .search-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .search-bar input,
+      .search-bar button {
+        width: 90%;
+      }
+      section {
+        padding: 2rem 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -107,16 +129,15 @@
     </nav>
   </header>
 
-<div class="hero">
-  <h1>A Job Board Built on Trust & Privacy</h1>
-  <p>Privacy-first job search</p>
-  <div class="search-bar">
-    <input type="text" placeholder="Job title or keyword" />
-    <input type="text" placeholder="Location" />
-    <button>Find Jobs</button>
+  <div class="hero">
+    <h1>A Job Board Built on Trust & Privacy</h1>
+    <p>Privacy-first job search</p>
+    <div class="search-bar">
+      <input type="text" placeholder="Job title or keyword" />
+      <input type="text" placeholder="Location" />
+      <button>Find Jobs</button>
+    </div>
   </div>
-</div>
-
 
   <section>
     <h2>Featured Jobs</h2>
