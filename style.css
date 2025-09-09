@@ -1,12 +1,22 @@
-/* Global */
+/* ====== Global ====== */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #FCEFDC;
-  color: #3C3525;
+  background: #FCEFDC; /* soft cream from logo */
+  color: #3C3525; /* dark brown from logo */
+  line-height: 1.6;
 }
 
-/* Header */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+h1, h2, h3 {
+  color: #715336; /* deep brown accent */
+}
+
+/* ====== Header & Navigation ====== */
 header {
   display: flex;
   justify-content: space-between;
@@ -14,66 +24,62 @@ header {
   padding: 1rem 2rem;
   background: #FFFFFF;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
+
 .logo img {
   height: 50px;
 }
-header nav a {
+
+nav a {
   margin: 0 1rem;
-  text-decoration: none;
   color: #3C3525;
   font-weight: 500;
 }
-header nav a:hover {
+
+nav a:hover,
+nav a.active {
   color: #715336;
-}
-/* Active link */
-header nav a.active {
-  color: #A18F7B;
-  font-weight: bold;
+  border-bottom: 2px solid #715336;
+  padding-bottom: 2px;
 }
 
-/* Hero section */
+/* ====== Hero (Homepage welcome) ====== */
 .hero {
   text-align: center;
   padding: 4rem 2rem;
   background: linear-gradient(to right, #715336, #A18F7B);
   color: #FCEFDC;
 }
+
 .hero h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
 }
+
 .hero p {
   font-size: 1.2rem;
   margin-bottom: 2rem;
 }
-.hero-button {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background: #A18F7B;
-  color: #FCEFDC;
-  border-radius: 4px;
-  text-decoration: none;
-  font-weight: bold;
-  margin-top: 1rem;
-  transition: background 0.3s;
-}
-.hero-button:hover {
-  background: #715336;
-}
 
-/* Sections */
-section {
-  padding: 3rem 2rem;
+/* ====== Content Area ====== */
+.content {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
   text-align: center;
 }
+
+/* ====== Jobs Grid ====== */
 .jobs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
 }
+
 .job-card {
   background: #FFF8F2;
   padding: 1.5rem;
@@ -81,68 +87,35 @@ section {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   text-align: left;
 }
+
 .job-card h3 {
-  margin: 0 0 0.5rem;
+  margin-top: 0;
+  color: #715336;
 }
+
 .job-card p {
-  margin: 0.25rem 0;
+  margin: 0.5rem 0;
 }
+
 .job-card small {
   display: block;
-  margin-top: 0.5rem;
-  color: #715336;
+  margin-top: 1rem;
+  color: #666;
 }
 
-/* About / Content page */
-.content {
-  padding: 3rem 2rem;
-  max-width: 800px;
-  margin: auto;
-  line-height: 1.6;
-}
-.content h1 {
-  color: #715336;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-/* Footer */
-footer {
-  background: #715336;
-  color: #FCEFDC;
-  text-align: center;
-  padding: 2rem 1rem;
-  margin-top: 3rem;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .hero h1 {
-    font-size: 1.8rem;
-  }
-  .hero p {
-    font-size: 1rem;
-  }
-  .search-bar {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  .search-bar input,
-  .search-bar button {
-    width: 90%;
-  }
-  section {
-    padding: 2rem 1rem;
-  }
-}
-/* Contact form */
+/* ====== Forms (Contact + Post Job) ====== */
 form {
-  max-width: 500px;
+  max-width: 600px;
   margin: 2rem auto;
   text-align: left;
 }
-form input, form textarea {
+
+form label {
+  font-weight: bold;
+}
+
+form input,
+form textarea {
   width: 100%;
   padding: 0.75rem;
   margin-top: 0.25rem;
@@ -150,6 +123,11 @@ form input, form textarea {
   border-radius: 4px;
   font-family: inherit;
 }
+
+form textarea {
+  resize: vertical;
+}
+
 form button {
   display: inline-block;
   margin-top: 1rem;
@@ -162,6 +140,59 @@ form button {
   font-weight: bold;
   transition: background 0.3s;
 }
+
 form button:hover {
   background: #715336;
+}
+
+/* ====== Footer ====== */
+footer {
+  background: #715336;
+  color: #FCEFDC;
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+}
+
+/* ====== Responsive Design ====== */
+@media (max-width: 768px) {
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  nav a {
+    margin: 0.5rem;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 2rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .hero p {
+    font-size: 0.9rem;
+  }
+
+  .job-card {
+    padding: 1rem;
+  }
 }
