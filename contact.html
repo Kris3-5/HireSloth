@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireSloth - Contact</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html" class="active">Contact</a>
+      <a href="#">Sign In</a>
+    </nav>
+  </header>
+
+  <div class="content">
+    <h1>Contact Us</h1>
+    <p>Have questions, feedback, or spotted an issue? Get in touch below.</p>
+
+    <form id="contactForm">
+      <label for="name">Name</label><br>
+      <input type="text" id="name" name="name" required><br><br>
+
+      <label for="email">Email</label><br>
+      <input type="email" id="email" name="email" required><br><br>
+
+      <label for="message">Message</label><br>
+      <textarea id="message" name="message" rows="5" required></textarea><br><br>
+
+      <button type="submit">Send Message</button>
+    </form>
+
+    <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 HireSloth. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const form = document.getElementById("contactForm");
+    const statusEl = document.getElementById("formStatus");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const message = document.getElementById("message").value.trim();
+
+      const { error } = await supabase.from("messages").insert([
+        { name, email, message }
+      ]);
+
+      if (error) {
+        statusEl.textContent = "❌ Something went wrong. Please try again.";
+        statusEl.style.color = "red";
+        console.error(error);
+      } else {
+        statusEl.textContent = "✅ Thank you! Your message has been sent.";
+        statusEl.style.color = "green";
+        form.reset();
+      }
+    });
+  </script>
+</body>
+</html>
 
