@@ -8,11 +8,9 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #FCEFDC;
-      color: #3C3525;
+      background: #FCEFDC; /* logo background color */
+      color: #3C3525; /* logo letters color */
     }
-
-    /* Header */
     header {
       display: flex;
       justify-content: space-between;
@@ -20,65 +18,56 @@
       padding: 1rem 2rem;
       background: #FFFFFF;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      flex-wrap: wrap;
     }
     .logo img {
       height: 50px;
     }
-    nav {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    nav a {
+    header nav a {
+      margin: 0 1rem;
       text-decoration: none;
-      color: #3C3525;
+      color: #3C3525; /* match logo letters */
       font-weight: 500;
     }
-    nav a:hover {
-      color: #715336;
+    header nav a:hover {
+      color: #715336; /* match logo drawing color */
     }
-
-    /* Hero */
     .hero {
       text-align: center;
-      padding: 3rem 2rem;
-      background: linear-gradient(to right, #715336, #A18F7B);
+      padding: 4rem 2rem;
+      background: linear-gradient(to right, #715336, #A18F7B); /* warm gradient */
       color: #FCEFDC;
     }
     .hero h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
     }
     .hero p {
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
     }
     .search-bar {
       display: flex;
       justify-content: center;
       gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .search-bar input, .search-bar button {
-      padding: 0.75rem;
-      border-radius: 4px;
-      border: none;
     }
     .search-bar input {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
       width: 200px;
     }
     .search-bar button {
+      padding: 0.75rem 1.5rem;
       background: #A18F7B;
       color: #FCEFDC;
-      font-weight: bold;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
+      font-weight: bold;
     }
     .search-bar button:hover {
       background: #715336;
     }
-
-    /* Featured Jobs */
     section {
       padding: 3rem 2rem;
       text-align: center;
@@ -94,9 +83,19 @@
       padding: 1.5rem;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: left;
     }
-
-    /* Footer */
+    .job-card h3 {
+      margin: 0 0 0.5rem;
+    }
+    .job-card p {
+      margin: 0.25rem 0;
+    }
+    .job-card small {
+      display: block;
+      margin-top: 0.5rem;
+      color: #715336;
+    }
     footer {
       background: #715336;
       color: #FCEFDC;
@@ -104,45 +103,21 @@
       padding: 2rem 1rem;
       margin-top: 3rem;
     }
-
-    /* Responsive */
-    @media (max-width: 768px) {
+    @media (max-width: 600px) {
       .hero h1 {
         font-size: 1.8rem;
       }
       .hero p {
         font-size: 1rem;
       }
-      .search-bar input {
-        width: 150px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      nav {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 0.5rem;
-      }
-      nav a {
-        margin: 0.25rem 0;
-      }
-      .hero h1 {
-        font-size: 1.5rem;
-      }
-      .hero p {
-        font-size: 0.95rem;
-      }
       .search-bar {
         flex-direction: column;
-        align-items: stretch;
+        gap: 0.5rem;
+        align-items: center;
       }
-      .search-bar input, .search-bar button {
-        width: 100%;
+      .search-bar input,
+      .search-bar button {
+        width: 90%;
       }
       section {
         padding: 2rem 1rem;
@@ -152,7 +127,9 @@
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <a href="index.html" class="logo">
+      <img src="logo.jpg" alt="HireSloth Logo">
+    </a>
     <nav>
       <a href="#">Jobs</a>
       <a href="#">Companies</a>
@@ -166,32 +143,75 @@
     <h1>A Job Board Built on Trust & Privacy</h1>
     <p>Privacy-first job search</p>
     <div class="search-bar">
-      <input type="text" placeholder="Job title or keyword">
-      <input type="text" placeholder="Location">
-      <button>Find Jobs</button>
+      <input type="text" placeholder="Job title or keyword" id="searchKeyword" />
+      <input type="text" placeholder="Location" id="searchLocation" />
+      <button onclick="loadJobs()">Find Jobs</button>
     </div>
   </div>
 
   <section>
     <h2>Featured Jobs</h2>
     <div class="jobs">
-      <div class="job-card">
-        <h3>Frontend Developer</h3>
-        <p>Acme Corp — Remote</p>
-      </div>
-      <div class="job-card">
-        <h3>Data Analyst</h3>
-        <p>Bright Analytics — New York</p>
-      </div>
-      <div class="job-card">
-        <h3>Project Manager</h3>
-        <p>NextGen Tech — San Francisco</p>
-      </div>
+      <p>Loading jobs...</p>
     </div>
   </section>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
   </footer>
+
+  <!-- Supabase client -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace with your Supabase project URL
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace with your anon key
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function loadJobs() {
+      const keyword = document.getElementById("searchKeyword").value;
+      const location = document.getElementById("searchLocation").value;
+
+      let query = supabase.from("jobs").select("*").eq("is_active", true);
+
+      if (keyword) {
+        query = query.ilike("title", `%${keyword}%`);
+      }
+      if (location) {
+        query = query.ilike("location", `%${location}%`);
+      }
+
+      let { data: jobs, error } = await query.order("created_at", { ascending: false });
+
+      const jobsContainer = document.querySelector(".jobs");
+      jobsContainer.innerHTML = "";
+
+      if (error) {
+        jobsContainer.innerHTML = "<p>Failed to load jobs.</p>";
+        console.error(error);
+        return;
+      }
+
+      if (!jobs || jobs.length === 0) {
+        jobsContainer.innerHTML = "<p>No jobs found.</p>";
+        return;
+      }
+
+      jobs.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "job-card";
+        card.innerHTML = `
+          <h3>${job.title}</h3>
+          <p><strong>${job.company}</strong> — ${job.remote ? "Remote" : job.location || "N/A"}</p>
+          ${job.salary ? `<p><strong>Salary:</strong> ${job.salary}</p>` : ""}
+          ${job.description ? `<p>${job.description.substring(0, 100)}...</p>` : ""}
+          <small>Posted: ${new Date(job.created_at).toLocaleDateString()}</small>
+        `;
+        jobsContainer.appendChild(card);
+      });
+    }
+
+    loadJobs();
+  </script>
 </body>
 </html>
