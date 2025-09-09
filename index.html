@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Job Board</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      color: #111;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header nav a {
+      margin: 0 1rem;
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+    }
+    header nav a:hover {
+      color: #0077ff;
+    }
+    .hero {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: linear-gradient(to right, #0077ff, #00c6ff);
+      color: white;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .search-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .search-bar input {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      width: 200px;
+    }
+    .search-bar button {
+      padding: 0.75rem 1.5rem;
+      background: #fff;
+      color: #0077ff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .search-bar button:hover {
+      background: #f0f0f0;
+    }
+    section {
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .jobs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .job-card {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    footer {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 2rem 1rem;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🌐 YourLogo</div>
+    <nav>
+      <a href="#">Jobs</a>
+      <a href="#">Companies</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Sign In</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>A Job Board Built on Trust & Privacy</h1>
+    <p>Apply to jobs without your personal data being sold.</p>
+    <div class="search-bar">
+      <input type="text" placeholder="Job title or keyword" />
+      <input type="text" placeholder="Location" />
+      <button>Find Jobs</button>
+    </div>
+  </div>
+
+  <section>
+    <h2>Featured Jobs</h2>
+    <div class="jobs">
+      <div class="job-card">
+        <h3>Frontend Developer</h3>
+        <p>Acme Corp — Remote</p>
+      </div>
+      <div class="job-card">
+        <h3>Data Analyst</h3>
+        <p>Bright Analytics — New York</p>
+      </div>
+      <div class="job-card">
+        <h3>Project Manager</h3>
+        <p>NextGen Tech — San Francisco</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Your Job Board. All rights reserved.</p>
+  </footer>
+</body>
+</html>
