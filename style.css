@@ -196,3 +196,34 @@ footer {
     padding: 1rem;
   }
 }
+/* ====== Call-to-action buttons (Homepage) ====== */
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #A18F7B;
+  color: #FCEFDC;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #715336;
+}
+
+.btn-alt {
+  background: #FCEFDC;
+  color: #715336;
+  border: 2px solid #715336;
+}
+
+.btn-alt:hover {
+  background: #FFF8F2;
+}
