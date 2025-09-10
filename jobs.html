@@ -43,10 +43,12 @@
       const jobsContainer = document.getElementById("jobsList");
 
       const { data: jobs, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+       .from("jobs")
+       .select("*")
+       .eq("is_active", true)
+       .eq("approved", true)   // ✅ only show approved
+       .order("created_at", { ascending: false });
+
 
       if (error) {
         console.error(error);
