@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireSloth - Sign In / Sign Up</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="post-job.html">Post a Job</a>
+      <a href="auth.html" class="active">Sign In / Sign Up</a>
+    </nav>
+  </header>
+
+  <div class="content">
+    <h1>Sign In / Sign Up</h1>
+    <p>Create an account or log in to post jobs and manage your listings.</p>
+
+    <form id="authForm">
+      <label for="email">Email</label><br>
+      <input type="email" id="email" required><br><br>
+
+      <label for="password">Password</label><br>
+      <input type="password" id="password" required><br><br>
+
+      <button type="submit">Sign In / Sign Up</button>
+    </form>
+
+    <p id="authStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 HireSloth. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const form = document.getElementById("authForm");
+    const statusEl = document.getElementById("authStatus");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      // Try to sign in first
+      let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error && error.message.includes("Invalid login credentials")) {
+        // If sign-in fails, sign up automatically
+        const { data: signupData, error: signupError } = await supabase.auth.signUp({ email, password });
+        if (signupError) {
+          statusEl.textContent = `❌ ${signupError.message}`;
+          statusEl.style.color = "red";
+          return;
+        }
+        statusEl.textContent = "✅ Account created! Please check your email to confirm.";
+        statusEl.style.color = "green";
+      } else if (error) {
+        statusEl.textContent = `❌ ${error.message}`;
+        statusEl.style.color = "red";
+      } else {
+        statusEl.textContent = "✅ Signed in successfully!";
+        statusEl.style.color = "green";
+        // Redirect to Post a Job page
+        window.location.href = "post-job.html";
+      }
+    });
+  </script>
+</body>
+</html>
