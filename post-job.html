@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HireSloth — Post a Job</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireSloth - Post a Job</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,44 +14,44 @@
       <a href="jobs.html">Vacancies</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
-      <a href="my-jobs.html">My Jobs</a>
-      <a href="#" id="logoutBtn">Log Out</a>
+      <a href="post-job.html" class="active">Post a Job</a>
+      <a href="#">Sign In</a>
     </nav>
   </header>
 
-  <main class="content">
+  <div class="content">
     <h1>Post a Job</h1>
-    <p>Fill out the form below to list your vacancy. Jobs expire after 30 days and require admin approval.</p>
+    <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
 
     <form id="jobForm">
       <label for="title">Job Title</label><br>
-      <input id="title" name="title" type="text" required><br><br>
+      <input type="text" id="title" name="title" required><br><br>
 
       <label for="company">Company</label><br>
-      <input id="company" name="company" type="text" placeholder="(will use company name from your account if set)"><br><br>
+      <input type="text" id="company" name="company" required><br><br>
 
       <label for="location">Location</label><br>
-      <input id="location" name="location" type="text"><br><br>
+      <input type="text" id="location" name="location"><br><br>
 
       <label>
-        <input id="remote" name="remote" type="checkbox">
-        Remote position
+        <input type="checkbox" id="remote" name="remote">
+        Remote Position
       </label><br><br>
 
       <label for="salary">Salary (optional)</label><br>
-      <input id="salary" name="salary" type="text"><br><br>
+      <input type="text" id="salary" name="salary"><br><br>
 
       <label for="description">Job Summary</label><br>
-      <textarea id="description" name="description" rows="4" required></textarea><br><br>
+      <textarea id="description" name="description" rows="3" required></textarea><br><br>
 
-      <label for="responsibilities">Responsibilities (optional)</label><br>
+      <label for="responsibilities">Responsibilities</label><br>
       <textarea id="responsibilities" name="responsibilities" rows="5"></textarea><br><br>
 
-      <button id="submitBtn" type="submit">Post Job</button>
+      <button type="submit">Post Job</button>
     </form>
 
-    <p id="formStatus" style="margin-top:1rem; font-weight:bold;"></p>
-  </main>
+    <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+  </div>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
@@ -60,102 +60,46 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    // ---------- CONFIGURE ----------
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // ← replace with your Supabase project URL
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";                   // ← replace with your anon public key
-    // --------------------------------
-
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Auth guard: redirect if not logged in
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      // Not logged in -> send to login
-      window.location.href = "login.html";
-      throw new Error("Redirecting to login");
-    }
-
-    // Get current user (metadata may contain company name)
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // DOM
     const form = document.getElementById("jobForm");
     const statusEl = document.getElementById("formStatus");
-    const submitBtn = document.getElementById("submitBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
 
-    // Prefill company input if metadata exists
-    if (user?.user_metadata?.company_name) {
-      const companyInput = document.getElementById("company");
-      if (companyInput && !companyInput.value) {
-        companyInput.value = user.user_metadata.company_name;
-      }
-    }
-
-    // Logout
-    logoutBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      window.location.href = "login.html";
-    });
-
-    // Submit handler
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      statusEl.textContent = "";
-      submitBtn.disabled = true;
 
-      // collect values
-      const title = document.getElementById("title").value.trim();
-      const companyField = document.getElementById("company").value.trim();
-      const companyFromMeta = user?.user_metadata?.company_name || "";
-      const company = companyField || companyFromMeta || "Unknown";
-      const location = document.getElementById("location").value.trim() || null;
-      const remote = !!document.getElementById("remote").checked;
-      const salary = document.getElementById("salary").value.trim() || null;
-      const description = document.getElementById("description").value.trim();
-      const responsibilities = document.getElementById("responsibilities").value.trim() || null;
-
-      // simple client-side validation
-      if (!title || !description) {
+      // Get logged-in user
+      const user = supabase.auth.user();
+      if (!user) {
+        statusEl.textContent = "❌ You must be signed in to post a job.";
         statusEl.style.color = "red";
-        statusEl.textContent = "Please provide at minimum a job title and a summary.";
-        submitBtn.disabled = false;
         return;
       }
 
-      // construct job object
-      const jobRow = {
-        title,
-        company,
-        location,
-        remote,
-        salary,
-        description,
-        responsibilities,
-        posted_by: user.id,   // link to auth.users.id (needs DB column)
-        approved: false,      // admin must approve
-        is_active: true       // default active; expire function will handle expiration
+      const job = {
+        title: document.getElementById("title").value.trim(),
+        company: document.getElementById("company").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        remote: document.getElementById("remote").checked,
+        salary: document.getElementById("salary").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        responsibilities: document.getElementById("responsibilities").value.trim(),
+        posted_by: user.id,       // <--- Set the logged-in user's ID
+        approved: false           // <--- default to false; admin can approve later
       };
 
-      try {
-        const { data, error } = await supabase.from("jobs").insert([jobRow]).select();
+      const { error } = await supabase.from("jobs").insert([job]);
 
-        if (error) {
-          throw error;
-        }
-
-        statusEl.style.color = "green";
-        statusEl.textContent = "✅ Job posted successfully — awaiting admin approval.";
-        form.reset();
-        // restore company field from metadata (if any)
-        if (companyFromMeta) document.getElementById("company").value = companyFromMeta;
-      } catch (err) {
-        console.error(err);
+      if (error) {
+        statusEl.textContent = "❌ Something went wrong. Please try again.";
         statusEl.style.color = "red";
-        statusEl.textContent = "❌ Failed to post job. See console for details.";
-      } finally {
-        submitBtn.disabled = false;
+        console.error(error);
+      } else {
+        statusEl.textContent = "✅ Job posted successfully! Awaiting approval.";
+        statusEl.style.color = "green";
+        form.reset();
       }
     });
   </script>
