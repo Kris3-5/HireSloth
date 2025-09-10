@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireSloth - My Jobs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="post-job.html">Post a Job</a>
+      <a href="my-jobs.html" class="active">My Jobs</a>
+      <a href="#" id="logoutBtn">Log Out</a>
+    </nav>
+  </header>
+
+  <div class="content">
+    <h1>My Job Listings</h1>
+    <p>Here you can see and manage the jobs your company has posted.</p>
+
+    <div id="jobsList" class="jobs"></div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 HireSloth. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const jobsList = document.getElementById("jobsList");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    // ✅ Check if user is logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "login.html";
+    }
+    const user = session.user;
+
+    // ✅ Fetch jobs belonging to this company (by user ID)
+    async function loadJobs() {
+      jobsList.innerHTML = "<p>Loading jobs...</p>";
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        jobsList.innerHTML = "<p>❌ Error loading jobs.</p>";
+        console.error(error);
+        return;
+      }
+
+      if (data.length === 0) {
+        jobsList.innerHTML = "<p>No jobs posted yet.</p>";
+        return;
+      }
+
+      jobsList.innerHTML = "";
+      data.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "job-card";
+        card.innerHTML = `
+          <h3>${job.title}</h3>
