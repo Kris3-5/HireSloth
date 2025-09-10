@@ -8,17 +8,16 @@
 </head>
 <body>
   <header>
-   <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
-   <nav>
-    <a href="index.html">Home</a>
-    <a href="jobs.html">Vacancies</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a href="post-job.html">Post a Job</a>
-    <a href="auth.html" id="authBtn">Sign In</a> <!-- updated -->
-   </nav>
- </header>
-
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="post-job.html" class="active">Post a Job</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
+    </nav>
+  </header>
 
   <div class="content">
     <h1>Post a Job</h1>
@@ -61,17 +60,36 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+    // --- Supabase connection ---
     const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // --- Navigation Sign In / Sign Out ---
+    const authBtn = document.getElementById("authBtn");
+    async function updateAuthButton() {
+      const user = supabase.auth.user();
+      if (user) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.reload();
+        });
+      } else {
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+      }
+    }
+    updateAuthButton();
+
+    // --- Job Posting ---
     const form = document.getElementById("jobForm");
     const statusEl = document.getElementById("formStatus");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Get logged-in user
       const user = supabase.auth.user();
       if (!user) {
         statusEl.textContent = "❌ You must be signed in to post a job.";
@@ -87,8 +105,7 @@
         salary: document.getElementById("salary").value.trim(),
         description: document.getElementById("description").value.trim(),
         responsibilities: document.getElementById("responsibilities").value.trim(),
-        posted_by: user.id,       // <--- Set the logged-in user's ID
-        approved: false           // <--- default to false; admin can approve later
+        posted_by: user.id // link job to authenticated user
       };
 
       const { error } = await supabase.from("jobs").insert([job]);
@@ -98,7 +115,7 @@
         statusEl.style.color = "red";
         console.error(error);
       } else {
-        statusEl.textContent = "✅ Job posted successfully! Awaiting approval.";
+        statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
         statusEl.style.color = "green";
         form.reset();
       }
