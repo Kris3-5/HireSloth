@@ -8,24 +8,23 @@
 </head>
 <body>
   <header>
-   <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
-   <nav>
-    <a href="index.html">Home</a>
-    <a href="jobs.html">Vacancies</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <a href="auth.html" id="authBtn">Sign In</a> <!-- updated -->
-   </nav>
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="post-job.html" id="postJobBtn">Post a Job</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
+    </nav>
   </header>
-
 
   <div class="hero">
     <h1>Welcome to HireSloth</h1>
     <p>Privacy-first job search. No data selling. Just opportunities that matter.</p>
     <div class="cta-buttons">
       <a href="jobs.html" class="btn">View Vacancies</a>
-      <a href="post-job.html" class="btn btn-alt">Post a Job</a>
+      <a href="post-job.html" class="btn btn-alt" id="heroPostBtn">Post a Job</a>
     </div>
   </div>
 
@@ -42,37 +41,45 @@
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
   </footer>
+
   <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
-  const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const authBtn = document.getElementById("authBtn");
-  const postJobBtn = document.getElementById("postJobBtn");
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    const heroPostBtn = document.getElementById("heroPostBtn");
 
-  async function updateNav() {
-    const user = supabase.auth.user();
-
-    if (user) {
-      // User logged in
-      authBtn.textContent = "Sign Out";
-      authBtn.href = "#";
-      authBtn.addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      });
-      postJobBtn.style.display = "inline-block";
-    } else {
-      // User not logged in
-      authBtn.textContent = "Sign In";
-      authBtn.href = "auth.html";
-      postJobBtn.style.display = "none";
+    function updateNav(user) {
+      if (user) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.reload();
+        };
+        postJobBtn.style.display = "inline-block";
+        heroPostBtn.style.display = "inline-block";
+      } else {
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        postJobBtn.style.display = "none";
+        heroPostBtn.style.display = "none";
+      }
     }
-  }
 
-  updateNav();
-</script>
+    // Initial check
+    const currentUser = supabase.auth.user();
+    updateNav(currentUser);
+
+    // Listen for auth changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      updateNav(session?.user ?? null);
+    });
+  </script>
 </body>
 </html>
