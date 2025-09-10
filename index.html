@@ -42,5 +42,37 @@
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
   </footer>
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  const authBtn = document.getElementById("authBtn");
+  const postJobBtn = document.getElementById("postJobBtn");
+
+  async function updateNav() {
+    const user = supabase.auth.user();
+
+    if (user) {
+      // User logged in
+      authBtn.textContent = "Sign Out";
+      authBtn.href = "#";
+      authBtn.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+      });
+      postJobBtn.style.display = "inline-block";
+    } else {
+      // User not logged in
+      authBtn.textContent = "Sign In";
+      authBtn.href = "auth.html";
+      postJobBtn.style.display = "none";
+    }
+  }
+
+  updateNav();
+</script>
 </body>
 </html>
