@@ -15,25 +15,43 @@
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" class="active">Sign In / Sign Up</a>
+      <a href="#" id="authBtn">Sign In</a>
     </nav>
   </header>
 
-  <div class="content">
-    <h1>Sign In / Sign Up</h1>
-    <p>Create an account or log in to post jobs and manage your listings.</p>
+  <div class="content" id="authContent">
+    <h1>Welcome to HireSloth</h1>
+    <p>Sign in or create an account to post job listings.</p>
 
-    <form id="authForm">
-      <label for="email">Email</label><br>
-      <input type="email" id="email" required><br><br>
+    <div class="auth-forms">
+      <div class="form-container">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+          <label for="signupEmail">Email</label><br>
+          <input type="email" id="signupEmail" required><br><br>
 
-      <label for="password">Password</label><br>
-      <input type="password" id="password" required><br><br>
+          <label for="signupPassword">Password</label><br>
+          <input type="password" id="signupPassword" required><br><br>
 
-      <button type="submit">Sign In / Sign Up</button>
-    </form>
+          <button type="submit">Sign Up</button>
+        </form>
+        <p id="signupStatus"></p>
+      </div>
 
-    <p id="authStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+      <div class="form-container">
+        <h2>Sign In</h2>
+        <form id="signinForm">
+          <label for="signinEmail">Email</label><br>
+          <input type="email" id="signinEmail" required><br><br>
+
+          <label for="signinPassword">Password</label><br>
+          <input type="password" id="signinPassword" required><br><br>
+
+          <button type="submit">Sign In</button>
+        </form>
+        <p id="signinStatus"></p>
+      </div>
+    </div>
   </div>
 
   <footer>
@@ -47,34 +65,76 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const form = document.getElementById("authForm");
-    const statusEl = document.getElementById("authStatus");
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
+    const signupForm = document.getElementById("signupForm");
+    const signinForm = document.getElementById("signinForm");
+    const signupStatus = document.getElementById("signupStatus");
+    const signinStatus = document.getElementById("signinStatus");
 
-      // Try to sign in first
-      let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error && error.message.includes("Invalid login credentials")) {
-        // If sign-in fails, sign up automatically
-        const { data: signupData, error: signupError } = await supabase.auth.signUp({ email, password });
-        if (signupError) {
-          statusEl.textContent = `❌ ${signupError.message}`;
-          statusEl.style.color = "red";
-          return;
-        }
-        statusEl.textContent = "✅ Account created! Please check your email to confirm.";
-        statusEl.style.color = "green";
-      } else if (error) {
-        statusEl.textContent = `❌ ${error.message}`;
-        statusEl.style.color = "red";
+    async function updateNav(user) {
+      if (user) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.reload();
+        };
+        postJobBtn.style.display = "inline-block";
       } else {
-        statusEl.textContent = "✅ Signed in successfully!";
-        statusEl.style.color = "green";
-        // Redirect to Post a Job page
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        postJobBtn.style.display = "none";
+      }
+    }
+
+    // Check auth state
+    const currentUser = supabase.auth.user();
+    updateNav(currentUser);
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      updateNav(session?.user ?? null);
+    });
+
+    // --- Sign Up ---
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      signupStatus.textContent = "";
+
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+
+      const { user, error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        signupStatus.textContent = "❌ " + error.message;
+        signupStatus.style.color = "red";
+      } else {
+        signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
+        signupStatus.style.color = "green";
+        signupForm.reset();
+      }
+    });
+
+    // --- Sign In ---
+    signinForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      signinStatus.textContent = "";
+
+      const email = document.getElementById("signinEmail").value;
+      const password = document.getElementById("signinPassword").value;
+
+      const { user, error } = await supabase.auth.signIn({ email, password });
+
+      if (error) {
+        signinStatus.textContent = "❌ " + error.message;
+        signinStatus.style.color = "red";
+      } else {
+        signinStatus.textContent = "✅ Sign in successful!";
+        signinStatus.style.color = "green";
+        // Redirect to post-job page after login
         window.location.href = "post-job.html";
       }
     });
