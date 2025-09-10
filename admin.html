@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireSloth Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>HireSloth Admin Panel</h1>
+    <button id="logoutBtn">Log Out</button>
+  </header>
+
+  <div class="content">
+    <h2>Pending Job Posts</h2>
+    <div id="pendingJobs"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";  
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";  
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "login.html";
+    });
+
+    async function loadPendingJobs() {
+      const { data: jobs, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("approved", false)
+        .order("created_at", { ascending: false });
+
+      const container = document.getElementById("pendingJobs");
+      if (error) {
+        container.innerHTML = "<p>Error loading jobs.</p>";
+        return;
+      }
+      if (!jobs.length) {
+        container.innerHTML = "<p>✅ No jobs waiting for approval.</p>";
+        return;
+      }
+
+      container.innerHTML = jobs.map(job => `
+        <div class="job-card">
+          <h3>${job.title}</h3>
+          <p><strong>${job.company}</strong> — ${job.remote ? "Remote" : job.location}</p>
+          <p>${job.description}</p>
+          <button onclick="approveJob('${job.id}')">Approve ✅</button>
+          <button onclick="rejectJob('${job.id}')">Reject ❌</button>
+        </div>
+      `).join("");
+    }
+
+    window.approveJob = async function(id) {
+      await supabase.from("jobs").update({ approved: true }).eq("id", id);
+      loadPendingJobs();
+    };
+
+    window.rejectJob = async function(id) {
+      await supabase.from("jobs").delete().eq("id", id);
+      loadPendingJobs();
+    };
+
+    loadPendingJobs();
+  </script>
+</body>
+</html>
