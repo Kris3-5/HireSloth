@@ -19,7 +19,7 @@
     </nav>
   </header>
 
-  <div class="content">
+  <div class="content" id="jobContent">
     <h1>Post a Job</h1>
     <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
 
@@ -58,72 +58,76 @@
   </footer>
 
   <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
-  const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const authBtn = document.getElementById("authBtn");
-  const postJobBtn = document.getElementById("postJobBtn");
-  const form = document.getElementById("jobForm");
-  const statusEl = document.getElementById("formStatus");
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    const jobContent = document.getElementById("jobContent");
+    const jobForm = document.getElementById("jobForm");
+    const statusEl = document.getElementById("formStatus");
 
-  async function updateNav() {
-    const user = supabase.auth.user();
+    async function updateNav(user) {
+      if (user) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.reload();
+        };
+        postJobBtn.style.display = "inline-block";
+      } else {
+        // Not logged in: hide content and redirect to auth page
+        jobContent.style.display = "none";
+        window.location.href = "auth.html";
+      }
+    }
 
-    if (user) {
-      authBtn.textContent = "Sign Out";
-      authBtn.href = "#";
-      authBtn.onclick = async (e) => {
-        e.preventDefault();
-        await supabase.auth.signOut();
-        window.location.reload();
+    const currentUser = supabase.auth.user();
+    updateNav(currentUser);
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      updateNav(session?.user ?? null);
+    });
+
+    // --- Job Posting ---
+    jobForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const user = supabase.auth.user();
+      if (!user) {
+        statusEl.textContent = "❌ You must be signed in to post a job.";
+        statusEl.style.color = "red";
+        return;
+      }
+
+      const job = {
+        title: document.getElementById("title").value.trim(),
+        company: document.getElementById("company").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        remote: document.getElementById("remote").checked,
+        salary: document.getElementById("salary").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        responsibilities: document.getElementById("responsibilities").value.trim(),
+        posted_by: user.id
       };
-      postJobBtn.style.display = "inline-block";
-    } else {
-      authBtn.textContent = "Sign In";
-      authBtn.href = "auth.html";
-      postJobBtn.style.display = "none";
-    }
-  }
 
-  updateNav();
+      const { error } = await supabase.from("jobs").insert([job]);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const user = supabase.auth.user();
-    if (!user) {
-      statusEl.textContent = "❌ You must be signed in to post a job.";
-      statusEl.style.color = "red";
-      return;
-    }
-
-    const job = {
-      title: document.getElementById("title").value.trim(),
-      company: document.getElementById("company").value.trim(),
-      location: document.getElementById("location").value.trim(),
-      remote: document.getElementById("remote").checked,
-      salary: document.getElementById("salary").value.trim(),
-      description: document.getElementById("description").value.trim(),
-      responsibilities: document.getElementById("responsibilities").value.trim(),
-      posted_by: user.id // link job to authenticated user
-    };
-
-    const { error } = await supabase.from("jobs").insert([job]);
-
-    if (error) {
-      statusEl.textContent = "❌ Something went wrong. Please try again.";
-      statusEl.style.color = "red";
-      console.error(error);
-    } else {
-      statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
-      statusEl.style.color = "green";
-      form.reset();
-    }
-  });
-</script>
-
+      if (error) {
+        statusEl.textContent = "❌ Something went wrong. Please try again.";
+        statusEl.style.color = "red";
+        console.error(error);
+      } else {
+        statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
+        statusEl.style.color = "green";
+        jobForm.reset();
+      }
+    });
+  </script>
 </body>
 </html>
