@@ -6,172 +6,77 @@
   <title>HireSloth Admin Panel</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    body {
-      background: #FCEFDC;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      background: #715336;
-      color: #FCEFDC;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    header h1 {
-      margin: 0;
-    }
-    #logoutBtn {
-      padding: 0.5rem 1rem;
-      background: #A18F7B;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      color: #FCEFDC;
-      font-weight: bold;
-    }
-    .content {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .job-card {
-      background: #FFF8F2;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      transition: transform 0.2s ease, box-shadow 0.3s ease;
-    }
-    .job-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-    }
-    .job-card h3 {
-      margin-top: 0;
-      color: #715336;
-    }
-    .job-card p {
-      margin: 0.3rem 0;
-    }
-    .job-card button {
-      margin-right: 1rem;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: transform 0.2s ease;
-    }
-    .approve-btn {
-      background: #4CAF50;
-      color: #FFF;
-    }
-    .approve-btn:hover {
-      transform: scale(1.05);
-    }
-    .delete-btn {
-      background: #F44336;
-      color: #FFF;
-    }
-    .delete-btn:hover {
-      transform: scale(1.05);
-    }
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .controls input {
-      padding: 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      flex: 1;
-      min-width: 150px;
-    }
-    .toggle-btns button {
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      margin-right: 0.5rem;
-    }
-    .toggle-btns button.active {
-      background: #715336;
-      color: #FCEFDC;
-    }
-    .toggle-btns button.inactive {
-      background: #A18F7B;
-      color: #FCEFDC;
-    }
+    body { font-family: Arial, sans-serif; background: #FCEFDC; color: #3C3525; margin: 0; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    header button { padding: 0.5rem 1rem; cursor: pointer; background: #A18F7B; color: #FCEFDC; border: none; border-radius: 4px; }
+    .content { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+    .jobs { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    .job-card { background: #FFF8F2; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); position: relative; display: flex; flex-direction: column; }
+    .job-card.recent { border-left: 6px solid #4CAF50; }
+    .status-badge { position: absolute; top: 1rem; right: 1rem; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: #FFF; }
+    .status-pending { background: #FF9800; }
+    .status-approved { background: #4CAF50; }
+    .job-card h3 { margin: 0 0 0.5rem 0; }
+    .job-card p { margin: 0.3rem 0; }
+    .job-card button { margin-top: 0.5rem; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .approve-btn { background: #4CAF50; color: #FFF; margin-right: 0.5rem; }
+    .approve-btn:hover { background: #388E3C; }
+    .delete-btn { background: #F44336; color: #FFF; }
+    .delete-btn:hover { background: #C62828; }
+    .bulk-actions { margin: 1rem 0; display: flex; gap: 1rem; align-items: center; }
+    .bulk-actions button { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .bulk-approve { background: #4CAF50; color: #FFF; }
+    .bulk-delete { background: #F44336; color: #FFF; }
   </style>
 </head>
 <body>
-
   <header>
     <h1>HireSloth Admin Panel</h1>
     <button id="logoutBtn">Log Out</button>
   </header>
 
   <div class="content">
-    <div class="controls">
-      <div class="toggle-btns">
-        <button id="pendingToggle" class="active">Pending Jobs</button>
-        <button id="approvedToggle" class="inactive">Approved Jobs</button>
-      </div>
-      <input type="text" id="searchInput" placeholder="Search by title or company...">
+    <h2>Pending / Active Job Posts</h2>
+
+    <div class="bulk-actions">
+      <button id="bulkApprove" class="bulk-approve">Approve Selected ✅</button>
+      <button id="bulkDelete" class="bulk-delete">Delete Selected ❌</button>
+      <input type="text" id="searchInput" placeholder="Search jobs by title or company">
     </div>
 
-    <div id="jobsContainer">Loading jobs...</div>
+    <div class="jobs" id="jobsContainer"></div>
   </div>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";  // replace
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";  // replace
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const jobsContainer = document.getElementById("jobsContainer");
     const logoutBtn = document.getElementById("logoutBtn");
-    const pendingToggle = document.getElementById("pendingToggle");
-    const approvedToggle = document.getElementById("approvedToggle");
+    const bulkApproveBtn = document.getElementById("bulkApprove");
+    const bulkDeleteBtn = document.getElementById("bulkDelete");
     const searchInput = document.getElementById("searchInput");
 
-    let currentView = "pending"; // "pending" or "approved"
     let jobsData = [];
 
-    // Logout
     logoutBtn.addEventListener("click", async () => {
       await supabase.auth.signOut();
       window.location.href = "login.html";
     });
 
-    // Admin check
-    async function checkAdmin() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user.email !== "admin@yourdomain.com") {
-        alert("Access denied! Admin only.");
-        window.location.href = "login.html";
-      }
-    }
-    await checkAdmin();
-
-    // Fetch jobs
-    async function fetchJobs() {
+    // Load jobs from Supabase
+    async function loadJobs() {
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
-        jobsContainer.innerHTML = "<p style='color:red;'>Error loading jobs.</p>";
+        jobsContainer.innerHTML = "<p>❌ Error loading jobs.</p>";
         console.error(error);
         return;
       }
@@ -180,74 +85,72 @@
       renderJobs();
     }
 
-    // Render jobs
     function renderJobs() {
       const searchTerm = searchInput.value.toLowerCase();
-      const filtered = jobsData.filter(job => {
-        const matchView = currentView === "pending" ? !job.approved : job.approved;
-        const matchSearch = job.title.toLowerCase().includes(searchTerm) ||
-                            job.company.toLowerCase().includes(searchTerm);
-        return matchView && matchSearch;
-      });
+      const filtered = jobsData.filter(job =>
+        job.title.toLowerCase().includes(searchTerm) ||
+        job.company.toLowerCase().includes(searchTerm)
+      );
 
       if (!filtered.length) {
         jobsContainer.innerHTML = "<p>No jobs found.</p>";
         return;
       }
 
-      jobsContainer.innerHTML = filtered.map(job => `
-        <div class="job-card">
-          <h3>${job.title}</h3>
-          <p><strong>Company:</strong> ${job.company}</p>
-          <p><strong>Location:</strong> ${job.location || 'N/A'} ${job.remote ? '(Remote)' : ''}</p>
-          <p><strong>Salary:</strong> ${job.salary || 'N/A'}</p>
-          <p><strong>Description:</strong> ${job.description}</p>
-          <p><strong>Responsibilities:</strong> ${job.responsibilities || 'N/A'}</p>
-          ${!job.approved ? `<button class="approve-btn" onclick="approveJob('${job.id}')">Approve ✅</button>` : ''}
-          <button class="delete-btn" onclick="deleteJob('${job.id}')">Delete ❌</button>
-        </div>
-      `).join('');
+      jobsContainer.innerHTML = filtered.map(job => {
+        const isRecent = new Date() - new Date(job.created_at) < 24 * 60 * 60 * 1000;
+        const statusClass = job.approved ? "status-approved" : "status-pending";
+        const statusText = job.approved ? "Approved" : "Pending";
+
+        return `
+          <div class="job-card ${isRecent ? 'recent' : ''}">
+            <input type="checkbox" class="select-job" data-id="${job.id}">
+            <span class="status-badge ${statusClass}">${statusText}</span>
+            <h3>${job.title}</h3>
+            <p><strong>Company:</strong> ${job.company}</p>
+            <p><strong>Location:</strong> ${job.location || 'N/A'} ${job.remote ? '(Remote)' : ''}</p>
+            <p><strong>Salary:</strong> ${job.salary || 'N/A'}</p>
+            <p><strong>Description:</strong> ${job.description}</p>
+            <p><strong>Responsibilities:</strong> ${job.responsibilities || 'N/A'}</p>
+            ${!job.approved ? `<button class="approve-btn" onclick="approveJob('${job.id}')">Approve ✅</button>` : ''}
+            <button class="delete-btn" onclick="deleteJob('${job.id}')">Delete ❌</button>
+          </div>
+        `;
+      }).join('');
     }
 
-    // Approve job
     window.approveJob = async function(id) {
-      const { error } = await supabase.from("jobs").update({ approved: true }).eq("id", id);
-      if (error) return alert("Error approving job: " + error.message);
-      fetchJobs();
+      await supabase.from("jobs").update({ approved: true }).eq("id", id);
+      loadJobs();
     };
 
-    // Delete job
     window.deleteJob = async function(id) {
       if (!confirm("Are you sure you want to delete this job?")) return;
-      const { error } = await supabase.from("jobs").delete().eq("id", id);
-      if (error) return alert("Error deleting job: " + error.message);
-      fetchJobs();
+      await supabase.from("jobs").delete().eq("id", id);
+      loadJobs();
     };
 
-    // Toggle view
-    pendingToggle.addEventListener("click", () => {
-      currentView = "pending";
-      pendingToggle.classList.add("active");
-      pendingToggle.classList.remove("inactive");
-      approvedToggle.classList.remove("active");
-      approvedToggle.classList.add("inactive");
-      renderJobs();
+    // Bulk approve
+    bulkApproveBtn.addEventListener("click", async () => {
+      const selected = Array.from(document.querySelectorAll(".select-job:checked")).map(cb => cb.dataset.id);
+      if (!selected.length) return alert("Select jobs to approve.");
+      await supabase.from("jobs").update({ approved: true }).in("id", selected);
+      loadJobs();
     });
 
-    approvedToggle.addEventListener("click", () => {
-      currentView = "approved";
-      approvedToggle.classList.add("active");
-      approvedToggle.classList.remove("inactive");
-      pendingToggle.classList.remove("active");
-      pendingToggle.classList.add("inactive");
-      renderJobs();
+    // Bulk delete
+    bulkDeleteBtn.addEventListener("click", async () => {
+      const selected = Array.from(document.querySelectorAll(".select-job:checked")).map(cb => cb.dataset.id);
+      if (!selected.length) return alert("Select jobs to delete.");
+      if (!confirm(`Delete ${selected.length} selected job(s)?`)) return;
+      await supabase.from("jobs").delete().in("id", selected);
+      loadJobs();
     });
 
-    // Search
+    // Search functionality
     searchInput.addEventListener("input", renderJobs);
 
-    fetchJobs();
+    loadJobs();
   </script>
 </body>
 </html>
-
