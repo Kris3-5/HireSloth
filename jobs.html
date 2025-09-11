@@ -8,19 +8,18 @@
 </head>
 <body>
   <header>
-   <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
-   <nav>
-    <a href="index.html">Home</a>
-    <a href="jobs.html">Vacancies</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <a href="auth.html" id="authBtn">Sign In</a> <!-- updated -->
-   </nav>
+    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html" class="active">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="post-job.html" id="postJobBtn" style="display: none;">Post a Job</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
+    </nav>
   </header>
 
-
-  <div class="content">
+  <main class="content">
     <h1>Vacancies</h1>
     <p>Browse current job openings. Use filters or search by keyword to find your next opportunity.</p>
 
@@ -35,10 +34,8 @@
     </div>
 
     <!-- Jobs Grid -->
-    <div class="jobs" id="jobsContainer">
-      <!-- Jobs will be loaded here -->
-    </div>
-  </div>
+    <div class="jobs" id="jobsContainer"></div>
+  </main>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
@@ -47,14 +44,20 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
+    // TODO: Replace with your actual keys
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const jobsContainer = document.getElementById("jobsContainer");
     const searchBtn = document.getElementById("searchBtn");
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
 
-    async function loadJobs(keyword = '', location = '', remoteOnly = false) {
+    // ----------------------------
+    // Load jobs
+    // ----------------------------
+    async function loadJobs(keyword = "", location = "", remoteOnly = false) {
       jobsContainer.innerHTML = "<p>Loading jobs...</p>";
 
       let query = supabase
@@ -63,9 +66,15 @@
         .eq("approved", true)
         .eq("is_active", true);
 
-      if (keyword) query = query.ilike("title", `%${keyword}%`);
-      if (location) query = query.ilike("location", `%${location}%`);
-      if (remoteOnly) query = query.eq("remote", true);
+      if (keyword) {
+        query = query.ilike("title", `%${keyword}%`);
+      }
+      if (location) {
+        query = query.ilike("location", `%${location}%`);
+      }
+      if (remoteOnly) {
+        query = query.eq("remote", true);
+      }
 
       const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -75,21 +84,27 @@
         return;
       }
 
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         jobsContainer.innerHTML = "<p>No jobs found.</p>";
         return;
       }
 
-      jobsContainer.innerHTML = data.map(job => `
+      jobsContainer.innerHTML = data
+        .map(
+          (job) => `
         <div class="job-card">
           <h3>${job.title}</h3>
           <p><strong>Company:</strong> ${job.company}</p>
-          <p><strong>Location:</strong> ${job.location || 'N/A'} ${job.remote ? '(Remote)' : ''}</p>
-          ${job.salary ? `<p><strong>Salary:</strong> ${job.salary}</p>` : ''}
+          <p><strong>Location:</strong> ${job.location || "N/A"} ${
+            job.remote ? "(Remote)" : ""
+          }</p>
+          ${job.salary ? `<p><strong>Salary:</strong> ${job.salary}</p>` : ""}
           <p><strong>Summary:</strong> ${job.description}</p>
-          ${job.responsibilities ? `<p><strong>Responsibilities:</strong> ${job.responsibilities}</p>` : ''}
+          ${job.responsibilities ? `<p><strong>Responsibilities:</strong> ${job.responsibilities}</p>` : ""}
         </div>
-      `).join('');
+      `
+        )
+        .join("");
     }
 
     // Initial load
@@ -102,38 +117,37 @@
       const remoteOnly = document.getElementById("remote").checked;
       loadJobs(keyword, location, remoteOnly);
     });
-  </script>
-    <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
-  const supabase = createClient(supabaseUrl, supabaseKey);
+    // ----------------------------
+    // Auth-aware nav
+    // ----------------------------
+    async function updateNav() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  const authBtn = document.getElementById("authBtn");
-  const postJobBtn = document.getElementById("postJobBtn");
-
-  async function updateNav() {
-    const user = supabase.auth.user();
-
-    if (user) {
-      // User logged in
-      authBtn.textContent = "Sign Out";
-      authBtn.href = "#";
-      authBtn.addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      });
-      postJobBtn.style.display = "inline-block";
-    } else {
-      // User not logged in
-      authBtn.textContent = "Sign In";
-      authBtn.href = "auth.html";
-      postJobBtn.style.display = "none";
+      if (user) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          updateNav();
+        };
+        postJobBtn.style.display = "inline-block";
+      } else {
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+        postJobBtn.style.display = "none";
+      }
     }
-  }
 
-  updateNav();
-</script>
+    updateNav();
+
+    supabase.auth.onAuthStateChange(() => {
+      updateNav();
+    });
+  </script>
 </body>
 </html>
