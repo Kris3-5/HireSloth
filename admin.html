@@ -12,19 +12,48 @@
     <button id="logoutBtn">Log Out</button>
   </header>
 
-  <div class="content">
+  <main class="content">
     <h2>Pending Job Posts</h2>
     <div id="pendingJobs"></div>
-  </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 HireSloth. Admin only.</p>
+  </footer>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+    // TODO: Replace with real values
     const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";  
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";  
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const logoutBtn = document.getElementById("logoutBtn");
+    const container = document.getElementById("pendingJobs");
+
+    // Protect admin route
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Example: check if user is admin (assuming you store a "role" column in profiles)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile || profile.role !== "admin") {
+        alert("Unauthorized: Admins only.");
+        window.location.href = "index.html";
+      }
+    }
+
     logoutBtn.addEventListener("click", async () => {
       await supabase.auth.signOut();
       window.location.href = "login.html";
@@ -37,7 +66,6 @@
         .eq("approved", false)
         .order("created_at", { ascending: false });
 
-      const container = document.getElementById("pendingJobs");
       if (error) {
         container.innerHTML = "<p>Error loading jobs.</p>";
         return;
@@ -47,28 +75,39 @@
         return;
       }
 
-      container.innerHTML = jobs.map(job => `
-        <div class="job-card">
+      container.innerHTML = "";
+      jobs.forEach(job => {
+        const jobCard = document.createElement("div");
+        jobCard.className = "job-card";
+        jobCard.innerHTML = `
           <h3>${job.title}</h3>
           <p><strong>${job.company}</strong> — ${job.remote ? "Remote" : job.location}</p>
-          <p>${job.description}</p>
-          <button onclick="approveJob('${job.id}')">Approve ✅</button>
-          <button onclick="rejectJob('${job.id}')">Reject ❌</button>
-        </div>
-      `).join("");
+          <p>${job.description ? job.description.substring(0, 150) + "..." : "No description"}</p>
+        `;
+
+        const approveBtn = document.createElement("button");
+        approveBtn.textContent = "Approve ✅";
+        approveBtn.addEventListener("click", async () => {
+          await supabase.from("jobs").update({ approved: true }).eq("id", job.id);
+          loadPendingJobs();
+        });
+
+        const rejectBtn = document.createElement("button");
+        rejectBtn.textContent = "Reject ❌";
+        rejectBtn.addEventListener("click", async () => {
+          await supabase.from("jobs").delete().eq("id", job.id);
+          loadPendingJobs();
+        });
+
+        jobCard.appendChild(approveBtn);
+        jobCard.appendChild(rejectBtn);
+
+        container.appendChild(jobCard);
+      });
     }
 
-    window.approveJob = async function(id) {
-      await supabase.from("jobs").update({ approved: true }).eq("id", id);
-      loadPendingJobs();
-    };
-
-    window.rejectJob = async function(id) {
-      await supabase.from("jobs").delete().eq("id", id);
-      loadPendingJobs();
-    };
-
-    loadPendingJobs();
+    // Init
+    checkAuth().then(loadPendingJobs);
   </script>
 </body>
 </html>
