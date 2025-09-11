@@ -1,10 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - Sign In / Sign Up</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css"/>
+
+  <style>
+    /* Lightweight tab styling (scoped to this page) */
+    .tabs {
+      display: inline-flex;
+      gap: .4rem;
+      background: #fff;
+      border: 1px solid rgba(113,83,54,.12);
+      border-radius: 12px;
+      padding: .35rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      margin: 1rem auto 0;
+    }
+    .tab-btn {
+      border: none;
+      padding: .6rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      background: transparent;
+      color: #715336;
+      transition: transform .15s ease, box-shadow .25s ease, background .2s ease;
+    }
+    .tab-btn[aria-selected="true"] {
+      background: linear-gradient(135deg, #A18F7B, #715336);
+      color: #FCEFDC;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .auth-forms {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 720px;
+      margin: 1.2rem auto 0;
+    }
+    @media (min-width: 900px){
+      .auth-forms { max-width: 820px; }
+    }
+    .form-container { width: 100%; }
+
+    /* Inline utility for the show-password row */
+    .field-row {
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+    }
+    .field-row small {
+      display:flex; align-items:center; gap:.4rem; color:#715336; cursor:pointer;
+      user-select:none;
+    }
+    .busy { opacity: .7; pointer-events: none; }
+  </style>
 </head>
 <body>
   <header>
@@ -23,34 +76,62 @@
     <h1>Welcome to HireSloth</h1>
     <p>Sign in or create an account to post job listings.</p>
 
+    <!-- Tabs -->
+    <div class="tabs" role="tablist" aria-label="Authentication">
+      <button id="tab-signin" class="tab-btn" role="tab" aria-controls="panel-signin" aria-selected="true">Sign In</button>
+      <button id="tab-signup" class="tab-btn" role="tab" aria-controls="panel-signup" aria-selected="false">Sign Up</button>
+    </div>
+
     <div class="auth-forms">
-      <div class="form-container">
-        <h2>Sign Up</h2>
-        <form id="signupForm">
-          <label for="signupEmail">Email</label><br>
-          <input type="email" id="signupEmail" required><br><br>
+      <!-- Sign In Panel -->
+      <section id="panel-signin" class="tab-panel active" role="tabpanel" aria-labelledby="tab-signin" tabindex="0">
+        <div class="form-container">
+          <form id="signinForm">
+            <label for="signinEmail">Email</label><br>
+            <input type="email" id="signinEmail" required><br><br>
 
-          <label for="signupPassword">Password</label><br>
-          <input type="password" id="signupPassword" required><br><br>
+            <div class="field-row">
+              <div style="flex:1">
+                <label for="signinPassword">Password</label><br>
+                <input type="password" id="signinPassword" required>
+              </div>
+              <small>
+                <input type="checkbox" id="signinShowPw">
+                <label for="signinShowPw">Show</label>
+              </small>
+            </div>
+            <br>
 
-          <button type="submit">Sign Up</button>
-        </form>
-        <p id="signupStatus"></p>
-      </div>
+            <button id="signinBtn" type="submit">Sign In</button>
+          </form>
+          <p id="signinStatus" aria-live="polite"></p>
+        </div>
+      </section>
 
-      <div class="form-container">
-        <h2>Sign In</h2>
-        <form id="signinForm">
-          <label for="signinEmail">Email</label><br>
-          <input type="email" id="signinEmail" required><br><br>
+      <!-- Sign Up Panel -->
+      <section id="panel-signup" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" tabindex="0">
+        <div class="form-container">
+          <form id="signupForm">
+            <label for="signupEmail">Email</label><br>
+            <input type="email" id="signupEmail" required><br><br>
 
-          <label for="signinPassword">Password</label><br>
-          <input type="password" id="signinPassword" required><br><br>
+            <div class="field-row">
+              <div style="flex:1">
+                <label for="signupPassword">Password</label><br>
+                <input type="password" id="signupPassword" required minlength="6">
+              </div>
+              <small>
+                <input type="checkbox" id="signupShowPw">
+                <label for="signupShowPw">Show</label>
+              </small>
+            </div>
+            <br>
 
-          <button type="submit">Sign In</button>
-        </form>
-        <p id="signinStatus"></p>
-      </div>
+            <button id="signupBtn" type="submit">Sign Up</button>
+          </form>
+          <p id="signupStatus" aria-live="polite"></p>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -73,11 +154,41 @@
     const signinForm = document.getElementById("signinForm");
     const signupStatus = document.getElementById("signupStatus");
     const signinStatus = document.getElementById("signinStatus");
+    const signupBtn = document.getElementById("signupBtn");
+    const signinBtn = document.getElementById("signinBtn");
 
+    // --- Tabs wiring ---
+    const tabSignin = document.getElementById("tab-signin");
+    const tabSignup = document.getElementById("tab-signup");
+    const panelSignin = document.getElementById("panel-signin");
+    const panelSignup = document.getElementById("panel-signup");
+
+    function setTab(mode){
+      const isSignin = mode === "signin";
+      tabSignin.setAttribute("aria-selected", isSignin ? "true" : "false");
+      tabSignup.setAttribute("aria-selected", isSignin ? "false" : "true");
+      panelSignin.classList.toggle("active", isSignin);
+      panelSignup.classList.toggle("active", !isSignin);
+      (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
+      history.replaceState(null, "", `auth.html?mode=${isSignin ? "signin" : "signup"}`);
+    }
+
+    tabSignin.addEventListener("click", () => setTab("signin"));
+    tabSignup.addEventListener("click", () => setTab("signup"));
+
+    // Deep-link support: auth.html?mode=signin|signup
+    (function initModeFromQuery(){
+      const params = new URLSearchParams(location.search);
+      const mode = params.get("mode");
+      if (mode === "signup") setTab("signup"); else setTab("signin");
+    })();
+
+    // --- Nav state ---
     async function updateNav() {
       const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-      if (session?.user) {
+      if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
         authBtn.onclick = async (e) => {
@@ -92,14 +203,29 @@
         postJobBtn.style.display = "none";
       }
     }
-
-    // Initial state
     updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
 
-    // React to auth state changes
-    supabase.auth.onAuthStateChange(() => {
-      updateNav();
+    // --- Show/Hide password toggles ---
+    document.getElementById("signinShowPw").addEventListener("change", (e) => {
+      document.getElementById("signinPassword").type = e.target.checked ? "text" : "password";
     });
+    document.getElementById("signupShowPw").addEventListener("change", (e) => {
+      document.getElementById("signupPassword").type = e.target.checked ? "text" : "password";
+    });
+
+    // Helpers to lock/unlock UI during async actions
+    function lock(formEl, btnEl){
+      formEl.classList.add("busy");
+      btnEl.disabled = true;
+      btnEl.dataset.label = btnEl.textContent;
+      btnEl.textContent = "Working…";
+    }
+    function unlock(formEl, btnEl){
+      formEl.classList.remove("busy");
+      btnEl.disabled = false;
+      if (btnEl.dataset.label) btnEl.textContent = btnEl.dataset.label;
+    }
 
     // --- Sign Up ---
     signupForm.addEventListener("submit", async (e) => {
@@ -109,7 +235,9 @@
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value.trim();
 
-      const { error } = await supabase.auth.signUp({ email, password });
+      lock(signupForm, signupBtn);
+      const { error } = await supabase.auth.signUp({ email, password })
+        .finally(() => unlock(signupForm, signupBtn));
 
       if (error) {
         signupStatus.textContent = "❌ " + error.message;
@@ -118,6 +246,7 @@
         signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
         signupStatus.style.color = "green";
         signupForm.reset();
+        setTab("signin"); // nudge back to sign-in after signup
       }
     });
 
@@ -129,7 +258,9 @@
       const email = document.getElementById("signinEmail").value.trim();
       const password = document.getElementById("signinPassword").value.trim();
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      lock(signinForm, signinBtn);
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+        .finally(() => unlock(signinForm, signinBtn));
 
       if (error) {
         signinStatus.textContent = "❌ " + error.message;
@@ -138,9 +269,21 @@
         signinStatus.textContent = "✅ Signed in successfully!";
         signinStatus.style.color = "green";
         signinForm.reset();
-        // Optional: redirect after login
+        // Optional redirect:
         // window.location.href = "index.html";
       }
+    });
+
+    // Keyboard accessibility for tabs (left/right arrows)
+    [tabSignin, tabSignup].forEach(btn => {
+      btn.addEventListener("keydown", (ev) => {
+        if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
+          ev.preventDefault();
+          const next = btn === tabSignin ? tabSignup : tabSignin;
+          next.focus();
+          next.click();
+        }
+      });
     });
   </script>
 </body>
