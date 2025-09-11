@@ -58,7 +58,7 @@
     const currentUser = session?.user;
     if (!currentUser) {
       window.location.href = "auth.html";
-      throw new Error("Redirecting to auth"); // stop further execution
+      throw new Error("Redirecting to auth");
     }
 
     // ----------------------------
@@ -90,8 +90,9 @@
         card.className = "job-card";
         card.innerHTML = `
           <h3>${esc(job.title)}</h3>
-          <p><strong>Location:</strong> ${esc(job.location || "Not specified")}</p>
+          <p><strong>Location:</strong> ${esc(job.location || "Not specified")}${job.remote ? " (Remote)" : ""}</p>
           <p>${esc(job.description || "")}</p>
+          ${job.contact_email ? `<p><strong>Contact Email:</strong> ${esc(job.contact_email)}</p>` : ""}
           <button class="deleteBtn" data-id="${esc(job.id)}">🗑 Delete</button>
         `;
         jobsList.appendChild(card);
