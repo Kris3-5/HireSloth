@@ -104,6 +104,15 @@
             ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>`
             : "";
 
+          // Mailto only (no data collected by your site)
+          const applyBtn = job.contact_email
+            ? `<div class="actions">
+                 <a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">
+                   Apply via Email
+                 </a>
+               </div>`
+            : "";
+
           return `
             <div class="job-card">
               <h3>${title}</h3>
@@ -112,6 +121,7 @@
               ${salary}
               <p><strong>Summary:</strong> ${desc}</p>
               ${resp}
+              ${applyBtn}
             </div>
           `;
         })
