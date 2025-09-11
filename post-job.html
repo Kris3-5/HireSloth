@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Post a Job</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,33 +20,33 @@
     </nav>
   </header>
 
-  <main class="content" id="jobContent">
+  <main class="content">
     <h1>Post a Job</h1>
     <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
 
     <form id="jobForm">
       <label for="title">Job Title</label><br>
-      <input type="text" id="title" name="title" required><br><br>
+      <input type="text" id="title" required><br><br>
 
       <label for="company">Company</label><br>
-      <input type="text" id="company" name="company" required><br><br>
+      <input type="text" id="company" required><br><br>
 
       <label for="location">Location</label><br>
-      <input type="text" id="location" name="location"><br><br>
+      <input type="text" id="location"><br><br>
 
-      <label><input type="checkbox" id="remote" name="remote"> Remote Position</label><br><br>
+      <label><input type="checkbox" id="remote"> Remote Position</label><br><br>
 
       <label for="salary">Salary (optional)</label><br>
-      <input type="text" id="salary" name="salary"><br><br>
+      <input type="text" id="salary"><br><br>
 
       <label for="description">Job Summary</label><br>
-      <textarea id="description" name="description" rows="3" required></textarea><br><br>
+      <textarea id="description" rows="3" required></textarea><br><br>
 
       <label for="responsibilities">Responsibilities</label><br>
-      <textarea id="responsibilities" name="responsibilities" rows="5"></textarea><br><br>
+      <textarea id="responsibilities" rows="5"></textarea><br><br>
 
       <label for="contact_email">Company Contact Email</label><br>
-      <input type="email" id="contact_email" name="contact_email" required><br><br>
+      <input type="email" id="contact_email" required><br><br>
 
       <button type="submit">Post Job</button>
     </form>
@@ -53,46 +54,44 @@
     <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
   </main>
 
-  <footer>
-    <p>&copy; 2025 HireSloth. All rights reserved.</p>
-  </footer>
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const jobForm = document.getElementById("jobForm");
-    const statusEl = document.getElementById("formStatus");
+    // fast nav
+    document.body.classList.add("auth-pending");
+    async function initNavFast() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      const authBtn = document.getElementById("authBtn");
+      const postJobBtn = document.getElementById("postJobBtn");
 
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUser = session?.user;
-    if (!currentUser) {
-      window.location.href = "auth.html";
-      throw new Error("Redirecting to auth");
-    }
-
-    async function updateNav() {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-        postJobBtn.style.display = "inline-block";
+        authBtn.href="#";
+        authBtn.onclick = async (e)=>{ e.preventDefault(); await supabase.auth.signOut(); window.location.href="index.html"; };
+        postJobBtn.style.display="inline-block";
       } else {
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-        postJobBtn.style.display = "none";
+        authBtn.textContent="Sign In";
+        authBtn.href="auth.html";
+        authBtn.onclick=null;
+        postJobBtn.style.display="none";
       }
+      document.body.classList.remove("auth-pending");
+      document.body.classList.add("auth-ready");
     }
-    updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
+    initNavFast();
+    supabase.auth.onAuthStateChange(()=>initNavFast());
 
-    jobForm.addEventListener("submit", async (e) => {
+    // protect page
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
+    if (!currentUser) { window.location.href = "auth.html"; throw new Error("Redirecting to auth"); }
+
+    const statusEl = document.getElementById("formStatus");
+    document.getElementById("jobForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
       const job = {
         title: document.getElementById("title").value.trim(),
@@ -106,18 +105,11 @@
         user_id: currentUser.id,
         approved: false,
         is_active: true,
-        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+        expires_at: new Date(Date.now()+30*24*60*60*1000).toISOString()
       };
-
       const { error } = await supabase.from("jobs").insert([job]);
-      if (error) {
-        statusEl.textContent = "❌ " + error.message;
-        statusEl.style.color = "red";
-      } else {
-        statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
-        statusEl.style.color = "green";
-        jobForm.reset();
-      }
+      if (error){ statusEl.textContent = "❌ " + error.message; statusEl.style.color="red"; }
+      else { statusEl.textContent="✅ Job posted! Awaiting approval."; statusEl.style.color="green"; (e.target).reset(); }
     });
   </script>
 </body>
