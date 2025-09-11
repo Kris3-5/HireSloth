@@ -1,19 +1,23 @@
 /* ====== Global ====== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #FCEFDC; /* soft cream from logo */
-  color: #3C3525; /* dark brown from logo */
+  font-family: 'Poppins', sans-serif;
+  background: #FCEFDC; /* soft cream */
+  color: #3C3525; /* dark brown */
   line-height: 1.6;
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.3s ease;
 }
 
 h1, h2, h3 {
-  color: #715336; /* deep brown accent */
+  color: #715336;
+  font-weight: 700;
 }
 
 /* ====== Header & Navigation ====== */
@@ -23,7 +27,7 @@ header {
   align-items: center;
   padding: 1rem 2rem;
   background: #FFFFFF;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -37,55 +41,74 @@ nav a {
   margin: 0 1rem;
   color: #3C3525;
   font-weight: 500;
+  position: relative;
 }
 
-nav a:hover,
-nav a.active {
-  color: #715336;
-  border-bottom: 2px solid #715336;
-  padding-bottom: 2px;
+nav a::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: #715336;
+  transition: width 0.3s ease;
 }
 
-/* ====== Hero (Homepage welcome) ====== */
+nav a:hover::after,
+nav a.active::after {
+  width: 100%;
+}
+
+/* ====== Hero Section ====== */
 .hero {
   text-align: center;
-  padding: 4rem 2rem;
-  background: linear-gradient(to right, #715336, #A18F7B);
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, #715336, #A18F7B);
   color: #FCEFDC;
+  border-bottom-left-radius: 50px;
+  border-bottom-right-radius: 50px;
 }
 
 .hero h1 {
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin-bottom: 1rem;
 }
 
 .hero p {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  opacity: 0.9;
   margin-bottom: 2rem;
 }
 
 /* ====== Content Area ====== */
 .content {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
   text-align: center;
 }
 
 /* ====== Jobs Grid ====== */
 .jobs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
   margin-top: 2rem;
 }
 
 .job-card {
   background: #FFF8F2;
   padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
   text-align: left;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
 }
 
 .job-card h3 {
@@ -93,25 +116,27 @@ nav a.active {
   color: #715336;
 }
 
-.job-card p {
-  margin: 0.5rem 0;
-}
-
 .job-card small {
   display: block;
   margin-top: 1rem;
-  color: #666;
+  color: #777;
 }
 
-/* ====== Forms (Contact + Post Job) ====== */
+/* ====== Forms ====== */
 form {
   max-width: 600px;
   margin: 2rem auto;
   text-align: left;
+  background: #FFF8F2;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 form label {
-  font-weight: bold;
+  font-weight: 500;
+  margin-top: 1rem;
+  display: block;
 }
 
 form input,
@@ -120,29 +145,35 @@ form textarea {
   padding: 0.75rem;
   margin-top: 0.25rem;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
   font-family: inherit;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
 }
 
-form textarea {
-  resize: vertical;
+form input:focus,
+form textarea:focus {
+  border-color: #715336;
+  box-shadow: 0 0 6px rgba(113, 83, 54, 0.4);
+  outline: none;
 }
 
 form button {
   display: inline-block;
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background: #A18F7B;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1.8rem;
+  background: linear-gradient(135deg, #A18F7B, #715336);
   color: #FCEFDC;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  transition: background 0.3s;
+  font-size: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 form button:hover {
-  background: #715336;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
 }
 
 /* ====== Footer ====== */
@@ -150,53 +181,13 @@ footer {
   background: #715336;
   color: #FCEFDC;
   text-align: center;
-  padding: 2rem 1rem;
-  margin-top: 3rem;
+  padding: 2.5rem 1rem;
+  margin-top: 4rem;
+  border-top-left-radius: 50px;
+  border-top-right-radius: 50px;
 }
 
-/* ====== Responsive Design ====== */
-@media (max-width: 768px) {
-  nav {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  nav a {
-    margin: 0.5rem;
-  }
-
-  .hero h1 {
-    font-size: 2rem;
-  }
-
-  .hero p {
-    font-size: 1rem;
-  }
-
-  .content {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero {
-    padding: 2rem 1rem;
-  }
-
-  .hero h1 {
-    font-size: 1.5rem;
-  }
-
-  .hero p {
-    font-size: 0.9rem;
-  }
-
-  .job-card {
-    padding: 1rem;
-  }
-}
-/* ====== Call-to-action buttons (Homepage) ====== */
+/* ====== CTA Buttons ====== */
 .cta-buttons {
   display: flex;
   justify-content: center;
@@ -206,16 +197,17 @@ footer {
 
 .btn {
   display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background: #A18F7B;
+  padding: 0.9rem 1.8rem;
+  background: linear-gradient(135deg, #A18F7B, #715336);
   color: #FCEFDC;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: bold;
-  transition: background 0.3s;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .btn:hover {
-  background: #715336;
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .btn-alt {
@@ -226,4 +218,35 @@ footer {
 
 .btn-alt:hover {
   background: #FFF8F2;
+  transform: scale(1.05);
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+  nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 3rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .job-card {
+    padding: 1.2rem;
+  }
 }
