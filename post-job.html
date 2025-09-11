@@ -70,13 +70,14 @@
     const statusEl = document.getElementById("formStatus");
 
     // ----------------------------
-    // Protect this page
+    // Protect this page (safe guard)
     // ----------------------------
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const currentUser = session?.user;
+    if (!currentUser) {
       window.location.href = "auth.html";
+      throw new Error("Redirecting to auth"); // stop further execution
     }
-    const user = session.user;
 
     // ----------------------------
     // Nav updates
@@ -95,6 +96,7 @@
       } else {
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
+        authBtn.onclick = null;                 // clear any old handler
         postJobBtn.style.display = "none";
       }
     }
@@ -115,10 +117,10 @@
         salary: document.getElementById("salary").value.trim(),
         description: document.getElementById("description").value.trim(),
         responsibilities: document.getElementById("responsibilities").value.trim(),
-        user_id: user.id,  // 🔑 consistent with my-jobs.html
-        approved: false,   // require admin approval
+        user_id: currentUser.id,  // 🔑 consistent with my-jobs.html
+        approved: false,          // require admin approval
         is_active: true,
-        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString() // auto-expire 30 days
+        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString() // 30 days
       };
 
       const { error } = await supabase.from("jobs").insert([job]);
