@@ -14,12 +14,12 @@
       <a href="jobs.html">Vacancies</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
+      <a href="post-job.html" id="postJobBtn" style="display:none;">Post a Job</a>
       <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
 
-  <div class="content" id="jobContent">
+  <main class="content" id="jobContent">
     <h1>Post a Job</h1>
     <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
 
@@ -51,7 +51,7 @@
     </form>
 
     <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
-  </div>
+  </main>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
@@ -66,44 +66,46 @@
 
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
-    const jobContent = document.getElementById("jobContent");
     const jobForm = document.getElementById("jobForm");
     const statusEl = document.getElementById("formStatus");
 
-    async function updateNav(user) {
+    // ----------------------------
+    // Protect this page
+    // ----------------------------
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "auth.html";
+    }
+    const user = session.user;
+
+    // ----------------------------
+    // Nav updates
+    // ----------------------------
+    async function updateNav() {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
         authBtn.onclick = async (e) => {
           e.preventDefault();
           await supabase.auth.signOut();
-          window.location.reload();
+          window.location.href = "index.html";
         };
         postJobBtn.style.display = "inline-block";
       } else {
-        // Not logged in: hide content and redirect to auth page
-        jobContent.style.display = "none";
-        window.location.href = "auth.html";
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        postJobBtn.style.display = "none";
       }
     }
+    updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
 
-    const currentUser = supabase.auth.user();
-    updateNav(currentUser);
-
-    supabase.auth.onAuthStateChange((event, session) => {
-      updateNav(session?.user ?? null);
-    });
-
-    // --- Job Posting ---
+    // ----------------------------
+    // Handle form submit
+    // ----------------------------
     jobForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      const user = supabase.auth.user();
-      if (!user) {
-        statusEl.textContent = "❌ You must be signed in to post a job.";
-        statusEl.style.color = "red";
-        return;
-      }
 
       const job = {
         title: document.getElementById("title").value.trim(),
@@ -113,15 +115,17 @@
         salary: document.getElementById("salary").value.trim(),
         description: document.getElementById("description").value.trim(),
         responsibilities: document.getElementById("responsibilities").value.trim(),
-        posted_by: user.id
+        user_id: user.id,  // 🔑 consistent with my-jobs.html
+        approved: false,   // require admin approval
+        is_active: true,
+        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString() // auto-expire 30 days
       };
 
       const { error } = await supabase.from("jobs").insert([job]);
 
       if (error) {
-        statusEl.textContent = "❌ Something went wrong. Please try again.";
+        statusEl.textContent = "❌ " + error.message;
         statusEl.style.color = "red";
-        console.error(error);
       } else {
         statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
         statusEl.style.color = "green";
