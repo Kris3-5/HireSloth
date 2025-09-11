@@ -15,7 +15,7 @@
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <a href="post-job.html" id="postJobBtn" style="display: none;">Post a Job</a>
-      <a href="#" id="authBtn">Sign In</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
 
@@ -61,7 +61,7 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    // TODO: Replace with your real Supabase URL and anon key
+    // Replace with your real Supabase URL and anon key
     const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -75,15 +75,14 @@
     const signinStatus = document.getElementById("signinStatus");
 
     async function updateNav() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (user) {
+      if (session?.user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
         authBtn.onclick = async (e) => {
           e.preventDefault();
           await supabase.auth.signOut();
-          updateNav();
         };
         postJobBtn.style.display = "inline-block";
       } else {
@@ -107,8 +106,8 @@
       e.preventDefault();
       signupStatus.textContent = "";
 
-      const email = document.getElementById("signupEmail").value;
-      const password = document.getElementById("signupPassword").value;
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value.trim();
 
       const { error } = await supabase.auth.signUp({ email, password });
 
@@ -124,25 +123,4 @@
 
     // --- Sign In ---
     signinForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      signinStatus.textContent = "";
-
-      const email = document.getElementById("signinEmail").value;
-      const password = document.getElementById("signinPassword").value;
-
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        signinStatus.textContent = "❌ " + error.message;
-        signinStatus.style.color = "red";
-      } else {
-        signinStatus.textContent = "✅ Sign in successful! Redirecting...";
-        signinStatus.style.color = "green";
-        setTimeout(() => {
-          window.location.href = "post-job.html";
-        }, 1000);
-      }
-    });
-  </script>
-</body>
-</html>
+      e.preventDefault
