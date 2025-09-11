@@ -4,15 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - Sign In / Sign Up</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="style.css"/>
   <style>
     .tabs{display:inline-flex;gap:.4rem;background:#fff;border:1px solid rgba(113,83,54,.12);border-radius:12px;padding:.35rem;box-shadow:0 4px 12px rgba(0,0,0,.08);margin:1rem auto 0}
-    .tab-btn{border:none;padding:.6rem 1rem;border-radius:10px;font-weight:700;cursor:pointer;background:transparent;color:#715336;transition:transform .15s,box-shadow .25s,background .2s}
+    .tab-btn{border:none;padding:.6rem 1rem;border-radius:10px;font-weight:700;cursor:pointer;background:transparent;color:#715336}
     .tab-btn[aria-selected="true"]{background:linear-gradient(135deg,#A18F7B,#715336);color:#FCEFDC;box-shadow:0 4px 12px rgba(0,0,0,.12)}
     .tab-panel{display:none}.tab-panel.active{display:block}
     .auth-forms{display:grid;grid-template-columns:1fr;gap:1.5rem;max-width:720px;margin:1.2rem auto 0}
     @media (min-width:900px){.auth-forms{max-width:820px}}
-    .form-container{width:100%}
     .field-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
     .field-row small{display:flex;align-items:center;gap:.4rem;color:#715336;cursor:pointer;user-select:none}
     .busy{opacity:.7;pointer-events:none}
@@ -31,7 +31,7 @@
     </nav>
   </header>
 
-  <main class="content" id="authContent">
+  <main class="content">
     <h1>Welcome to HireSloth</h1>
     <p>Sign in or create an account to post job listings.</p>
 
@@ -42,103 +42,69 @@
 
     <div class="auth-forms">
       <section id="panel-signin" class="tab-panel active" role="tabpanel" aria-labelledby="tab-signin" tabindex="0">
-        <div class="form-container">
-          <form id="signinForm">
-            <label for="signinEmail">Email</label><br>
-            <input type="email" id="signinEmail" required><br><br>
+        <form id="signinForm">
+          <label for="signinEmail">Email</label><br>
+          <input type="email" id="signinEmail" required><br><br>
 
-            <div class="field-row">
-              <div style="flex:1">
-                <label for="signinPassword">Password</label><br>
-                <input type="password" id="signinPassword" required>
-              </div>
-              <small>
-                <input type="checkbox" id="signinShowPw">
-                <label for="signinShowPw">Show</label>
-              </small>
+          <div class="field-row">
+            <div style="flex:1">
+              <label for="signinPassword">Password</label><br>
+              <input type="password" id="signinPassword" required>
             </div>
-            <br>
+            <small>
+              <input type="checkbox" id="signinShowPw">
+              <label for="signinShowPw">Show</label>
+            </small>
+          </div>
+          <br>
 
-            <button id="signinBtn" type="submit">Sign In</button>
-          </form>
-          <p id="signinStatus" aria-live="polite"></p>
-        </div>
+          <button id="signinBtn" type="submit">Sign In</button>
+        </form>
+        <p id="signinStatus" aria-live="polite"></p>
       </section>
 
       <section id="panel-signup" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" tabindex="0">
-        <div class="form-container">
-          <form id="signupForm">
-            <label for="signupEmail">Email</label><br>
-            <input type="email" id="signupEmail" required><br><br>
+        <form id="signupForm">
+          <label for="signupEmail">Email</label><br>
+          <input type="email" id="signupEmail" required><br><br>
 
-            <div class="field-row">
-              <div style="flex:1">
-                <label for="signupPassword">Password</label><br>
-                <input type="password" id="signupPassword" required minlength="6">
-              </div>
-              <small>
-                <input type="checkbox" id="signupShowPw">
-                <label for="signupShowPw">Show</label>
-              </small>
+          <div class="field-row">
+            <div style="flex:1">
+              <label for="signupPassword">Password</label><br>
+              <input type="password" id="signupPassword" required minlength="6">
             </div>
-            <br>
+            <small>
+              <input type="checkbox" id="signupShowPw">
+              <label for="signupShowPw">Show</label>
+            </small>
+          </div>
+          <br>
 
-            <button id="signupBtn" type="submit">Sign Up</button>
-          </form>
-          <p id="signupStatus" aria-live="polite"></p>
-        </div>
+          <button id="signupBtn" type="submit">Sign Up</button>
+        </form>
+        <p id="signupStatus" aria-live="polite"></p>
       </section>
     </div>
   </main>
 
-  <footer>
-    <p>&copy; 2025 HireSloth. All rights reserved.</p>
-  </footer>
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const signupForm = document.getElementById("signupForm");
-    const signinForm = document.getElementById("signinForm");
-    const signupStatus = document.getElementById("signupStatus");
-    const signinStatus = document.getElementById("signinStatus");
-    const signupBtn = document.getElementById("signupBtn");
-    const signinBtn = document.getElementById("signinBtn");
-
-    const tabSignin = document.getElementById("tab-signin");
-    const tabSignup = document.getElementById("tab-signup");
-    const panelSignin = document.getElementById("panel-signin");
-    const panelSignup = document.getElementById("panel-signup");
-
-    function setTab(mode){
-      const isSignin = mode === "signin";
-      tabSignin.setAttribute("aria-selected", isSignin ? "true" : "false");
-      tabSignup.setAttribute("aria-selected", isSignin ? "false" : "true");
-      panelSignin.classList.toggle("active", isSignin);
-      panelSignup.classList.toggle("active", !isSignin);
-      (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
-      history.replaceState(null, "", `auth.html?mode=${isSignin ? "signin" : "signup"}`);
-    }
-    tabSignin.addEventListener("click", () => setTab("signin"));
-    tabSignup.addEventListener("click", () => setTab("signup"));
-    (function initModeFromQuery(){
-      const params = new URLSearchParams(location.search);
-      const mode = params.get("mode");
-      if (mode === "signup") setTab("signup"); else setTab("signin");
-    })();
-
-    async function updateNav() {
+    // nav (no flicker)
+    document.body.classList.add("auth-pending");
+    async function initNavFast() {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
+      const authBtn = document.getElementById("authBtn");
+      const postJobBtn = document.getElementById("postJobBtn");
+
       if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); };
+        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href="index.html"; };
         postJobBtn.style.display = "inline-block";
       } else {
         authBtn.textContent = "Sign In";
@@ -146,78 +112,75 @@
         authBtn.onclick = null;
         postJobBtn.style.display = "none";
       }
+      document.body.classList.remove("auth-pending");
+      document.body.classList.add("auth-ready");
     }
-    updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
+    initNavFast();
+    supabase.auth.onAuthStateChange(() => initNavFast());
 
-    document.getElementById("signinShowPw").addEventListener("change", (e) => {
-      document.getElementById("signinPassword").type = e.target.checked ? "text" : "password";
+    // tabs
+    const tabSignin = document.getElementById("tab-signin");
+    const tabSignup = document.getElementById("tab-signup");
+    const panelSignin = document.getElementById("panel-signin");
+    const panelSignup = document.getElementById("panel-signup");
+    function setTab(mode){
+      const isSignin = mode === "signin";
+      tabSignin.setAttribute("aria-selected", isSignin ? "true":"false");
+      tabSignup.setAttribute("aria-selected", isSignin ? "false":"true");
+      panelSignin.classList.toggle("active", isSignin);
+      panelSignup.classList.toggle("active", !isSignin);
+      (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
+      history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}`);
+    }
+    tabSignin.addEventListener("click", ()=>setTab("signin"));
+    tabSignup.addEventListener("click", ()=>setTab("signup"));
+    (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
+
+    // show/hide password
+    document.getElementById("signinShowPw").addEventListener("change", e => {
+      document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
     });
-    document.getElementById("signupShowPw").addEventListener("change", (e) => {
-      document.getElementById("signupPassword").type = e.target.checked ? "text" : "password";
+    document.getElementById("signupShowPw").addEventListener("change", e => {
+      document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
     });
 
-    function lock(formEl, btnEl){
-      formEl.classList.add("busy");
-      btnEl.disabled = true;
-      btnEl.dataset.label = btnEl.textContent;
-      btnEl.textContent = "Working…";
-    }
-    function unlock(formEl, btnEl){
-      formEl.classList.remove("busy");
-      btnEl.disabled = false;
-      if (btnEl.dataset.label) btnEl.textContent = btnEl.dataset.label;
-    }
+    // UI lock helpers
+    function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
+    function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
 
-    signupForm.addEventListener("submit", async (e) => {
+    // signup
+    const signupForm = document.getElementById("signupForm");
+    const signupBtn  = document.getElementById("signupBtn");
+    const signupStatus = document.getElementById("signupStatus");
+    signupForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
-      signupStatus.textContent = "";
+      signupStatus.textContent="";
+      lock(signupForm, signupBtn);
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value.trim();
-
-      lock(signupForm, signupBtn);
-      const { error } = await supabase.auth.signUp({ email, password }).finally(() => unlock(signupForm, signupBtn));
-
-      if (error) {
-        signupStatus.textContent = "❌ " + error.message;
-        signupStatus.style.color = "red";
-      } else {
-        signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
-        signupStatus.style.color = "green";
-        signupForm.reset();
-        setTab("signin");
-      }
+      const { error } = await supabase.auth.signUp({ email, password }).finally(()=>unlock(signupForm, signupBtn));
+      if (error){ signupStatus.textContent = "❌ " + error.message; signupStatus.style.color="red"; }
+      else { signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation."; signupStatus.style.color="green"; signupForm.reset(); setTab("signin"); }
     });
 
-    signinForm.addEventListener("submit", async (e) => {
+    // signin + redirect to post-job
+    const signinForm = document.getElementById("signinForm");
+    const signinBtn  = document.getElementById("signinBtn");
+    const signinStatus = document.getElementById("signinStatus");
+    signinForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
-      signinStatus.textContent = "";
+      signinStatus.textContent="";
+      lock(signinForm, signinBtn);
       const email = document.getElementById("signinEmail").value.trim();
       const password = document.getElementById("signinPassword").value.trim();
-
-      lock(signinForm, signinBtn);
-      const { error } = await supabase.auth.signInWithPassword({ email, password }).finally(() => unlock(signinForm, signinBtn));
-
-      if (error) {
-        signinStatus.textContent = "❌ " + error.message;
-        signinStatus.style.color = "red";
-      } else {
-        signinStatus.textContent = "✅ Signed in successfully!";
-        signinStatus.style.color = "green";
-        signinForm.reset();
-        // Optional redirect:
-        // window.location.href = "index.html";
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password }).finally(()=>unlock(signinForm, signinBtn));
+      if (error){ signinStatus.textContent = "❌ " + error.message; signinStatus.style.color="red"; }
+      else { signinStatus.textContent = "✅ Signed in! Redirecting…"; signinStatus.style.color="green"; window.location.href = "post-job.html"; }
     });
 
-    [tabSignin, tabSignup].forEach(btn => {
-      btn.addEventListener("keydown", (ev) => {
-        if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
-          ev.preventDefault();
-          const next = btn === tabSignin ? tabSignup : tabSignin;
-          next.focus();
-          next.click();
-        }
+    [tabSignin, tabSignup].forEach(btn=>{
+      btn.addEventListener("keydown",(ev)=>{
+        if(ev.key==="ArrowRight"||ev.key==="ArrowLeft"){ ev.preventDefault(); (btn===tabSignin?tabSignup:tabSignin).click(); }
       });
     });
   </script>
