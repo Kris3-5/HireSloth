@@ -14,12 +14,12 @@
       <a href="jobs.html">Vacancies</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
+      <a href="post-job.html" id="postJobBtn" style="display: none;">Post a Job</a>
       <a href="#" id="authBtn">Sign In</a>
     </nav>
   </header>
 
-  <div class="content" id="authContent">
+  <main class="content" id="authContent">
     <h1>Welcome to HireSloth</h1>
     <p>Sign in or create an account to post job listings.</p>
 
@@ -52,7 +52,7 @@
         <p id="signinStatus"></p>
       </div>
     </div>
-  </div>
+  </main>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
@@ -61,6 +61,7 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+    // TODO: Replace with your real Supabase URL and anon key
     const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -73,29 +74,32 @@
     const signupStatus = document.getElementById("signupStatus");
     const signinStatus = document.getElementById("signinStatus");
 
-    async function updateNav(user) {
+    async function updateNav() {
+      const { data: { user } } = await supabase.auth.getUser();
+
       if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
         authBtn.onclick = async (e) => {
           e.preventDefault();
           await supabase.auth.signOut();
-          window.location.reload();
+          updateNav();
         };
         postJobBtn.style.display = "inline-block";
       } else {
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
+        authBtn.onclick = null;
         postJobBtn.style.display = "none";
       }
     }
 
-    // Check auth state
-    const currentUser = supabase.auth.user();
-    updateNav(currentUser);
+    // Initial state
+    updateNav();
 
-    supabase.auth.onAuthStateChange((event, session) => {
-      updateNav(session?.user ?? null);
+    // React to auth state changes
+    supabase.auth.onAuthStateChange(() => {
+      updateNav();
     });
 
     // --- Sign Up ---
@@ -106,7 +110,7 @@
       const email = document.getElementById("signupEmail").value;
       const password = document.getElementById("signupPassword").value;
 
-      const { user, error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ email, password });
 
       if (error) {
         signupStatus.textContent = "❌ " + error.message;
@@ -126,16 +130,17 @@
       const email = document.getElementById("signinEmail").value;
       const password = document.getElementById("signinPassword").value;
 
-      const { user, error } = await supabase.auth.signIn({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         signinStatus.textContent = "❌ " + error.message;
         signinStatus.style.color = "red";
       } else {
-        signinStatus.textContent = "✅ Sign in successful!";
+        signinStatus.textContent = "✅ Sign in successful! Redirecting...";
         signinStatus.style.color = "green";
-        // Redirect to post-job page after login
-        window.location.href = "post-job.html";
+        setTimeout(() => {
+          window.location.href = "post-job.html";
+        }, 1000);
       }
     });
   </script>
