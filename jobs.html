@@ -23,17 +23,13 @@
     <h1>Vacancies</h1>
     <p>Browse current job openings. Use filters or search by keyword to find your next opportunity.</p>
 
-    <!-- Search & Filter -->
     <div class="search-bar">
       <input type="text" id="keyword" placeholder="Keyword (e.g., Frontend)">
       <input type="text" id="location" placeholder="Location">
-      <label>
-        <input type="checkbox" id="remote"> Remote only
-      </label>
+      <label><input type="checkbox" id="remote"> Remote only</label>
       <button id="searchBtn">Search</button>
     </div>
 
-    <!-- Jobs Grid -->
     <div class="jobs" id="jobsContainer"></div>
   </main>
 
@@ -43,8 +39,6 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    // TODO: Replace with your actual keys
     const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -54,84 +48,50 @@
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
 
-    // Escape helper to prevent XSS
-    const esc = (s) =>
-      (s ?? "")
-        .toString()
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+    const esc = (s) => (s ?? "").toString()
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-    // ----------------------------
-    // Load jobs
-    // ----------------------------
-    async function loadJobs(keyword = "", location = "", remoteOnly = false) {
+    async function loadJobs(keyword="", location="", remoteOnly=false) {
       jobsContainer.innerHTML = "<p>Loading jobs...</p>";
-
-      let query = supabase
-        .from("jobs")
-        .select("*")
-        .eq("approved", true)
-        .eq("is_active", true);
-
+      let query = supabase.from("jobs").select("*").eq("approved", true).eq("is_active", true);
       if (keyword) query = query.ilike("title", `%${keyword}%`);
       if (location) query = query.ilike("location", `%${location}%`);
       if (remoteOnly) query = query.eq("remote", true);
 
       const { data, error } = await query.order("created_at", { ascending: false });
+      if (error) { jobsContainer.innerHTML = `<p style="color:red;">Error loading jobs: ${esc(error.message)}</p>`; console.error(error); return; }
+      if (!data || data.length===0) { jobsContainer.innerHTML = "<p>No jobs found.</p>"; return; }
 
-      if (error) {
-        jobsContainer.innerHTML = `<p style="color:red;">Error loading jobs: ${esc(error.message)}</p>`;
-        console.error(error);
-        return;
-      }
+      jobsContainer.innerHTML = data.map(job => {
+        const title = esc(job.title);
+        const company = esc(job.company);
+        const loc = esc(job.location || "N/A");
+        const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+        const desc = esc(job.description || "");
+        const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
 
-      if (!data || data.length === 0) {
-        jobsContainer.innerHTML = "<p>No jobs found.</p>";
-        return;
-      }
+        const applyLink = job.contact_email
+          ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
+          : "";
+        const reportLink = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title || "")}&company=${encodeURIComponent(job.company || "")}">Report</a>`;
+        const actions = `<div class="actions">${applyLink} ${reportLink}</div>`;
 
-      jobsContainer.innerHTML = data
-        .map((job) => {
-          const title = esc(job.title);
-          const company = esc(job.company);
-          const loc = esc(job.location || "N/A");
-          const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
-          const desc = esc(job.description || "");
-          const resp = job.responsibilities
-            ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>`
-            : "";
-
-          // Mailto only (no data collected by your site)
-          const applyBtn = job.contact_email
-            ? `<div class="actions">
-                 <a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">
-                   Apply via Email
-                 </a>
-               </div>`
-            : "";
-
-          return `
-            <div class="job-card">
-              <h3>${title}</h3>
-              <p><strong>Company:</strong> ${company}</p>
-              <p><strong>Location:</strong> ${loc} ${job.remote ? "(Remote)" : ""}</p>
-              ${salary}
-              <p><strong>Summary:</strong> ${desc}</p>
-              ${resp}
-              ${applyBtn}
-            </div>
-          `;
-        })
-        .join("");
+        return `
+          <div class="job-card">
+            <h3>${title}</h3>
+            <p><strong>Company:</strong> ${company}</p>
+            <p><strong>Location:</strong> ${loc} ${job.remote ? "(Remote)" : ""}</p>
+            ${salary}
+            <p><strong>Summary:</strong> ${desc}</p>
+            ${resp}
+            ${actions}
+          </div>
+        `;
+      }).join("");
     }
 
-    // Initial load
     loadJobs();
-
-    // Search button event
     searchBtn.addEventListener("click", () => {
       const keyword = document.getElementById("keyword").value.trim();
       const location = document.getElementById("location").value.trim();
@@ -139,20 +99,12 @@
       loadJobs(keyword, location, remoteOnly);
     });
 
-    // ----------------------------
-    // Auth-aware nav
-    // ----------------------------
     async function updateNav() {
       const { data: { user } } = await supabase.auth.getUser();
-
       if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
-        authBtn.onclick = async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-          updateNav();
-        };
+        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); updateNav(); };
         postJobBtn.style.display = "inline-block";
       } else {
         authBtn.textContent = "Sign In";
@@ -161,7 +113,6 @@
         postJobBtn.style.display = "none";
       }
     }
-
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
   </script>
