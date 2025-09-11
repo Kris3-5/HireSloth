@@ -41,24 +41,36 @@
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
 
-    // ----------------------------
-    // Redirect if not logged in
-    // ----------------------------
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      window.location.href = "auth.html";
-    }
-    const user = session.user;
+    // Escape helper to prevent XSS
+    const esc = (s) =>
+      (s ?? "")
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 
     // ----------------------------
-    // Fetch jobs belonging to this company
+    // Require login (safe guard)
+    // ----------------------------
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
+    if (!currentUser) {
+      window.location.href = "auth.html";
+      throw new Error("Redirecting to auth"); // stop further execution
+    }
+
+    // ----------------------------
+    // Fetch jobs belonging to this user
     // ----------------------------
     async function loadJobs() {
       jobsList.innerHTML = "<p>Loading jobs...</p>";
+
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUser.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -67,30 +79,34 @@
         return;
       }
 
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         jobsList.innerHTML = "<p>No jobs posted yet.</p>";
         return;
       }
 
       jobsList.innerHTML = "";
-      data.forEach(job => {
+      data.forEach((job) => {
         const card = document.createElement("div");
         card.className = "job-card";
         card.innerHTML = `
-          <h3>${job.title}</h3>
-          <p><strong>Location:</strong> ${job.location || "Not specified"}</p>
-          <p>${job.description || ""}</p>
-          <button class="deleteBtn" data-id="${job.id}">🗑 Delete</button>
+          <h3>${esc(job.title)}</h3>
+          <p><strong>Location:</strong> ${esc(job.location || "Not specified")}</p>
+          <p>${esc(job.description || "")}</p>
+          <button class="deleteBtn" data-id="${esc(job.id)}">🗑 Delete</button>
         `;
         jobsList.appendChild(card);
       });
 
       // attach delete handlers
-      document.querySelectorAll(".deleteBtn").forEach(btn => {
+      document.querySelectorAll(".deleteBtn").forEach((btn) => {
         btn.addEventListener("click", async (e) => {
-          const jobId = e.target.dataset.id;
+          const jobId = e.currentTarget.dataset.id;
           if (confirm("Are you sure you want to delete this job?")) {
-            const { error } = await supabase.from("jobs").delete().eq("id", jobId).eq("user_id", user.id);
+            const { error } = await supabase
+              .from("jobs")
+              .delete()
+              .eq("id", jobId)
+              .eq("user_id", currentUser.id);
             if (error) {
               alert("❌ Error deleting job: " + error.message);
             } else {
