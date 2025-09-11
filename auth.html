@@ -123,4 +123,25 @@
 
     // --- Sign In ---
     signinForm.addEventListener("submit", async (e) => {
-      e.preventDefault
+      e.preventDefault();
+      signinStatus.textContent = "";
+
+      const email = document.getElementById("signinEmail").value.trim();
+      const password = document.getElementById("signinPassword").value.trim();
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        signinStatus.textContent = "❌ " + error.message;
+        signinStatus.style.color = "red";
+      } else {
+        signinStatus.textContent = "✅ Signed in successfully!";
+        signinStatus.style.color = "green";
+        signinForm.reset();
+        // Optional: redirect after login
+        // window.location.href = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
