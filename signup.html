@@ -14,14 +14,15 @@
       <input type="email" id="email" required>
 
       <label>Password</label>
-      <input type="password" id="password" required>
+      <input type="password" id="password" required minlength="6">
 
       <label>Company Name</label>
       <input type="text" id="company" required>
 
       <button type="submit">Sign Up</button>
     </form>
-    <p id="status"></p>
+
+    <p id="status" style="margin-top: 1rem; font-weight: bold;"></p>
     <p>Already have an account? <a href="login.html">Log in here</a>.</p>
   </div>
 
@@ -37,16 +38,22 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const company = document.getElementById("company").value;
 
-      // Sign up the company user
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const company = document.getElementById("company").value.trim();
+
+      if (password.length < 6) {
+        statusEl.textContent = "❌ Password must be at least 6 characters.";
+        statusEl.style.color = "red";
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { company_name: company } // save company name in user metadata
+          data: { company_name: company } // saved in user_metadata
         }
       });
 
@@ -54,8 +61,20 @@
         statusEl.textContent = "❌ Signup failed: " + error.message;
         statusEl.style.color = "red";
       } else {
-        statusEl.textContent = "✅ Signup successful! Please check your email to confirm.";
-        statusEl.style.color = "green";
+        if (data.user?.identities?.length === 0) {
+          // User already exists
+          statusEl.textContent = "⚠️ This email is already registered. Try logging in.";
+          statusEl.style.color = "orange";
+        } else if (data.session) {
+          // Email confirmation disabled → user is logged in immediately
+          statusEl.textContent = "✅ Account created! Redirecting...";
+          statusEl.style.color = "green";
+          setTimeout(() => window.location.href = "post-job.html", 1200);
+        } else {
+          // Email confirmation enabled → user must check inbox
+          statusEl.textContent = "✅ Signup successful! Please check your email to confirm.";
+          statusEl.style.color = "green";
+        }
       }
     });
   </script>
