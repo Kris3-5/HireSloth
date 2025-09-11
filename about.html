@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - About</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,66 +22,39 @@
 
   <main class="content">
     <h1>About HireSloth</h1>
-    <p>
-      HireSloth is a privacy-first job board built to protect job seekers and provide
-      transparent listings for employers. Unlike traditional platforms, we never sell
-      or misuse personal data.
-    </p>
-    <p>
-      Our goal is to make job hunting stress-free, honest, and effective. We encourage
-      employers to share clear details about their openings including job responsibilities,
-      salary ranges, and company information.
-    </p>
-    <p>
-      HireSloth automatically removes expired listings after 30 days, and allows users
-      to report duplicates, scams, or errors to ensure only high-quality jobs remain visible.
-    </p>
-    <p>
-      🦥 Slow, steady, and safe — that’s the HireSloth way.
-    </p>
+    <p>HireSloth is a privacy-first job board…</p>
+    <p>🦥 Slow, steady, and safe — that’s the HireSloth way.</p>
   </main>
 
-  <footer>
-    <p>&copy; 2025 HireSloth. All rights reserved.</p>
-  </footer>
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    // Replace with your real Supabase URL and anon key
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-
-    async function updateNav() {
+    document.body.classList.add("auth-pending");
+    async function initNavFast() {
       const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      const authBtn = document.getElementById("authBtn");
+      const postJobBtn = document.getElementById("postJobBtn");
 
-      if (session?.user) {
+      if (user) {
         authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-        };
-        postJobBtn.style.display = "inline-block";
+        authBtn.href="#";
+        authBtn.onclick = async (e)=>{e.preventDefault(); await supabase.auth.signOut(); window.location.href="index.html";};
+        postJobBtn.style.display="inline-block";
       } else {
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-        postJobBtn.style.display = "none";
+        authBtn.textContent="Sign In";
+        authBtn.href="auth.html";
+        authBtn.onclick=null;
+        postJobBtn.style.display="none";
       }
+      document.body.classList.remove("auth-pending");
+      document.body.classList.add("auth-ready");
     }
-
-    // Initial nav update
-    updateNav();
-
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange(() => {
-      updateNav();
-    });
+    initNavFast();
+    supabase.auth.onAuthStateChange(()=>initNavFast());
   </script>
 </body>
 </html>
