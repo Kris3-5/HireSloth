@@ -54,6 +54,16 @@
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
 
+    // Escape helper to prevent XSS
+    const esc = (s) =>
+      (s ?? "")
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
     // ----------------------------
     // Load jobs
     // ----------------------------
@@ -66,20 +76,14 @@
         .eq("approved", true)
         .eq("is_active", true);
 
-      if (keyword) {
-        query = query.ilike("title", `%${keyword}%`);
-      }
-      if (location) {
-        query = query.ilike("location", `%${location}%`);
-      }
-      if (remoteOnly) {
-        query = query.eq("remote", true);
-      }
+      if (keyword) query = query.ilike("title", `%${keyword}%`);
+      if (location) query = query.ilike("location", `%${location}%`);
+      if (remoteOnly) query = query.eq("remote", true);
 
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
-        jobsContainer.innerHTML = `<p style="color:red;">Error loading jobs: ${error.message}</p>`;
+        jobsContainer.innerHTML = `<p style="color:red;">Error loading jobs: ${esc(error.message)}</p>`;
         console.error(error);
         return;
       }
@@ -90,20 +94,27 @@
       }
 
       jobsContainer.innerHTML = data
-        .map(
-          (job) => `
-        <div class="job-card">
-          <h3>${job.title}</h3>
-          <p><strong>Company:</strong> ${job.company}</p>
-          <p><strong>Location:</strong> ${job.location || "N/A"} ${
-            job.remote ? "(Remote)" : ""
-          }</p>
-          ${job.salary ? `<p><strong>Salary:</strong> ${job.salary}</p>` : ""}
-          <p><strong>Summary:</strong> ${job.description}</p>
-          ${job.responsibilities ? `<p><strong>Responsibilities:</strong> ${job.responsibilities}</p>` : ""}
-        </div>
-      `
-        )
+        .map((job) => {
+          const title = esc(job.title);
+          const company = esc(job.company);
+          const loc = esc(job.location || "N/A");
+          const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+          const desc = esc(job.description || "");
+          const resp = job.responsibilities
+            ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>`
+            : "";
+
+          return `
+            <div class="job-card">
+              <h3>${title}</h3>
+              <p><strong>Company:</strong> ${company}</p>
+              <p><strong>Location:</strong> ${loc} ${job.remote ? "(Remote)" : ""}</p>
+              ${salary}
+              <p><strong>Summary:</strong> ${desc}</p>
+              ${resp}
+            </div>
+          `;
+        })
         .join("");
     }
 
@@ -122,9 +133,7 @@
     // Auth-aware nav
     // ----------------------------
     async function updateNav() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
         authBtn.textContent = "Sign Out";
@@ -144,10 +153,7 @@
     }
 
     updateNav();
-
-    supabase.auth.onAuthStateChange(() => {
-      updateNav();
-    });
+    supabase.auth.onAuthStateChange(() => updateNav());
   </script>
 </body>
 </html>
