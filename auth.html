@@ -5,58 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - Sign In / Sign Up</title>
   <link rel="stylesheet" href="style.css"/>
-
   <style>
-    /* Lightweight tab styling (scoped to this page) */
-    .tabs {
-      display: inline-flex;
-      gap: .4rem;
-      background: #fff;
-      border: 1px solid rgba(113,83,54,.12);
-      border-radius: 12px;
-      padding: .35rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,.08);
-      margin: 1rem auto 0;
-    }
-    .tab-btn {
-      border: none;
-      padding: .6rem 1rem;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      background: transparent;
-      color: #715336;
-      transition: transform .15s ease, box-shadow .25s ease, background .2s ease;
-    }
-    .tab-btn[aria-selected="true"] {
-      background: linear-gradient(135deg, #A18F7B, #715336);
-      color: #FCEFDC;
-      box-shadow: 0 4px 12px rgba(0,0,0,.12);
-    }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .auth-forms {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-      max-width: 720px;
-      margin: 1.2rem auto 0;
-    }
-    @media (min-width: 900px){
-      .auth-forms { max-width: 820px; }
-    }
-    .form-container { width: 100%; }
-
-    /* Inline utility for the show-password row */
-    .field-row {
-      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
-    }
-    .field-row small {
-      display:flex; align-items:center; gap:.4rem; color:#715336; cursor:pointer;
-      user-select:none;
-    }
-    .busy { opacity: .7; pointer-events: none; }
+    .tabs{display:inline-flex;gap:.4rem;background:#fff;border:1px solid rgba(113,83,54,.12);border-radius:12px;padding:.35rem;box-shadow:0 4px 12px rgba(0,0,0,.08);margin:1rem auto 0}
+    .tab-btn{border:none;padding:.6rem 1rem;border-radius:10px;font-weight:700;cursor:pointer;background:transparent;color:#715336;transition:transform .15s,box-shadow .25s,background .2s}
+    .tab-btn[aria-selected="true"]{background:linear-gradient(135deg,#A18F7B,#715336);color:#FCEFDC;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+    .tab-panel{display:none}.tab-panel.active{display:block}
+    .auth-forms{display:grid;grid-template-columns:1fr;gap:1.5rem;max-width:720px;margin:1.2rem auto 0}
+    @media (min-width:900px){.auth-forms{max-width:820px}}
+    .form-container{width:100%}
+    .field-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+    .field-row small{display:flex;align-items:center;gap:.4rem;color:#715336;cursor:pointer;user-select:none}
+    .busy{opacity:.7;pointer-events:none}
   </style>
 </head>
 <body>
@@ -76,14 +35,12 @@
     <h1>Welcome to HireSloth</h1>
     <p>Sign in or create an account to post job listings.</p>
 
-    <!-- Tabs -->
     <div class="tabs" role="tablist" aria-label="Authentication">
       <button id="tab-signin" class="tab-btn" role="tab" aria-controls="panel-signin" aria-selected="true">Sign In</button>
       <button id="tab-signup" class="tab-btn" role="tab" aria-controls="panel-signup" aria-selected="false">Sign Up</button>
     </div>
 
     <div class="auth-forms">
-      <!-- Sign In Panel -->
       <section id="panel-signin" class="tab-panel active" role="tabpanel" aria-labelledby="tab-signin" tabindex="0">
         <div class="form-container">
           <form id="signinForm">
@@ -108,7 +65,6 @@
         </div>
       </section>
 
-      <!-- Sign Up Panel -->
       <section id="panel-signup" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" tabindex="0">
         <div class="form-container">
           <form id="signupForm">
@@ -141,15 +97,12 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    // Replace with your real Supabase URL and anon key
     const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
-
     const signupForm = document.getElementById("signupForm");
     const signinForm = document.getElementById("signinForm");
     const signupStatus = document.getElementById("signupStatus");
@@ -157,7 +110,6 @@
     const signupBtn = document.getElementById("signupBtn");
     const signinBtn = document.getElementById("signinBtn");
 
-    // --- Tabs wiring ---
     const tabSignin = document.getElementById("tab-signin");
     const tabSignup = document.getElementById("tab-signup");
     const panelSignin = document.getElementById("panel-signin");
@@ -172,29 +124,21 @@
       (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
       history.replaceState(null, "", `auth.html?mode=${isSignin ? "signin" : "signup"}`);
     }
-
     tabSignin.addEventListener("click", () => setTab("signin"));
     tabSignup.addEventListener("click", () => setTab("signup"));
-
-    // Deep-link support: auth.html?mode=signin|signup
     (function initModeFromQuery(){
       const params = new URLSearchParams(location.search);
       const mode = params.get("mode");
       if (mode === "signup") setTab("signup"); else setTab("signin");
     })();
 
-    // --- Nav state ---
     async function updateNav() {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
-
       if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
-        authBtn.onclick = async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-        };
+        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); };
         postJobBtn.style.display = "inline-block";
       } else {
         authBtn.textContent = "Sign In";
@@ -206,7 +150,6 @@
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
 
-    // --- Show/Hide password toggles ---
     document.getElementById("signinShowPw").addEventListener("change", (e) => {
       document.getElementById("signinPassword").type = e.target.checked ? "text" : "password";
     });
@@ -214,7 +157,6 @@
       document.getElementById("signupPassword").type = e.target.checked ? "text" : "password";
     });
 
-    // Helpers to lock/unlock UI during async actions
     function lock(formEl, btnEl){
       formEl.classList.add("busy");
       btnEl.disabled = true;
@@ -227,17 +169,14 @@
       if (btnEl.dataset.label) btnEl.textContent = btnEl.dataset.label;
     }
 
-    // --- Sign Up ---
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       signupStatus.textContent = "";
-
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value.trim();
 
       lock(signupForm, signupBtn);
-      const { error } = await supabase.auth.signUp({ email, password })
-        .finally(() => unlock(signupForm, signupBtn));
+      const { error } = await supabase.auth.signUp({ email, password }).finally(() => unlock(signupForm, signupBtn));
 
       if (error) {
         signupStatus.textContent = "❌ " + error.message;
@@ -246,21 +185,18 @@
         signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
         signupStatus.style.color = "green";
         signupForm.reset();
-        setTab("signin"); // nudge back to sign-in after signup
+        setTab("signin");
       }
     });
 
-    // --- Sign In ---
     signinForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       signinStatus.textContent = "";
-
       const email = document.getElementById("signinEmail").value.trim();
       const password = document.getElementById("signinPassword").value.trim();
 
       lock(signinForm, signinBtn);
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-        .finally(() => unlock(signinForm, signinBtn));
+      const { error } = await supabase.auth.signInWithPassword({ email, password }).finally(() => unlock(signinForm, signinBtn));
 
       if (error) {
         signinStatus.textContent = "❌ " + error.message;
@@ -274,7 +210,6 @@
       }
     });
 
-    // Keyboard accessibility for tabs (left/right arrows)
     [tabSignin, tabSignup].forEach(btn => {
       btn.addEventListener("keydown", (ev) => {
         if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
