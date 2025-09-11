@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Contact</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,17 +26,17 @@
 
     <form id="contactForm">
       <label for="name">Name</label><br>
-      <input type="text" id="name" name="name" required><br><br>
+      <input type="text" id="name" required><br><br>
 
       <!-- hidden fields for reports -->
-      <input type="hidden" id="type" name="type" value="message">
-      <input type="hidden" id="job_id" name="job_id">
+      <input type="hidden" id="type" value="message">
+      <input type="hidden" id="job_id">
 
       <label for="email">Email</label><br>
-      <input type="email" id="email" name="email" required><br><br>
+      <input type="email" id="email" required><br><br>
 
       <label for="message">Message</label><br>
-      <textarea id="message" name="message" rows="5" required></textarea><br><br>
+      <textarea id="message" rows="5" required></textarea><br><br>
 
       <button type="submit">Send Message</button>
     </form>
@@ -43,37 +44,49 @@
     <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
   </main>
 
-  <footer>
-    <p>&copy; 2025 HireSloth. All rights reserved.</p>
-  </footer>
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    const form = document.getElementById("contactForm");
-    const statusEl = document.getElementById("formStatus");
-    const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
+    // fast nav
+    document.body.classList.add("auth-pending");
+    async function initNavFast() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      const authBtn = document.getElementById("authBtn");
+      const postJobBtn = document.getElementById("postJobBtn");
+      if (user) {
+        authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick = async (e)=>{ e.preventDefault(); await supabase.auth.signOut(); window.location.href="index.html"; };
+        postJobBtn.style.display="inline-block";
+      } else {
+        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null; postJobBtn.style.display="none";
+      }
+      document.body.classList.remove("auth-pending"); document.body.classList.add("auth-ready");
+    }
+    initNavFast();
+    supabase.auth.onAuthStateChange(()=>initNavFast());
 
-    // Prefill for job reports
+    // report prefill
     (function prefillReport(){
-      const params = new URLSearchParams(location.search);
-      const jobId = params.get("report_job");
+      const p = new URLSearchParams(location.search);
+      const jobId = p.get("report_job");
       if (!jobId) return;
       document.getElementById("type").value = "report";
       document.getElementById("job_id").value = jobId;
-      const t = params.get("title") || "";
-      const c = params.get("company") || "";
+      const t = p.get("title") || "";
+      const c = p.get("company") || "";
       const preset = `Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
       const msg = document.getElementById("message");
       if (!msg.value) msg.value = preset;
     })();
 
-    // Contact / Report submit
-    form.addEventListener("submit", async (e) => {
+    // submit
+    const form = document.getElementById("contactForm");
+    const statusEl = document.getElementById("formStatus");
+    form.addEventListener("submit", async (e)=>{
       e.preventDefault();
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
@@ -82,34 +95,9 @@
       const job_id = document.getElementById("job_id").value || null;
 
       const { error } = await supabase.from("messages").insert([{ name, email, message, type, job_id }]);
-
-      if (error) {
-        statusEl.textContent = "❌ Something went wrong. Please try again.";
-        statusEl.style.color = "red";
-        console.error(error);
-      } else {
-        statusEl.textContent = type === "report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent.";
-        statusEl.style.color = "green";
-        form.reset();
-      }
+      if (error){ statusEl.textContent="❌ Something went wrong. Please try again."; statusEl.style.color="red"; console.error(error); }
+      else { statusEl.textContent = type==="report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent."; statusEl.style.color="green"; form.reset(); }
     });
-
-    async function updateNav() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); updateNav(); };
-        postJobBtn.style.display = "inline-block";
-      } else {
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-        postJobBtn.style.display = "none";
-      }
-    }
-    updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
   </script>
 </body>
 </html>
