@@ -13,14 +13,13 @@
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-    <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <a href="auth.html" id="authBtn">Sign In</a> <!-- updated -->
+    <a href="contact.html" class="active">Contact</a>
+    <a href="post-job.html" id="postJobBtn" style="display: none;">Post a Job</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
    </nav>
   </header>
 
-
-  <div class="content">
+  <main class="content">
     <h1>Contact Us</h1>
     <p>Have questions, feedback, or spotted an issue? Get in touch below.</p>
 
@@ -38,7 +37,7 @@
     </form>
 
     <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
-  </div>
+  </main>
 
   <footer>
     <p>&copy; 2025 HireSloth. All rights reserved.</p>
@@ -47,13 +46,18 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
+    // TODO: Replace with real values
+    const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const form = document.getElementById("contactForm");
     const statusEl = document.getElementById("formStatus");
 
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+
+    // --- Contact Form ---
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -61,9 +65,7 @@
       const email = document.getElementById("email").value.trim();
       const message = document.getElementById("message").value.trim();
 
-      const { error } = await supabase.from("messages").insert([
-        { name, email, message }
-      ]);
+      const { error } = await supabase.from("messages").insert([{ name, email, message }]);
 
       if (error) {
         statusEl.textContent = "❌ Something went wrong. Please try again.";
@@ -75,38 +77,34 @@
         form.reset();
       }
     });
-  </script>
-    <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const supabaseUrl = "https://arzddicguiydfvtwewlq.supabase.co"; // replace
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg"; // replace
-  const supabase = createClient(supabaseUrl, supabaseKey);
+    // --- Update Navigation ---
+    async function updateNav() {
+      const { data: { user } } = await supabase.auth.getUser();
 
-  const authBtn = document.getElementById("authBtn");
-  const postJobBtn = document.getElementById("postJobBtn");
-
-  async function updateNav() {
-    const user = supabase.auth.user();
-
-    if (user) {
-      // User logged in
-      authBtn.textContent = "Sign Out";
-      authBtn.href = "#";
-      authBtn.addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      });
-      postJobBtn.style.display = "inline-block";
-    } else {
-      // User not logged in
-      authBtn.textContent = "Sign In";
-      authBtn.href = "auth.html";
-      postJobBtn.style.display = "none";
+      if (user) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          updateNav();
+        };
+        postJobBtn.style.display = "inline-block";
+      } else {
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+        postJobBtn.style.display = "none";
+      }
     }
-  }
 
-  updateNav();
+    updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
+  </script>
+</body>
+</html>
+
 </script>
 </body>
 </html>
