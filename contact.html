@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Contact</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- ✅ Add your Supabase preconnect (change YOUR-REF) -->
+  <link rel="preconnect" href="https://YOUR-REF.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
@@ -26,14 +28,14 @@
 
     <form id="contactForm">
       <label for="name">Name</label><br>
-      <input type="text" id="name" required><br><br>
+      <input type="text" id="name" required autocomplete="name"><br><br>
 
       <!-- hidden fields for reports -->
       <input type="hidden" id="type" value="message">
       <input type="hidden" id="job_id">
 
       <label for="email">Email</label><br>
-      <input type="email" id="email" required><br><br>
+      <input type="email" id="email" required autocomplete="email"><br><br>
 
       <label for="message">Message</label><br>
       <textarea id="message" rows="5" required></textarea><br><br>
@@ -48,21 +50,46 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
+
+    // ✅ REPLACE with your real project values
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
 
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
 
-    async function updateNav() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
+    // ---- Nav with timeout guard (prevents infinite "loading") ----
+    const FALLBACK_MS = 2000;
+    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
 
-      if (user) {
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); updateNav(); };
-        postJobBtn.style.display = "inline-block";
-      } else {
+    async function updateNav() {
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
+
+        if (user) {
+          authBtn.textContent = "Sign Out";
+          authBtn.href = "#";
+          authBtn.onclick = async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            // simple UX: refresh nav state
+            updateNav();
+          };
+          postJobBtn.style.display = "inline-block";
+        } else {
+          authBtn.textContent = "Sign In";
+          authBtn.href = "auth.html";
+          authBtn.onclick = null;
+          postJobBtn.style.display = "none";
+        }
+      } catch (err) {
+        // Fallback to signed-out UI if session check is slow/blocked
+        console.warn("Auth check failed/slow; showing signed-out nav.", err?.message || err);
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
@@ -73,7 +100,7 @@
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
 
-    // Prefill for job reports
+    // ---- Prefill for job reports ----
     (function prefillReport(){
       const params = new URLSearchParams(location.search);
       const jobId = params.get("report_job");
@@ -87,7 +114,7 @@
       if (!msg.value) msg.value = preset;
     })();
 
-    // Submit
+    // ---- Submit ----
     const form = document.getElementById("contactForm");
     const statusEl = document.getElementById("formStatus");
 
@@ -107,7 +134,9 @@
         statusEl.style.color = "red";
         console.error(error);
       } else {
-        statusEl.textContent = type === "report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent.";
+        statusEl.textContent = type === "report"
+          ? "✅ Thank you for your report. We’ll review it shortly."
+          : "✅ Thank you! Your message has been sent.";
         statusEl.style.color = "green";
         form.reset();
       }
