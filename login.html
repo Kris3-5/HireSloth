@@ -3,12 +3,33 @@
 <head>
   <meta charset="utf-8">
   <title>HireSloth – Redirecting to Sign In…</title>
+
+  <!-- Instant redirect via meta (fallback if JS disabled) -->
   <meta http-equiv="refresh" content="0; url=auth.html?mode=signin">
+
+  <!-- Prevent indexing this shim page -->
+  <meta name="robots" content="noindex,follow">
+
+  <!-- Canonical target is the Sign In tab -->
   <link rel="canonical" href="auth.html?mode=signin">
+
+  <!-- Perf: CDN preconnect (harmless here) -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <p>If you’re not redirected, <a href="auth.html?mode=signin">click here to Sign In</a>.</p>
+
+  <!-- JS redirect (preferred – doesn’t add an extra history entry) -->
+  <script>
+    // Replace so the back button doesn't bounce users through this page
+    location.replace("auth.html?mode=signin");
+  </script>
+
+  <noscript>
+    <p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p>
+  </noscript>
 </body>
 </html>
