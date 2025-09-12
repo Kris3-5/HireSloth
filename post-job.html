@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Post a Job</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <header>
@@ -20,7 +20,7 @@
     </nav>
   </header>
 
-  <main class="content">
+  <main class="content" id="jobContent">
     <h1>Post a Job</h1>
     <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
 
@@ -58,41 +58,41 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
+    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    // fast nav
-    document.body.classList.add("auth-pending");
-    async function initNavFast() {
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    const jobForm = document.getElementById("jobForm");
+    const statusEl = document.getElementById("formStatus");
+
+    // Nav
+    async function updateNav() {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
-      const authBtn = document.getElementById("authBtn");
-      const postJobBtn = document.getElementById("postJobBtn");
-
       if (user) {
         authBtn.textContent = "Sign Out";
-        authBtn.href="#";
-        authBtn.onclick = async (e)=>{ e.preventDefault(); await supabase.auth.signOut(); window.location.href="index.html"; };
-        postJobBtn.style.display="inline-block";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
+        postJobBtn.style.display = "inline-block";
       } else {
-        authBtn.textContent="Sign In";
-        authBtn.href="auth.html";
-        authBtn.onclick=null;
-        postJobBtn.style.display="none";
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+        postJobBtn.style.display = "none";
       }
-      document.body.classList.remove("auth-pending");
-      document.body.classList.add("auth-ready");
     }
-    initNavFast();
-    supabase.auth.onAuthStateChange(()=>initNavFast());
+    updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
 
-    // protect page
+    // Protect this page
     const { data: { session } } = await supabase.auth.getSession();
     const currentUser = session?.user;
     if (!currentUser) { window.location.href = "auth.html"; throw new Error("Redirecting to auth"); }
 
-    const statusEl = document.getElementById("formStatus");
-    document.getElementById("jobForm").addEventListener("submit", async (e)=>{
+    // Handle form submit
+    jobForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const job = {
         title: document.getElementById("title").value.trim(),
         company: document.getElementById("company").value.trim(),
@@ -105,11 +105,19 @@
         user_id: currentUser.id,
         approved: false,
         is_active: true,
-        expires_at: new Date(Date.now()+30*24*60*60*1000).toISOString()
+        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
       };
+
       const { error } = await supabase.from("jobs").insert([job]);
-      if (error){ statusEl.textContent = "❌ " + error.message; statusEl.style.color="red"; }
-      else { statusEl.textContent="✅ Job posted! Awaiting approval."; statusEl.style.color="green"; (e.target).reset(); }
+
+      if (error) {
+        statusEl.textContent = "❌ " + error.message;
+        statusEl.style.color = "red";
+      } else {
+        statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
+        statusEl.style.color = "green";
+        jobForm.reset();
+      }
     });
   </script>
 </body>
