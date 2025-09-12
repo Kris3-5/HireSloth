@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - About</title>
+  <!-- Speed: preconnect to CDNs and your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://YOUR-REF.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
@@ -43,25 +45,51 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
+
+    // ✅ REPLACE these with your real values:
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
 
-    async function updateNav() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
+    // Prevent “forever loading” if getSession hangs (extensions/network)
+    const FALLBACK_MS = 2000;
+    const timeout = (promise, ms) =>
+      Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
 
-      if (user) {
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-        postJobBtn.style.display = "inline-block";
-      } else {
+    document.body.classList.add("auth-pending"); // harmless if CSS hook not present
+    async function updateNav() {
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
+
+        if (user) {
+          authBtn.textContent = "Sign Out";
+          authBtn.href = "#";
+          authBtn.onclick = async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+          };
+          postJobBtn.style.display = "inline-block";
+        } else {
+          authBtn.textContent = "Sign In";
+          authBtn.href = "auth.html";
+          authBtn.onclick = null;
+          postJobBtn.style.display = "none";
+        }
+      } catch (err) {
+        // Fallback to signed-out UI
+        console.warn("Auth check failed/slow; showing signed-out nav.", err?.message || err);
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
         postJobBtn.style.display = "none";
+      } finally {
+        document.body.classList.remove("auth-pending");
+        document.body.classList.add("auth-ready");
       }
     }
 
