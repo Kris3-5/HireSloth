@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - Sign In / Sign Up</title>
+  <!-- Speed: preconnect to CDN + your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://YOUR-REF.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a"/>
   <style>
     .tabs{display:inline-flex;gap:.4rem;background:#fff;border:1px solid rgba(113,83,54,.12);border-radius:12px;padding:.35rem;box-shadow:0 4px 12px rgba(0,0,0,.08);margin:1rem auto 0}
@@ -44,12 +46,12 @@
       <section id="panel-signin" class="tab-panel active" role="tabpanel" aria-labelledby="tab-signin" tabindex="0">
         <form id="signinForm">
           <label for="signinEmail">Email</label><br>
-          <input type="email" id="signinEmail" required><br><br>
+          <input type="email" id="signinEmail" autocomplete="email" required><br><br>
 
           <div class="field-row">
             <div style="flex:1">
               <label for="signinPassword">Password</label><br>
-              <input type="password" id="signinPassword" required>
+              <input type="password" id="signinPassword" autocomplete="current-password" required>
             </div>
             <small>
               <input type="checkbox" id="signinShowPw">
@@ -66,12 +68,12 @@
       <section id="panel-signup" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" tabindex="0">
         <form id="signupForm">
           <label for="signupEmail">Email</label><br>
-          <input type="email" id="signupEmail" required><br><br>
+          <input type="email" id="signupEmail" autocomplete="email" required><br><br>
 
           <div class="field-row">
             <div style="flex:1">
               <label for="signupPassword">Password</label><br>
-              <input type="password" id="signupPassword" required minlength="6">
+              <input type="password" id="signupPassword" autocomplete="new-password" required minlength="6">
             </div>
             <small>
               <input type="checkbox" id="signupShowPw">
@@ -91,20 +93,41 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    // nav
+    // ✅ REPLACE THESE with your real project values
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+
+    // Keep sessions + auto-refresh
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    // ---- Nav (with timeout guard so it never "loads forever") ----
+    const FALLBACK_MS = 2000;
+    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
+
     async function updateNav() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (user) {
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-        postJobBtn.style.display = "inline-block";
-      } else {
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
+        if (user) {
+          authBtn.textContent = "Sign Out";
+          authBtn.href = "#";
+          authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
+          postJobBtn.style.display = "inline-block";
+        } else {
+          authBtn.textContent = "Sign In";
+          authBtn.href = "auth.html";
+          authBtn.onclick = null;
+          postJobBtn.style.display = "none";
+        }
+      } catch (err) {
+        // Fallback: show signed-out nav if getSession hangs or fails
+        console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
@@ -114,7 +137,7 @@
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
 
-    // tabs
+    // ---- Tabs ----
     const tabSignin = document.getElementById("tab-signin");
     const tabSignup = document.getElementById("tab-signup");
     const panelSignin = document.getElementById("panel-signin");
@@ -132,7 +155,7 @@
     tabSignup.addEventListener("click", ()=>setTab("signup"));
     (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
 
-    // show/hide pw
+    // ---- Show/Hide password ----
     document.getElementById("signinShowPw").addEventListener("change", e => {
       document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
     });
@@ -140,38 +163,75 @@
       document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
     });
 
-    // helpers
+    // ---- Helpers to lock buttons during async ----
     function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
     function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
 
-    // signup
+    // ---- Signup ----
     const signupForm = document.getElementById("signupForm");
     const signupBtn  = document.getElementById("signupBtn");
     const signupStatus = document.getElementById("signupStatus");
+
     signupForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
-      signupStatus.textContent="";
+      signupStatus.textContent = "";
       lock(signupForm, signupBtn);
+
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value.trim();
-      const { error } = await supabase.auth.signUp({ email, password }).finally(()=>unlock(signupForm, signupBtn));
-      if (error){ signupStatus.textContent = "❌ " + error.message; signupStatus.style.color="red"; }
-      else { signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation."; signupStatus.style.color="green"; signupForm.reset(); setTab("signin"); }
+
+      try {
+        const AUTH_MS = 15000;
+        const { error } = await Promise.race([
+          supabase.auth.signUp({ email, password }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("signup-timeout")), AUTH_MS))
+        ]);
+        if (error) throw error;
+
+        signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
+        signupStatus.style.color = "green";
+        signupForm.reset();
+        setTab("signin");
+      } catch (err) {
+        signupStatus.textContent = err.message === "signup-timeout"
+          ? "❌ Sign-up took too long. Check your connection or disable blockers and try again."
+          : "❌ " + (err.message || "Sign-up failed");
+        signupStatus.style.color = "red";
+      } finally {
+        unlock(signupForm, signupBtn);
+      }
     });
 
-    // signin (redirect to post-job)
+    // ---- Signin (redirect to post-job) ----
     const signinForm = document.getElementById("signinForm");
     const signinBtn  = document.getElementById("signinBtn");
     const signinStatus = document.getElementById("signinStatus");
+
     signinForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
-      signinStatus.textContent="";
+      signinStatus.textContent = "";
       lock(signinForm, signinBtn);
+
       const email = document.getElementById("signinEmail").value.trim();
       const password = document.getElementById("signinPassword").value.trim();
-      const { error } = await supabase.auth.signInWithPassword({ email, password }).finally(()=>unlock(signinForm, signinBtn));
-      if (error){ signinStatus.textContent = "❌ " + error.message; signinStatus.style.color="red"; }
-      else { window.location.href = "post-job.html"; }
+
+      try {
+        const AUTH_MS = 15000;
+        const { error } = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("signin-timeout")), AUTH_MS))
+        ]);
+        if (error) throw error;
+
+        window.location.href = "post-job.html";
+      } catch (err) {
+        signinStatus.textContent = err.message === "signin-timeout"
+          ? "❌ Sign-in took too long. Check your connection or disable blockers and try again."
+          : "❌ " + (err.message || "Sign-in failed");
+        signinStatus.style.color = "red";
+      } finally {
+        unlock(signinForm, signinBtn);
+      }
     });
 
     [tabSignin, tabSignup].forEach(btn=>{
