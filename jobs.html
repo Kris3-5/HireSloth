@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Vacancies</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- ✅ Preconnect to your Supabase project (change YOUR-REF) -->
+  <link rel="preconnect" href="https://YOUR-REF.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
@@ -38,17 +40,61 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
+
+    // ✅ REPLACE with your real project values
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
 
     const jobsContainer = document.getElementById("jobsContainer");
     const searchBtn = document.getElementById("searchBtn");
     const authBtn = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
 
+    // ---- Prevent “infinite loading” in nav ----
+    const FALLBACK_MS = 2000;
+    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+
+    async function updateNav() {
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
+        if (user) {
+          authBtn.textContent = "Sign Out";
+          authBtn.href = "#";
+          authBtn.onclick = async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            updateNav();
+          };
+          postJobBtn.style.display = "inline-block";
+        } else {
+          authBtn.textContent = "Sign In";
+          authBtn.href = "auth.html";
+          authBtn.onclick = null;
+          postJobBtn.style.display = "none";
+        }
+      } catch (err) {
+        // Fallback: show signed-out nav if session check is slow/blocked
+        console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+        postJobBtn.style.display = "none";
+      }
+    }
+    updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
+
+    // ---- Helpers ----
     const esc = (s) => (s ?? "").toString()
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
       .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
+    // ---- Load jobs ----
     async function loadJobs(keyword = "", location = "", remoteOnly = false) {
       jobsContainer.innerHTML = "<p>Loading jobs...</p>";
 
@@ -58,15 +104,9 @@
         .eq("approved", true)
         .eq("is_active", true);
 
-      if (keyword) {
-        query = query.ilike("title", `%${keyword}%`);
-      }
-      if (location) {
-        query = query.ilike("location", `%${location}%`);
-      }
-      if (remoteOnly) {
-        query = query.eq("remote", true);
-      }
+      if (keyword)  query = query.ilike("title", `%${keyword}%`);
+      if (location) query = query.ilike("location", `%${location}%`);
+      if (remoteOnly) query = query.eq("remote", true);
 
       const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -81,28 +121,26 @@
         return;
       }
 
-      jobsContainer.innerHTML = data
-        .map((job) => {
-          const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
-          const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
-          const applyLink = job.contact_email
-            ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
-            : "";
-          const reportLink = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title || "")}&company=${encodeURIComponent(job.company || "")}">Report</a>`;
+      jobsContainer.innerHTML = data.map((job) => {
+        const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+        const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
+        const applyLink = job.contact_email
+          ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
+          : "";
+        const reportLink = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title || "")}&company=${encodeURIComponent(job.company || "")}">Report</a>`;
 
-          return `
-            <div class="job-card">
-              <h3>${esc(job.title)}</h3>
-              <p><strong>Company:</strong> ${esc(job.company)}</p>
-              <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
-              ${salary}
-              <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
-              ${resp}
-              <div class="actions">${applyLink} ${reportLink}</div>
-            </div>
-          `;
-        })
-        .join("");
+        return `
+          <div class="job-card">
+            <h3>${esc(job.title)}</h3>
+            <p><strong>Company:</strong> ${esc(job.company)}</p>
+            <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
+            ${salary}
+            <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
+            ${resp}
+            <div class="actions">${applyLink} ${reportLink}</div>
+          </div>
+        `;
+      }).join("");
     }
 
     // Initial load
@@ -115,31 +153,6 @@
       const remoteOnly = document.getElementById("remote").checked;
       loadJobs(keyword, location, remoteOnly);
     });
-
-    // Auth-aware nav
-    async function updateNav() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (user) {
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-          updateNav();
-        };
-        postJobBtn.style.display = "inline-block";
-      } else {
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-        postJobBtn.style.display = "none";
-      }
-    }
-
-    updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
   </script>
 </body>
 </html>
