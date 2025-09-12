@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - Sign In / Sign Up</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css?v=20250912a"/>
   <style>
     .tabs{display:inline-flex;gap:.4rem;background:#fff;border:1px solid rgba(113,83,54,.12);border-radius:12px;padding:.35rem;box-shadow:0 4px 12px rgba(0,0,0,.08);margin:1rem auto 0}
     .tab-btn{border:none;padding:.6rem 1rem;border-radius:10px;font-weight:700;cursor:pointer;background:transparent;color:#715336}
@@ -91,20 +91,18 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
+    const supabase = createClient("https://arzddicguiydfvtwewlq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg");
 
-    // nav (no flicker)
-    document.body.classList.add("auth-pending");
-    async function initNavFast() {
+    // nav
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    async function updateNav() {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
-      const authBtn = document.getElementById("authBtn");
-      const postJobBtn = document.getElementById("postJobBtn");
-
       if (user) {
         authBtn.textContent = "Sign Out";
         authBtn.href = "#";
-        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href="index.html"; };
+        authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
         postJobBtn.style.display = "inline-block";
       } else {
         authBtn.textContent = "Sign In";
@@ -112,11 +110,9 @@
         authBtn.onclick = null;
         postJobBtn.style.display = "none";
       }
-      document.body.classList.remove("auth-pending");
-      document.body.classList.add("auth-ready");
     }
-    initNavFast();
-    supabase.auth.onAuthStateChange(() => initNavFast());
+    updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
 
     // tabs
     const tabSignin = document.getElementById("tab-signin");
@@ -136,7 +132,7 @@
     tabSignup.addEventListener("click", ()=>setTab("signup"));
     (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
 
-    // show/hide password
+    // show/hide pw
     document.getElementById("signinShowPw").addEventListener("change", e => {
       document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
     });
@@ -144,7 +140,7 @@
       document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
     });
 
-    // UI lock helpers
+    // helpers
     function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
     function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
 
@@ -163,7 +159,7 @@
       else { signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation."; signupStatus.style.color="green"; signupForm.reset(); setTab("signin"); }
     });
 
-    // signin + redirect to post-job
+    // signin (redirect to post-job)
     const signinForm = document.getElementById("signinForm");
     const signinBtn  = document.getElementById("signinBtn");
     const signinStatus = document.getElementById("signinStatus");
@@ -175,7 +171,7 @@
       const password = document.getElementById("signinPassword").value.trim();
       const { error } = await supabase.auth.signInWithPassword({ email, password }).finally(()=>unlock(signinForm, signinBtn));
       if (error){ signinStatus.textContent = "❌ " + error.message; signinStatus.style.color="red"; }
-      else { signinStatus.textContent = "✅ Signed in! Redirecting…"; signinStatus.style.color="green"; window.location.href = "post-job.html"; }
+      else { window.location.href = "post-job.html"; }
     });
 
     [tabSignin, tabSignup].forEach(btn=>{
