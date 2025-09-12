@@ -250,3 +250,64 @@ footer{
   nav a{ color:var(--ink) }
   footer{ background:#2a241e }
 }
+
+/* ===== UX & A11y polish (append) =============================== */
+
+/* Use system form theming (helps in dark mode too) */
+:root { color-scheme: light dark; }
+
+/* Better keyboard outlines */
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 3px solid rgba(113,83,54,.55);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+.btn:focus-visible {
+  box-shadow: 0 0 0 4px rgba(113,83,54,.25);
+}
+
+/* Make checkboxes match brand */
+input[type="checkbox"] { accent-color: var(--brand); }
+
+/* Add icons without changing HTML */
+.actions .btn:not(.secondary)::before {
+  content: "✉️";
+  margin-right: .35rem;
+}
+.actions .btn.secondary::before {
+  content: "🚩";
+  margin-right: .35rem;
+}
+
+/* Make inline links in content clearly interactive */
+.content a { text-decoration: underline; text-underline-offset: 2px; }
+.content a:hover { text-decoration-thickness: 2px; }
+
+/* Images behave (logo already sized, this covers any others) */
+img { max-width: 100%; height: auto; }
+
+/* Utilities */
+.visually-hidden {
+  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* Touch devices: soften hover lifts */
+@media (hover: none) {
+  .btn:hover, .job-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+}
+
+/* Reduced motion: remove animations/lifts */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .btn:hover, .job-card:hover { transform: none; }
+}
+
+/* High contrast users: bump borders/text contrast */
+@media (prefers-contrast: more) {
+  nav a::after { height: 4px; }
+  form, .job-card { border-color: rgba(0,0,0,.25); }
+  .btn, #postJobBtn {
+    box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm);
+  }
+}
