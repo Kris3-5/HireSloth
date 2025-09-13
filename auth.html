@@ -6,6 +6,7 @@
   <title>HireSloth - Sign In / Sign Up</title>
   <!-- Speed: preconnect to CDN + your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- ⬇️ replace YOUR-REF with your Supabase ref -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a"/>
   <style>
@@ -104,49 +105,54 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    // ---- Timeout guard so nav never "loads forever" ----
-    const FALLBACK_MS = 2000;
-    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+    // Default visuals to signed-out until session resolves
+    document.body.classList.add('auth-out');
 
     const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const myJobsBtn = document.getElementById("myJobsBtn");
 
-    async function updateNav() {
-      try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
-        // after: const user = session?.user;
-          document.body.classList.toggle('auth-in', !!user);
-          document.body.classList.toggle('auth-out', !user);
-          document.body.classList.remove('auth-pending'); // if you use it anywhere
+    // ---- Stable nav: flip only body class + Sign In/Out button ----
+    function applyAuthUI(isAuthed) {
+      document.body.classList.toggle('auth-in',  !!isAuthed);
+      document.body.classList.toggle('auth-out', !isAuthed);
 
-        if (user) {
-          authBtn.textContent = "Sign Out";
-          authBtn.href = "#";
-          authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-          if (postJobBtn) postJobBtn.style.display = "inline-block";
-          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
-        } else {
-          authBtn.textContent = "Sign In";
-          authBtn.href = "auth.html";
-          authBtn.onclick = null;
-          if (postJobBtn) postJobBtn.style.display = "none";
-          if (myJobsBtn)  myJobsBtn.style.display  = "none";
-        }
-      } catch (err) {
-        // Fallback: show signed-out nav if session check is slow/blocked
-        console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
+      if (!authBtn) return;
+      if (isAuthed) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          // onAuthStateChange will re-apply UI
+        };
+      } else {
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
-        if (postJobBtn) postJobBtn.style.display = "none";
-        if (myJobsBtn)  myJobsBtn.style.display  = "none";
+      }
+    }
+
+    let lastAuthed;
+    async function updateNav() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const isAuthed = !!session?.user;
+        if (isAuthed !== lastAuthed) {
+          lastAuthed = isAuthed;
+          applyAuthUI(isAuthed);
+        }
+      } catch (_) {
+        // ignore transient errors to avoid UI flashing
       }
     }
 
     updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
+    supabase.auth.onAuthStateChange((_event, session) => {
+      const isAuthed = !!session?.user;
+      if (isAuthed !== lastAuthed) {
+        lastAuthed = isAuthed;
+        applyAuthUI(isAuthed);
+      }
+    });
 
     // ---- Tabs ----
     const tabSignin = document.getElementById("tab-signin");
