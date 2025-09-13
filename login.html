@@ -3,35 +3,21 @@
 <head>
   <meta charset="utf-8">
   <title>HireSloth – Redirecting to Sign In…</title>
-
-  <!-- Instant redirect via meta (fallback if JS disabled) -->
   <meta http-equiv="refresh" content="0; url=auth.html?mode=signin">
-
-  <!-- Prevent indexing this shim page -->
   <meta name="robots" content="noindex,follow">
-
-  <!-- Canonical target is the Sign In tab -->
   <link rel="canonical" href="auth.html?mode=signin">
-
-  <!-- Perf preconnects -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <p>If you’re not redirected, <a href="auth.html?mode=signin">click here to Sign In</a>.</p>
-
-  <!-- JS redirect (preferred – preserves all params and replaces history) -->
   <script>
     const params = new URLSearchParams(location.search);
-    params.set("mode", "signin"); // force signin tab
-    location.replace("auth.html?" + params.toString());
+    const returnTo = params.get("returnTo");
+    const target = "auth.html?mode=signin" + (returnTo ? "&returnTo=" + encodeURIComponent(returnTo) : "");
+    location.replace(target);
   </script>
-
-  <noscript>
-    <p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p>
-  </noscript>
+  <noscript><p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p></noscript>
 </body>
 </html>
