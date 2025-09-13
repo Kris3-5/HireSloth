@@ -311,3 +311,16 @@ img { max-width: 100%; height: auto; }
     box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm);
   }
 }
+/* My Jobs pill button */
+#myJobsBtn{
+  background:#fff;
+  color:var(--brand);
+  border:2px solid var(--brand);
+  border-radius:12px;
+  padding:.55rem .9rem;
+  box-shadow:var(--shadow-sm);
+}
+#myJobsBtn:hover{
+  transform:translateY(-1px);
+  box-shadow:var(--shadow);
+}
