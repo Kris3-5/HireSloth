@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - My Jobs</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- ✅ Preconnect to your Supabase project (change YOUR-REF) -->
+  <!-- ✅ Preconnect to your Supabase project -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
@@ -50,7 +50,8 @@
 
     // ---- Helpers ----
     const FALLBACK_MS = 2000;
-    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+    const timeout = (p, ms) =>
+      Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
     const esc = (s) => (s ?? "").toString()
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
       .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -63,11 +64,6 @@
       session = null;
     }
     const currentUser = session?.user;
-    // after: const user = session?.user;
-      document.body.classList.toggle('auth-in', !!user);
-      document.body.classList.toggle('auth-out', !user);
-      document.body.classList.remove('auth-pending'); // if you use it anywhere
-
     if (!currentUser) {
       window.location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
       throw new Error("Redirecting to auth");
@@ -127,20 +123,23 @@
     }
     loadJobs();
 
-    // ---- Nav (with timeout guard to prevent hang) ----
+    // ---- Nav (single place handles all auth UI; avoids flicker) ----
     async function updateNav() {
       try {
         const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
         const user = session?.user;
-        // after: const user = session?.user;
-          document.body.classList.toggle('auth-in', !!user);
-          document.body.classList.toggle('auth-out', !user);
-          document.body.classList.remove('auth-pending'); // if you use it anywhere
+
+        document.body.classList.toggle('auth-in', !!user);
+        document.body.classList.toggle('auth-out', !user);
 
         if (user) {
           authBtn.textContent = "Sign Out";
           authBtn.href = "#";
-          authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
+          authBtn.onclick = async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+          };
           if (postJobBtn) postJobBtn.style.display = "inline-block";
           if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
         } else {
@@ -151,7 +150,10 @@
           if (myJobsBtn)  myJobsBtn.style.display  = "none";
         }
       } catch (err) {
+        // Fallback: show signed-out nav if session check is slow/blocked
         console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
+        document.body.classList.add('auth-out');
+        document.body.classList.remove('auth-in');
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
