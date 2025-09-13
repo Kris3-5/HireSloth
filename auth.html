@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - Sign In / Sign Up</title>
-  <!-- Speed: preconnect to CDN + your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- ⬇️ replace YOUR-REF with your Supabase ref -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a"/>
   <style>
@@ -95,76 +93,47 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
-    // ✅ REPLACE with your real project values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const authBtn=document.getElementById("authBtn");
+    const myJobsBtn=document.getElementById("myJobsBtn");
+    const postJobBtn=document.getElementById("postJobBtn");
 
-    // Keep sessions + auto-refresh
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
+    const FALLBACK_MS=2000;
+    const timeout=(p,ms=FALLBACK_MS)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("auth-timeout")),ms))]);
+    async function getUser(){ try{ const {data:{session}}=await timeout(supabase.auth.getSession()); return session?.user||null; }catch{return null;} }
 
-    // Default visuals to signed-out until session resolves
-    document.body.classList.add('auth-out');
+    async function updateAuthBtn(){
+      const user=await getUser();
+      if(user){ authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
+      } else { authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null; }
+    }
+    function gateLink(el,target){ if(!el) return; el.addEventListener("click",async(e)=>{ const u=await getUser(); if(!u){ e.preventDefault(); location.href=`auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }}); }
 
-    const authBtn = document.getElementById("authBtn");
-
-    const FALLBACK_MS = 2000;
-const timeout = (p, ms) => Promise.race([
-  p,
-  new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
-]);
-
-async function updateNav() {
-  try {
-    const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-    const user = session?.user;
-
-    // Toggle only body classes; DO NOT touch display styles of My Jobs / Post a Job
-    document.body.classList.toggle('auth-in', !!user);
-    document.body.classList.toggle('auth-out', !user);
-
-    // Auth button only
-    authBtn.textContent = user ? "Sign Out" : "Sign In";
-    authBtn.href = user ? "#" : "auth.html";
-    authBtn.onclick = user ? async (e) => {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    } : null;
-
-  } catch (err) {
-    // Fallback to signed-out state if slow/blocked
-    document.body.classList.remove('auth-in');
-    document.body.classList.add('auth-out');
-    authBtn.textContent = "Sign In";
-    authBtn.href = "auth.html";
-    authBtn.onclick = null;
-  }
-}
-
-updateNav();
-supabase.auth.onAuthStateChange(() => updateNav());
-
+    updateAuthBtn(); supabase.auth.onAuthStateChange(()=>updateAuthBtn());
+    gateLink(myJobsBtn,"my-jobs.html"); gateLink(postJobBtn,"post-job.html");
 
     // ---- Tabs ----
-    const tabSignin = document.getElementById("tab-signin");
-    const tabSignup = document.getElementById("tab-signup");
-    const panelSignin = document.getElementById("panel-signin");
-    const panelSignup = document.getElementById("panel-signup");
+    const tabSignin=document.getElementById("tab-signin");
+    const tabSignup=document.getElementById("tab-signup");
+    const panelSignin=document.getElementById("panel-signin");
+    const panelSignup=document.getElementById("panel-signup");
     function setTab(mode){
-      const isSignin = mode === "signin";
-      tabSignin.setAttribute("aria-selected", isSignin ? "true":"false");
-      tabSignup.setAttribute("aria-selected", isSignin ? "false":"true");
-      panelSignin.classList.toggle("active", isSignin);
-      panelSignup.classList.toggle("active", !isSignin);
-      (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
-      history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}`);
+      const isSignin=mode==="signin";
+      tabSignin.setAttribute("aria-selected",isSignin?"true":"false");
+      tabSignup.setAttribute("aria-selected",isSignin?"false":"true");
+      panelSignin.classList.toggle("active",isSignin);
+      panelSignup.classList.toggle("active",!isSignin);
+      (isSignin?document.getElementById("signinEmail"):document.getElementById("signupEmail"))?.focus();
+      history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}${returnTo?`&returnTo=${encodeURIComponent(returnTo)}`:""}`);
     }
-    tabSignin.addEventListener("click", ()=>setTab("signin"));
-    tabSignup.addEventListener("click", ()=>setTab("signup"));
-    (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
+    tabSignin.addEventListener("click",()=>setTab("signin"));
+    tabSignup.addEventListener("click",()=>setTab("signup"));
+    const params=new URLSearchParams(location.search);
+    const returnTo=params.get("returnTo")||"";
+    setTab(params.get("mode")==="signup"?"signup":"signin");
 
     // ---- Show/Hide password ----
     document.getElementById("signinShowPw").addEventListener("change", e => {
@@ -178,74 +147,52 @@ supabase.auth.onAuthStateChange(() => updateNav());
     function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
     function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
 
-    // Preserve optional return destination (e.g., from protected pages)
-    const returnTo = new URLSearchParams(location.search).get("returnTo");
-
     // ---- Signup ----
-    const signupForm = document.getElementById("signupForm");
-    const signupBtn  = document.getElementById("signupBtn");
-    const signupStatus = document.getElementById("signupStatus");
+    const signupForm=document.getElementById("signupForm");
+    const signupBtn=document.getElementById("signupBtn");
+    const signupStatus=document.getElementById("signupStatus");
 
     signupForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      signupStatus.textContent = "";
-      lock(signupForm, signupBtn);
-
-      const email = document.getElementById("signupEmail").value.trim();
-      const password = document.getElementById("signupPassword").value.trim();
-
-      try {
-        const AUTH_MS = 15000;
+      e.preventDefault(); signupStatus.textContent=""; lock(signupForm,signupBtn);
+      const email=document.getElementById("signupEmail").value.trim();
+      const password=document.getElementById("signupPassword").value.trim();
+      try{
+        const AUTH_MS=15000;
         const { error } = await Promise.race([
           supabase.auth.signUp({ email, password }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("signup-timeout")), AUTH_MS))
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error("signup-timeout")),AUTH_MS))
         ]);
-        if (error) throw error;
-
-        signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
-        signupStatus.style.color = "green";
-        signupForm.reset();
-        setTab("signin");
-      } catch (err) {
-        signupStatus.textContent = err.message === "signup-timeout"
-          ? "❌ Sign-up took too long. Check your connection or disable blockers and try again."
-          : "❌ " + (err.message || "Sign-up failed");
-        signupStatus.style.color = "red";
-      } finally {
-        unlock(signupForm, signupBtn);
-      }
+        if(error) throw error;
+        signupStatus.textContent="✅ Sign up successful! Check your email for confirmation.";
+        signupStatus.style.color="green";
+        signupForm.reset(); setTab("signin");
+      }catch(err){
+        signupStatus.textContent=err.message==="signup-timeout"?"❌ Sign-up took too long. Try again.":"❌ "+(err.message||"Sign-up failed");
+        signupStatus.style.color="red";
+      }finally{ unlock(signupForm,signupBtn); }
     });
 
-    // ---- Signin (redirect back if returnTo exists) ----
-    const signinForm = document.getElementById("signinForm");
-    const signinBtn  = document.getElementById("signinBtn");
-    const signinStatus = document.getElementById("signinStatus");
+    // ---- Signin ----
+    const signinForm=document.getElementById("signinForm");
+    const signinBtn=document.getElementById("signinBtn");
+    const signinStatus=document.getElementById("signinStatus");
 
     signinForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      signinStatus.textContent = "";
-      lock(signinForm, signinBtn);
-
-      const email = document.getElementById("signinEmail").value.trim();
-      const password = document.getElementById("signinPassword").value.trim();
-
-      try {
-        const AUTH_MS = 15000;
+      e.preventDefault(); signinStatus.textContent=""; lock(signinForm,signinBtn);
+      const email=document.getElementById("signinEmail").value.trim();
+      const password=document.getElementById("signinPassword").value.trim();
+      try{
+        const AUTH_MS=15000;
         const { error } = await Promise.race([
           supabase.auth.signInWithPassword({ email, password }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("signin-timeout")), AUTH_MS))
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error("signin-timeout")),AUTH_MS))
         ]);
-        if (error) throw error;
-
-        window.location.href = returnTo || "post-job.html";
-      } catch (err) {
-        signinStatus.textContent = err.message === "signin-timeout"
-          ? "❌ Sign-in took too long. Check your connection or disable blockers and try again."
-          : "❌ " + (err.message || "Sign-in failed");
-        signinStatus.style.color = "red";
-      } finally {
-        unlock(signinForm, signinBtn);
-      }
+        if(error) throw error;
+        location.href = returnTo || "post-job.html";
+      }catch(err){
+        signinStatus.textContent=err.message==="signin-timeout"?"❌ Sign-in took too long. Try again.":"❌ "+(err.message||"Sign-in failed");
+        signinStatus.style.color="red";
+      }finally{ unlock(signinForm,signinBtn); }
     });
 
     [tabSignin, tabSignup].forEach(btn=>{
