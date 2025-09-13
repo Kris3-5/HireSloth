@@ -22,12 +22,12 @@
 
   <!-- JS redirect (preferred – replaces history entry so Back works) -->
   <script>
-    // Preserve any optional returnTo query param if present
-    const params = new URLSearchParams(location.search);
-    const returnTo = params.get("returnTo");
-    const target = "auth.html?mode=signup" + (returnTo ? "&returnTo=" + encodeURIComponent(returnTo) : "");
-    location.replace(target);
+   // Preserve all query params and force mode=signup
+   const params = new URLSearchParams(location.search);
+   params.set("mode", "signup");
+   location.replace("auth.html?" + params.toString());
   </script>
+
 
   <noscript>
     <p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p>
