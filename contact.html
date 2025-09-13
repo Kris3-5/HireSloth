@@ -53,23 +53,27 @@
     const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
     const authBtn=document.getElementById("authBtn");
-    const myJobsBtn=document.getElementById("myJobsBtn");
-    const postJobBtn=document.getElementById("postJobBtn");
+    let currentUser=null;
 
-    const FALLBACK_MS=2000;
-    const timeout=(p,ms=FALLBACK_MS)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("auth-timeout")),ms))]);
-    async function getUser(){ try{ const {data:{session}}=await timeout(supabase.auth.getSession()); return session?.user||null; }catch{return null;} }
-
-    async function updateAuthBtn(){
-      const user=await getUser();
-      if(user){ authBtn.textContent="Sign Out"; authBtn.href="#";
-        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
-      } else { authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null; }
+    async function initAuth(){
+      const { data:{ session } } = await supabase.auth.getSession();
+      currentUser=session?.user||null;
+      updateAuthBtn();
     }
-    function gateLink(el,target){ if(!el) return; el.addEventListener("click",async(e)=>{ const u=await getUser(); if(!u){ e.preventDefault(); location.href=`auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }}); }
-
-    updateAuthBtn(); supabase.auth.onAuthStateChange(()=>updateAuthBtn());
-    gateLink(myJobsBtn,"my-jobs.html"); gateLink(postJobBtn,"post-job.html");
+    function updateAuthBtn(){
+      if(currentUser){
+        authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
+      }else{
+        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
+      }
+    }
+    supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
+        currentUser=session?.user||null; updateAuthBtn();
+      }
+    });
+    initAuth();
 
     // Prefill for job reports
     (function(){
