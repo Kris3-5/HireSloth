@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - About</title>
-  <!-- Speed: preconnect to CDN + your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- ⬇️ Replace YOUR-REF with your Supabase ref -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
@@ -47,58 +45,31 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
-    // ⬇️ Replace with your real project values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const authBtn=document.getElementById("authBtn");
+    const myJobsBtn=document.getElementById("myJobsBtn");
+    const postJobBtn=document.getElementById("postJobBtn");
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
+    const FALLBACK_MS=2000;
+    const timeout=(p,ms=FALLBACK_MS)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("auth-timeout")),ms))]);
+    async function getUser(){ try{ const {data:{session}}=await timeout(supabase.auth.getSession()); return session?.user||null; }catch{return null;} }
 
-    // Default to signed-out visuals until we know
-    document.body.classList.add('auth-out');
+    async function updateAuthBtn(){
+      const user=await getUser();
+      if(user){
+        authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
+      }else{
+        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
+      }
+    }
+    function gateLink(el,target){ if(!el) return; el.addEventListener("click",async(e)=>{ const u=await getUser(); if(!u){ e.preventDefault(); location.href=`auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }}); }
 
-    const authBtn = document.getElementById("authBtn");
-    // we intentionally don't read or toggle postJobBtn/myJobsBtn in JS
-
-    const FALLBACK_MS = 2000;
-const timeout = (p, ms) => Promise.race([
-  p,
-  new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
-]);
-
-async function updateNav() {
-  try {
-    const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-    const user = session?.user;
-
-    // Toggle only body classes; DO NOT touch display styles of My Jobs / Post a Job
-    document.body.classList.toggle('auth-in', !!user);
-    document.body.classList.toggle('auth-out', !user);
-
-    // Auth button only
-    authBtn.textContent = user ? "Sign Out" : "Sign In";
-    authBtn.href = user ? "#" : "auth.html";
-    authBtn.onclick = user ? async (e) => {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    } : null;
-
-  } catch (err) {
-    // Fallback to signed-out state if slow/blocked
-    document.body.classList.remove('auth-in');
-    document.body.classList.add('auth-out');
-    authBtn.textContent = "Sign In";
-    authBtn.href = "auth.html";
-    authBtn.onclick = null;
-  }
-}
-
-updateNav();
-supabase.auth.onAuthStateChange(() => updateNav());
-
+    updateAuthBtn(); supabase.auth.onAuthStateChange(()=>updateAuthBtn());
+    gateLink(myJobsBtn,"my-jobs.html");
+    gateLink(postJobBtn,"post-job.html");
   </script>
 </body>
 </html>
