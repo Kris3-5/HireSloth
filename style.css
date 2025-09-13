@@ -42,6 +42,8 @@ header{
   box-shadow:var(--shadow-sm);
   position:sticky; top:0; z-index:100;
   backdrop-filter:saturate(1.1) blur(6px);
+  background: rgba(255,255,255,.85);
+  -webkit-backdrop-filter: saturate(1.1) blur(6px);
 }
 
 .logo img{height:50px; border-radius:12px}
@@ -74,6 +76,9 @@ nav a:hover::after, nav a.active::after{ transform:scaleX(1) }
   box-shadow:var(--shadow-sm);
 }
 #postJobBtn:hover{ transform:translateY(-1px); box-shadow:var(--shadow) }
+
+/* Keep Sign In/Out width stable so text swap doesn't jiggle */
+#authBtn{ min-width: 8ch; text-align:center }
 
 /* ====== Hero ====== */
 .hero{
@@ -119,7 +124,6 @@ nav a:hover::after, nav a.active::after{ transform:scaleX(1) }
   background:#fff; color:var(--brand); border:2px solid var(--brand);
 }
 .btn-alt:hover{ transform:translateY(-2px); box-shadow:var(--shadow-sm) }
-/* Outlined variant used by Report links if present */
 .btn.secondary{ background:#fff; color:var(--brand); border:2px solid var(--brand); }
 .btn.secondary:hover{ transform:translateY(-2px); box-shadow:var(--shadow) }
 
@@ -175,7 +179,6 @@ nav a:hover::after, nav a.active::after{ transform:scaleX(1) }
 .job-card h3{ margin:.2rem 0 .35rem; color:var(--brand); font-size:1.15rem }
 .job-card p{ margin:.35rem 0; color:#4a4233 }
 .job-card small{ display:block; margin-top:.75rem; color:#7b7162 }
-/* Action row inside cards */
 .actions{ display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.8rem }
 
 /* ====== Forms ====== */
@@ -243,7 +246,7 @@ footer{
     --brand-3:#7f6b56;
   }
   body{ color:var(--ink) }
-  header{ background:#1e1a16 }
+  header{ background: rgba(30,26,22,.75) }
   .hero{ color:#fff }
   .job-card, form{ background:linear-gradient(180deg,#2a241e 0%, #201b16 100%); border-color:rgba(255,255,255,.06) }
   nav a{ color:var(--ink) }
@@ -251,65 +254,28 @@ footer{
 }
 
 /* ===== UX & A11y polish (append) =============================== */
-
-/* Use system form theming (helps in dark mode too) */
 :root { color-scheme: light dark; }
-
-/* Better keyboard outlines */
 :where(a, button, input, textarea, select):focus-visible {
   outline: 3px solid rgba(113,83,54,.55);
   outline-offset: 3px;
   border-radius: 10px;
 }
-.btn:focus-visible {
-  box-shadow: 0 0 0 4px rgba(113,83,54,.25);
-}
-
-/* Make checkboxes match brand */
+.btn:focus-visible { box-shadow: 0 0 0 4px rgba(113,83,54,.25); }
 input[type="checkbox"] { accent-color: var(--brand); }
-
-/* Add icons without changing HTML */
-.actions .btn:not(.secondary)::before {
-  content: "✉️";
-  margin-right: .35rem;
-}
-.actions .btn.secondary::before {
-  content: "🚩";
-  margin-right: .35rem;
-}
-
-/* Make inline links in content clearly interactive */
+.actions .btn:not(.secondary)::before { content: "✉️"; margin-right: .35rem; }
+.actions .btn.secondary::before { content: "🚩"; margin-right: .35rem; }
 .content a { text-decoration: underline; text-underline-offset: 2px; }
 .content a:hover { text-decoration-thickness: 2px; }
-
-/* Images behave (logo already sized, this covers any others) */
 img { max-width: 100%; height: auto; }
-
-/* Utilities */
-.visually-hidden {
-  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
-  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
-}
-
-/* Touch devices: soften hover lifts */
-@media (hover: none) {
-  .btn:hover, .job-card:hover { transform: none; box-shadow: var(--shadow-sm); }
-}
-
-/* Reduced motion: remove animations/lifts */
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-  .btn:hover, .job-card:hover { transform: none; }
-}
-
-/* High contrast users: bump borders/text contrast */
+.visually-hidden { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media (hover: none) { .btn:hover, .job-card:hover { transform: none; box-shadow: var(--shadow-sm); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .btn:hover, .job-card:hover { transform: none; } }
 @media (prefers-contrast: more) {
   nav a::after { height: 4px; }
   form, .job-card { border-color: rgba(0,0,0,.25); }
-  .btn, #postJobBtn {
-    box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm);
-  }
+  .btn, #postJobBtn { box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm); }
 }
+
 /* My Jobs pill button */
 #myJobsBtn{
   background:#fff;
@@ -319,59 +285,9 @@ img { max-width: 100%; height: auto; }
   padding:.55rem .9rem;
   box-shadow:var(--shadow-sm);
 }
-#myJobsBtn:hover{
-  transform:translateY(-1px);
-  box-shadow:var(--shadow);
-}
-/* ==== Frosted, translucent header ==== */
-header{
-  background: rgba(255,255,255,.85);
-  -webkit-backdrop-filter: saturate(1.1) blur(6px);
-  backdrop-filter: saturate(1.1) blur(6px);
-}
+#myJobsBtn:hover{ transform:translateY(-1px); box-shadow:var(--shadow); }
 
-/* Dark mode header tint to keep blur readable */
-@media (prefers-color-scheme: dark){
-  header{ background: rgba(30,26,22,.75); }
-}
-
-/* ==== Prevent long titles/URLs from overflowing in job cards ==== */
-.job-card h3,
-.job-card p{
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  hyphens: auto;
-}
-/* Prevent nav twitch: keep auth buttons in flow, fade in/out */
-#postJobBtn,
-#myJobsBtn{
-  display: inline-block !important;   /* override inline display:none */
-  visibility: hidden;                 /* reserve space but hide */
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .20s ease;
-}
-
-/* Show when authenticated */
-.auth-in #postJobBtn,
-.auth-in #myJobsBtn{
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Keep Sign In/Out width stable so text swap doesn't jiggle */
-#authBtn{
-  min-width: 8ch;           /* enough for “Sign Out” */
-  text-align: center;
-}
-/* Prevent nav item wrapping/jank */
-nav a { white-space: nowrap; }
-
-/* Fallback when blur isn't supported */
-@supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
-  header { background:#fff; } /* light mode */
-  @media (prefers-color-scheme: dark){
-    header { background:#1e1a16; } /* dark mode */
-  }
+/* Prevent long titles/URLs from overflowing in job cards */
+.job-card h3, .job-card p{
+  overflow-wrap:anywhere; word-break:break-word; hyphens:auto;
 }
