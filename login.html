@@ -22,10 +22,12 @@
 <body>
   <p>If you’re not redirected, <a href="auth.html?mode=signin">click here to Sign In</a>.</p>
 
-  <!-- JS redirect (preferred – doesn’t add an extra history entry) -->
+  <!-- JS redirect (preferred – preserves optional returnTo and replaces history) -->
   <script>
-    // Replace so the back button doesn't bounce users through this page
-    location.replace("auth.html?mode=signin");
+    const params = new URLSearchParams(location.search);
+    const returnTo = params.get("returnTo");
+    const target = "auth.html?mode=signin" + (returnTo ? "&returnTo=" + encodeURIComponent(returnTo) : "");
+    location.replace(target);
   </script>
 
   <noscript>
