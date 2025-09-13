@@ -48,7 +48,7 @@ header{
 
 .logo img{height:50px; border-radius:12px}
 
-nav{display:flex; align-items:center; gap:.8rem; visibility:visible}
+nav{display:flex; align-items:center; gap:.8rem}
 nav a{
   padding:.5rem .75rem;
   color:var(--ink);
@@ -253,7 +253,7 @@ footer{
   footer{ background:#2a241e }
 }
 
-/* ===== UX & A11y polish (append) =============================== */
+/* ===== UX & A11y polish =============================== */
 :root { color-scheme: light dark; }
 :where(a, button, input, textarea, select):focus-visible {
   outline: 3px solid rgba(113,83,54,.55);
@@ -275,17 +275,6 @@ img { max-width: 100%; height: auto; }
   form, .job-card { border-color: rgba(0,0,0,.25); }
   .btn, #postJobBtn { box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm); }
 }
-
-/* My Jobs pill button */
-#myJobsBtn{
-  background:#fff;
-  color:var(--brand);
-  border:2px solid var(--brand);
-  border-radius:12px;
-  padding:.55rem .9rem;
-  box-shadow:var(--shadow-sm);
-}
-#myJobsBtn:hover{ transform:translateY(-1px); box-shadow:var(--shadow); }
 
 /* Prevent long titles/URLs from overflowing in job cards */
 .job-card h3, .job-card p{
