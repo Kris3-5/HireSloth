@@ -113,29 +113,26 @@
     const myJobsBtn = document.getElementById("myJobsBtn");
 
     async function updateNav() {
-      try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
-        if (user) {
-          authBtn.textContent = "Sign Out";
-          authBtn.href = "#";
-          authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-          postJobBtn.style.display = "inline-block";
-        } else {
-          authBtn.textContent = "Sign In";
-          authBtn.href = "auth.html";
-          authBtn.onclick = null;
-          postJobBtn.style.display = "none";
-        }
-      } catch (err) {
-        // Fallback: show signed-out nav if getSession hangs or fails
-        console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-        postJobBtn.style.display = "none";
-      }
+     const { data: { session } } = await supabase.auth.getSession();
+     const user = session?.user;
+
+      if (user) {
+       authBtn.textContent = "Sign Out";
+       authBtn.href = "#";
+       authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
+
+      if (postJobBtn) postJobBtn.style.display = "inline-block";
+      if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
+    } else {
+       authBtn.textContent = "Sign In";
+       authBtn.href = "auth.html";
+       authBtn.onclick = null;
+
+      if (postJobBtn) postJobBtn.style.display = "none";
+      if (myJobsBtn)  myJobsBtn.style.display  = "none";
     }
+  }
+
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
 
