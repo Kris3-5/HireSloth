@@ -53,10 +53,10 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    const authBtn = document.getElementById("authBtn");
+    const authBtn    = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
-    const heroPostBtn = document.getElementById("heroPostBtn");
-    const myJobsBtn = document.getElementById("myJobsBtn");
+    const heroPostBtn= document.getElementById("heroPostBtn");
+    const myJobsBtn  = document.getElementById("myJobsBtn");
 
     // Prevent “infinite loading” if getSession hangs (extensions/network)
     const FALLBACK_MS = 2000;
@@ -71,14 +71,16 @@
           authBtn.textContent = "Sign Out";
           authBtn.href = "#";
           authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-          postJobBtn.style.display = "inline-block";
-          heroPostBtn.style.display = "inline-block";
+          if (postJobBtn) postJobBtn.style.display = "inline-block";
+          if (heroPostBtn) heroPostBtn.style.display = "inline-block";
+          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
         } else {
           authBtn.textContent = "Sign In";
           authBtn.href = "auth.html";
           authBtn.onclick = null;
-          postJobBtn.style.display = "none";
-          heroPostBtn.style.display = "none";
+          if (postJobBtn) postJobBtn.style.display = "none";
+          if (heroPostBtn) heroPostBtn.style.display = "none";
+          if (myJobsBtn)  myJobsBtn.style.display  = "none";
         }
       } catch (err) {
         // Fallback: show signed-out UI if session check is slow/blocked
@@ -86,8 +88,9 @@
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
-        postJobBtn.style.display = "none";
-        heroPostBtn.style.display = "none";
+        if (postJobBtn) postJobBtn.style.display = "none";
+        if (heroPostBtn) heroPostBtn.style.display = "none";
+        if (myJobsBtn)  myJobsBtn.style.display  = "none";
       }
     }
 
