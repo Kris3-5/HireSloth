@@ -14,7 +14,13 @@
   <link rel="canonical" href="auth.html?mode=signup">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Perf: preconnects -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- ✅ add your Supabase project host -->
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
+
+  <!-- (Optional) styling; safe to keep though not required for a redirect shim -->
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
@@ -22,12 +28,11 @@
 
   <!-- JS redirect (preferred – replaces history entry so Back works) -->
   <script>
-   // Preserve all query params and force mode=signup
-   const params = new URLSearchParams(location.search);
-   params.set("mode", "signup");
-   location.replace("auth.html?" + params.toString());
+    // Preserve all query params and force mode=signup
+    const params = new URLSearchParams(location.search);
+    params.set("mode", "signup");
+    location.replace("auth.html?" + params.toString());
   </script>
-
 
   <noscript>
     <p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p>
