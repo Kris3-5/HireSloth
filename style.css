@@ -365,3 +365,13 @@ header{
   min-width: 8ch;           /* enough for “Sign Out” */
   text-align: center;
 }
+/* Prevent nav item wrapping/jank */
+nav a { white-space: nowrap; }
+
+/* Fallback when blur isn't supported */
+@supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+  header { background:#fff; } /* light mode */
+  @media (prefers-color-scheme: dark){
+    header { background:#1e1a16; } /* dark mode */
+  }
+}
