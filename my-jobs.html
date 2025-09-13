@@ -64,6 +64,9 @@
       session = null;
     }
     const currentUser = session?.user;
+    document.body.classList.toggle('auth-in', !!currentUser);
+    document.body.classList.toggle('auth-out', !currentUser);
+    document.body.classList.remove('auth-pending');
     if (!currentUser) {
       window.location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
       throw new Error("Redirecting to auth");
