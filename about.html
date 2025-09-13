@@ -62,49 +62,43 @@
     const authBtn = document.getElementById("authBtn");
     // we intentionally don't read or toggle postJobBtn/myJobsBtn in JS
 
-    function applyAuthUI(isAuthed) {
-      document.body.classList.toggle('auth-in',  !!isAuthed);
-      document.body.classList.toggle('auth-out', !isAuthed);
+    const FALLBACK_MS = 2000;
+const timeout = (p, ms) => Promise.race([
+  p,
+  new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
+]);
 
-      if (!authBtn) return;
-      if (isAuthed) {
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-          // onAuthStateChange will re-apply the UI
-        };
-      } else {
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-      }
-    }
+async function updateNav() {
+  try {
+    const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+    const user = session?.user;
 
-    let lastAuthed;
-    async function updateNav() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const isAuthed = !!session?.user;
-        if (isAuthed !== lastAuthed) {
-          lastAuthed = isAuthed;
-          applyAuthUI(isAuthed);
-        }
-      } catch (err) {
-        // Do nothing on transient errors to avoid flicker
-        console.warn("Auth check issue:", err?.message || err);
-      }
-    }
+    // Toggle only body classes; DO NOT touch display styles of My Jobs / Post a Job
+    document.body.classList.toggle('auth-in', !!user);
+    document.body.classList.toggle('auth-out', !user);
 
-    updateNav();
-    supabase.auth.onAuthStateChange((_event, session) => {
-      const isAuthed = !!session?.user;
-      if (isAuthed !== lastAuthed) {
-        lastAuthed = isAuthed;
-        applyAuthUI(isAuthed);
-      }
-    });
+    // Auth button only
+    authBtn.textContent = user ? "Sign Out" : "Sign In";
+    authBtn.href = user ? "#" : "auth.html";
+    authBtn.onclick = user ? async (e) => {
+      e.preventDefault();
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    } : null;
+
+  } catch (err) {
+    // Fallback to signed-out state if slow/blocked
+    document.body.classList.remove('auth-in');
+    document.body.classList.add('auth-out');
+    authBtn.textContent = "Sign In";
+    authBtn.href = "auth.html";
+    authBtn.onclick = null;
+  }
+}
+
+updateNav();
+supabase.auth.onAuthStateChange(() => updateNav());
+
   </script>
 </body>
 </html>
