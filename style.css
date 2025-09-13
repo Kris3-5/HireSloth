@@ -39,7 +39,6 @@ h1,h2,h3{ color:var(--brand); font-weight:700; letter-spacing:.2px; margin-top:0
 header{
   display:flex; justify-content:space-between; align-items:center;
   padding:.9rem 1.6rem;
-  background:#fff;
   box-shadow:var(--shadow-sm);
   position:sticky; top:0; z-index:100;
   backdrop-filter:saturate(1.1) blur(6px);
@@ -323,4 +322,23 @@ img { max-width: 100%; height: auto; }
 #myJobsBtn:hover{
   transform:translateY(-1px);
   box-shadow:var(--shadow);
+}
+/* ==== Frosted, translucent header ==== */
+header{
+  background: rgba(255,255,255,.85);
+  -webkit-backdrop-filter: saturate(1.1) blur(6px);
+  backdrop-filter: saturate(1.1) blur(6px);
+}
+
+/* Dark mode header tint to keep blur readable */
+@media (prefers-color-scheme: dark){
+  header{ background: rgba(30,26,22,.75); }
+}
+
+/* ==== Prevent long titles/URLs from overflowing in job cards ==== */
+.job-card h3,
+.job-card p{
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
