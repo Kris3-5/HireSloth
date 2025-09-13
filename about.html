@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HireSloth - About</title>
-  <!-- Speed: preconnect to CDNs and your Supabase project -->
+  <!-- Speed: preconnect to CDN + your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://YOUR-REF.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
@@ -18,7 +18,7 @@
       <a href="about.html" class="active">About</a>
       <a href="contact.html">Contact</a>
       <a href="my-jobs.html" id="myJobsBtn" style="display:none;">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn" style="display: none;">Post a Job</a>
+      <a href="post-job.html" id="postJobBtn" style="display:none;">Post a Job</a>
       <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
@@ -47,42 +47,54 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-    // ✅ REPLACE these with your real values:
+    // ✅ REPLACE with your real project values
     const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    const authBtn   = document.getElementById("authBtn");
+    const postJobBtn= document.getElementById("postJobBtn");
     const myJobsBtn = document.getElementById("myJobsBtn");
 
-    // Prevent “forever loading” if getSession hangs (extensions/network)
+    // Use a short timeout so nav never “hangs”
     const FALLBACK_MS = 2000;
-    const timeout = (promise, ms) =>
-      Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
 
-    document.body.classList.add("auth-pending"); // harmless if CSS hook not present
     async function updateNav() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
 
-    if (user) {
-     authBtn.textContent = "Sign Out";
-     authBtn.href = "#";
-     authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-
-    if (postJobBtn) postJobBtn.style.display = "inline-block";
-    if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
-   } else {
-     authBtn.textContent = "Sign In";
-     authBtn.href = "auth.html";
-     authBtn.onclick = null;
-
-    if (postJobBtn) postJobBtn.style.display = "none";
-    if (myJobsBtn)  myJobsBtn.style.display  = "none";
-  }
- }
-
+        if (user) {
+          authBtn.textContent = "Sign Out";
+          authBtn.href = "#";
+          authBtn.onclick = async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+          };
+          if (postJobBtn) postJobBtn.style.display = "inline-block";
+          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
+        } else {
+          authBtn.textContent = "Sign In";
+          authBtn.href = "auth.html";
+          authBtn.onclick = null;
+          if (postJobBtn) postJobBtn.style.display = "none";
+          if (myJobsBtn)  myJobsBtn.style.display  = "none";
+        }
+      } catch (err) {
+        // Fallback to signed-out state if slow/blocked
+        console.warn("Auth check failed/slow; showing signed-out nav.", err?.message || err);
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+        if (postJobBtn) postJobBtn.style.display = "none";
+        if (myJobsBtn)  myJobsBtn.style.display  = "none";
+      }
+    }
 
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
