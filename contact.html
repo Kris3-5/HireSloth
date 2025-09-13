@@ -72,6 +72,10 @@
       try {
         const { data: { session} } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
         const user = session?.user;
+        // after: const user = session?.user;
+          document.body.classList.toggle('auth-in', !!user);
+          document.body.classList.toggle('auth-out', !user);
+          document.body.classList.remove('auth-pending'); // if you use it anywhere
 
         if (user) {
           authBtn.textContent = "Sign Out";
