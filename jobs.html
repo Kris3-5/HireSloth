@@ -6,7 +6,7 @@
   <title>HireSloth - Vacancies</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <!-- ✅ Preconnect to your Supabase project (change YOUR-REF) -->
-  <link rel="preconnect" href="https://YOUR-REF.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
@@ -72,12 +72,14 @@
             await supabase.auth.signOut();
             updateNav();
           };
-          postJobBtn.style.display = "inline-block";
+          if (postJobBtn) postJobBtn.style.display = "inline-block";
+          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
         } else {
           authBtn.textContent = "Sign In";
           authBtn.href = "auth.html";
           authBtn.onclick = null;
-          postJobBtn.style.display = "none";
+          if (postJobBtn) postJobBtn.style.display = "none";
+          if (myJobsBtn)  myJobsBtn.style.display  = "none";
         }
       } catch (err) {
         // Fallback: show signed-out nav if session check is slow/blocked
@@ -85,7 +87,8 @@
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
-        postJobBtn.style.display = "none";
+        if (postJobBtn) postJobBtn.style.display = "none";
+        if (myJobsBtn)  myJobsBtn.style.display  = "none";
       }
     }
     updateNav();
@@ -148,13 +151,16 @@
     // Initial load
     loadJobs();
 
-    // Search button event
-    searchBtn.addEventListener("click", () => {
+    // Search button click + Enter-to-search
+    function doSearch(){
       const keyword = document.getElementById("keyword").value.trim();
       const location = document.getElementById("location").value.trim();
       const remoteOnly = document.getElementById("remote").checked;
       loadJobs(keyword, location, remoteOnly);
-    });
+    }
+    searchBtn.addEventListener("click", doSearch);
+    document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+    document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
   </script>
 </body>
 </html>
