@@ -95,7 +95,7 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-    // ✅ REPLACE THESE with your real project values
+    // ✅ REPLACE with your real project values
     const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
 
@@ -104,7 +104,7 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    // ---- Nav (with timeout guard so it never "loads forever") ----
+    // ---- Timeout guard so nav never "loads forever" ----
     const FALLBACK_MS = 2000;
     const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
 
@@ -113,25 +113,33 @@
     const myJobsBtn = document.getElementById("myJobsBtn");
 
     async function updateNav() {
-     const { data: { session } } = await supabase.auth.getSession();
-     const user = session?.user;
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
 
-      if (user) {
-       authBtn.textContent = "Sign Out";
-       authBtn.href = "#";
-       authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
-
-      if (postJobBtn) postJobBtn.style.display = "inline-block";
-      if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
-    } else {
-       authBtn.textContent = "Sign In";
-       authBtn.href = "auth.html";
-       authBtn.onclick = null;
-
-      if (postJobBtn) postJobBtn.style.display = "none";
-      if (myJobsBtn)  myJobsBtn.style.display  = "none";
+        if (user) {
+          authBtn.textContent = "Sign Out";
+          authBtn.href = "#";
+          authBtn.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = "index.html"; };
+          if (postJobBtn) postJobBtn.style.display = "inline-block";
+          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
+        } else {
+          authBtn.textContent = "Sign In";
+          authBtn.href = "auth.html";
+          authBtn.onclick = null;
+          if (postJobBtn) postJobBtn.style.display = "none";
+          if (myJobsBtn)  myJobsBtn.style.display  = "none";
+        }
+      } catch (err) {
+        // Fallback: show signed-out nav if session check is slow/blocked
+        console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+        if (postJobBtn) postJobBtn.style.display = "none";
+        if (myJobsBtn)  myJobsBtn.style.display  = "none";
+      }
     }
-  }
 
     updateNav();
     supabase.auth.onAuthStateChange(() => updateNav());
@@ -165,6 +173,9 @@
     // ---- Helpers to lock buttons during async ----
     function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
     function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
+
+    // Preserve optional return destination (e.g., from protected pages)
+    const returnTo = new URLSearchParams(location.search).get("returnTo");
 
     // ---- Signup ----
     const signupForm = document.getElementById("signupForm");
@@ -201,7 +212,7 @@
       }
     });
 
-    // ---- Signin (redirect to post-job) ----
+    // ---- Signin (redirect back if returnTo exists) ----
     const signinForm = document.getElementById("signinForm");
     const signinBtn  = document.getElementById("signinBtn");
     const signinStatus = document.getElementById("signinStatus");
@@ -222,7 +233,7 @@
         ]);
         if (error) throw error;
 
-        window.location.href = "post-job.html";
+        window.location.href = returnTo || "post-job.html";
       } catch (err) {
         signinStatus.textContent = err.message === "signin-timeout"
           ? "❌ Sign-in took too long. Check your connection or disable blockers and try again."
