@@ -60,8 +60,9 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    const authBtn = document.getElementById("authBtn");
+    const authBtn    = document.getElementById("authBtn");
     const postJobBtn = document.getElementById("postJobBtn");
+    const myJobsBtn  = document.getElementById("myJobsBtn");
 
     // ---- Nav with timeout guard (prevents infinite "loading") ----
     const FALLBACK_MS = 2000;
@@ -69,7 +70,7 @@
 
     async function updateNav() {
       try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const { data: { session} } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
         const user = session?.user;
 
         if (user) {
@@ -78,15 +79,16 @@
           authBtn.onclick = async (e) => {
             e.preventDefault();
             await supabase.auth.signOut();
-            // simple UX: refresh nav state
             updateNav();
           };
-          postJobBtn.style.display = "inline-block";
+          if (postJobBtn) postJobBtn.style.display = "inline-block";
+          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
         } else {
           authBtn.textContent = "Sign In";
           authBtn.href = "auth.html";
           authBtn.onclick = null;
-          postJobBtn.style.display = "none";
+          if (postJobBtn) postJobBtn.style.display = "none";
+          if (myJobsBtn)  myJobsBtn.style.display  = "none";
         }
       } catch (err) {
         // Fallback to signed-out UI if session check is slow/blocked
@@ -94,7 +96,8 @@
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
-        postJobBtn.style.display = "none";
+        if (postJobBtn) postJobBtn.style.display = "none";
+        if (myJobsBtn)  myJobsBtn.style.display  = "none";
       }
     }
 
@@ -118,10 +121,15 @@
     // ---- Submit ----
     const form = document.getElementById("contactForm");
     const statusEl = document.getElementById("formStatus");
-    const myJobsBtn = document.getElementById("myJobsBtn");
+
+    // prevent double submits
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const lock = () => { if(!submitBtn) return; submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Sending…"; };
+    const unlock = () => { if(!submitBtn) return; submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      lock();
 
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
@@ -142,6 +150,7 @@
         statusEl.style.color = "green";
         form.reset();
       }
+      unlock();
     });
   </script>
 </body>
