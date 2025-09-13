@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Contact</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- ✅ Add your Supabase preconnect (change YOUR-REF) -->
+  <!-- ✅ Replace YOUR-REF with your actual project ref -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
-<body>
+<body class="auth-out">
   <header>
    <a href="index.html" class="logo"><img src="logo.jpg" alt="HireSloth Logo"></a>
    <nav>
@@ -17,8 +17,8 @@
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html" class="active">Contact</a>
-    <a href="my-jobs.html" id="myJobsBtn" style="display:none;">My Jobs</a>
-    <a href="post-job.html" id="postJobBtn" style="display: none;">Post a Job</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
     <a href="auth.html" id="authBtn">Sign In</a>
    </nav>
   </header>
@@ -60,55 +60,43 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    const authBtn    = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const myJobsBtn  = document.getElementById("myJobsBtn");
+    const authBtn = document.getElementById("authBtn");
 
-    // ---- Nav with timeout guard (prevents infinite "loading") ----
-    const FALLBACK_MS = 2000;
-    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+    // --- Stable nav via body classes (no per-button toggling) ---
+    function applyAuthUI(isAuthed) {
+      document.body.classList.toggle('auth-in',  !!isAuthed);
+      document.body.classList.toggle('auth-out', !isAuthed);
 
-    async function updateNav() {
-      try {
-        const { data: { session} } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
-        // after: const user = session?.user;
-          document.body.classList.toggle('auth-in', !!user);
-          document.body.classList.toggle('auth-out', !user);
-          document.body.classList.remove('auth-pending'); // if you use it anywhere
-
-        if (user) {
-          authBtn.textContent = "Sign Out";
-          authBtn.href = "#";
-          authBtn.onclick = async (e) => {
-            e.preventDefault();
-            await supabase.auth.signOut();
-            updateNav();
-          };
-          if (postJobBtn) postJobBtn.style.display = "inline-block";
-          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
-        } else {
-          authBtn.textContent = "Sign In";
-          authBtn.href = "auth.html";
-          authBtn.onclick = null;
-          if (postJobBtn) postJobBtn.style.display = "none";
-          if (myJobsBtn)  myJobsBtn.style.display  = "none";
-        }
-      } catch (err) {
-        // Fallback to signed-out UI if session check is slow/blocked
-        console.warn("Auth check failed/slow; showing signed-out nav.", err?.message || err);
+      if (!authBtn) return;
+      if (isAuthed) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          // onAuthStateChange will update the UI
+        };
+      } else {
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
-        if (postJobBtn) postJobBtn.style.display = "none";
-        if (myJobsBtn)  myJobsBtn.style.display  = "none";
+      }
+    }
+
+    async function updateNav() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        applyAuthUI(!!session?.user);
+      } catch {
+        // On error, stay signed-out visually
+        applyAuthUI(false);
       }
     }
 
     updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
+    supabase.auth.onAuthStateChange((_event, session) => applyAuthUI(!!session?.user));
 
-    // ---- Prefill for job reports ----
+    // --- Prefill for job reports ---
     (function prefillReport(){
       const params = new URLSearchParams(location.search);
       const jobId = params.get("report_job");
@@ -122,7 +110,7 @@
       if (!msg.value) msg.value = preset;
     })();
 
-    // ---- Submit ----
+    // --- Submit ---
     const form = document.getElementById("contactForm");
     const statusEl = document.getElementById("formStatus");
 
