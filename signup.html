@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+  
   <!-- Force HTTPS in production; allow localhost for dev -->
 <script>
   if (location.protocol === 'http:' &&
@@ -19,6 +16,22 @@
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
   <title>HireSloth – Redirecting to Sign Up…</title>
+  <!-- Favicons -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="shortcut icon" href="/favicon.ico">
+
+<!-- iOS home screen icon -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="HireSloth">
+
+<!-- PWA manifest (Android/Chrome uses this for 192/512) -->
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Address bar color (light/dark) -->
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
+<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
+
   <meta http-equiv="refresh" content="0; url=auth.html?mode=signup">
   <meta name="robots" content="noindex,follow">
   <link rel="canonical" href="auth.html?mode=signup">
