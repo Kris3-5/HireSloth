@@ -79,50 +79,42 @@
 
     // ---- Helpers ----
     const FALLBACK_MS = 2000;
-    const timeout = (p, ms) =>
-      Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
-    const lock = () => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Posting…"; };
-    const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
+const timeout = (p, ms) => Promise.race([
+  p,
+  new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
+]);
 
-    // ---- Nav (single source of truth; avoids flicker) ----
-    async function updateNav() {
-      try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
+async function updateNav() {
+  try {
+    const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+    const user = session?.user;
 
-        document.body.classList.toggle('auth-in', !!user);
-        document.body.classList.toggle('auth-out', !user);
+    // Toggle only body classes; DO NOT touch display styles of My Jobs / Post a Job
+    document.body.classList.toggle('auth-in', !!user);
+    document.body.classList.toggle('auth-out', !user);
 
-        if (user) {
-          authBtn.textContent = "Sign Out";
-          authBtn.href = "#";
-          authBtn.onclick = async (e) => {
-            e.preventDefault();
-            await supabase.auth.signOut();
-            window.location.href = "index.html";
-          };
-          if (postJobBtn) postJobBtn.style.display = "inline-block";
-          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
-        } else {
-          authBtn.textContent = "Sign In";
-          authBtn.href = "auth.html";
-          authBtn.onclick = null;
-          if (postJobBtn) postJobBtn.style.display = "none";
-          if (myJobsBtn)  myJobsBtn.style.display  = "none";
-        }
-      } catch (err) {
-        console.warn("Auth session check failed/slow; showing signed-out nav.", err?.message || err);
-        document.body.classList.add('auth-out');
-        document.body.classList.remove('auth-in');
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-        if (postJobBtn) postJobBtn.style.display = "none";
-        if (myJobsBtn)  myJobsBtn.style.display  = "none";
-      }
-    }
-    updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
+    // Auth button only
+    authBtn.textContent = user ? "Sign Out" : "Sign In";
+    authBtn.href = user ? "#" : "auth.html";
+    authBtn.onclick = user ? async (e) => {
+      e.preventDefault();
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    } : null;
+
+  } catch (err) {
+    // Fallback to signed-out state if slow/blocked
+    document.body.classList.remove('auth-in');
+    document.body.classList.add('auth-out');
+    authBtn.textContent = "Sign In";
+    authBtn.href = "auth.html";
+    authBtn.onclick = null;
+  }
+}
+
+updateNav();
+supabase.auth.onAuthStateChange(() => updateNav());
+
 
     // ---- Protect this page (redirect to Sign In if not logged in) ----
     let session;
