@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HireSloth - Post a Job</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- ✅ Preconnect to your Supabase project (swap to your real domain) -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
@@ -62,131 +61,72 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-    // ✅ REPLACE with your real project values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
+    const authBtn=document.getElementById("authBtn");
+    const myJobsBtn=document.getElementById("myJobsBtn");
+    const postJobBtn=document.getElementById("postJobBtn");
+    const jobForm=document.getElementById("jobForm");
+    const submitBtn=document.getElementById("submitBtn");
+    const statusEl=document.getElementById("formStatus");
 
-    const authBtn    = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const myJobsBtn  = document.getElementById("myJobsBtn");
-    const jobForm    = document.getElementById("jobForm");
-    const submitBtn  = document.getElementById("submitBtn");
-    const statusEl   = document.getElementById("formStatus");
+    const FALLBACK_MS=2000;
+    const timeout=(p,ms=FALLBACK_MS)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("auth-timeout")),ms))]);
+    async function getUser(){ try{ const {data:{session}}=await timeout(supabase.auth.getSession()); return session?.user||null; }catch{return null;} }
 
-    // ---- Helpers ----
-    const FALLBACK_MS = 2000;
-    const timeout = (p, ms) => Promise.race([
-      p,
-      new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
-    ]);
-
-    // ✅ NEW: prevent double submits + button UX (these were missing)
-    function lock(){
-      submitBtn.disabled = true;
-      submitBtn.dataset.label = submitBtn.textContent;
-      submitBtn.textContent = "Posting…";
+    async function updateAuthBtn(){
+      const user=await getUser();
+      if(user){ authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
+      } else { authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null; }
     }
-    function unlock(){
-      submitBtn.disabled = false;
-      if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label;
-    }
+    function gateLink(el,target){ if(!el) return; el.addEventListener("click",async(e)=>{ const u=await getUser(); if(!u){ e.preventDefault(); location.href=`auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }}); }
 
-    // ---- Nav (stable; only toggles body classes, no display flips) ----
-    async function updateNav() {
-      try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
+    updateAuthBtn(); supabase.auth.onAuthStateChange(()=>updateAuthBtn());
+    gateLink(myJobsBtn,"my-jobs.html"); gateLink(postJobBtn,"post-job.html");
 
-        // Toggle only body classes → CSS handles #myJobsBtn / #postJobBtn visibility smoothly
-        document.body.classList.toggle('auth-in', !!user);
-        document.body.classList.toggle('auth-out', !user);
+    // HARD-GATE page access
+    const user=await getUser();
+    if(!user){ location.href="auth.html?mode=signin&returnTo="+encodeURIComponent("post-job.html"); throw new Error("Redirecting to auth"); }
 
-        // Auth button only
-        authBtn.textContent = user ? "Sign Out" : "Sign In";
-        authBtn.href = user ? "#" : "auth.html";
-        authBtn.onclick = user ? async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-          window.location.href = "index.html";
-        } : null;
+    // form helpers
+    const lock=()=>{ submitBtn.disabled=true; submitBtn.dataset.label=submitBtn.textContent; submitBtn.textContent="Posting…"; };
+    const unlock=()=>{ submitBtn.disabled=false; if(submitBtn.dataset.label) submitBtn.textContent=submitBtn.dataset.label; };
 
-      } catch (err) {
-        // Fallback to signed-out state if slow/blocked
-        document.body.classList.remove('auth-in');
-        document.body.classList.add('auth-out');
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-      }
-    }
+    // Submit
+    jobForm.addEventListener("submit", async (e)=>{
+      e.preventDefault(); statusEl.textContent=""; statusEl.style.color="";
+      const contactEmail=document.getElementById("contact_email").value.trim();
+      if(!contactEmail){ statusEl.textContent="❌ Please provide the company contact email."; statusEl.style.color="red"; return; }
 
-    updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
-
-    // ---- Protect this page (redirect to Sign In if not logged in) ----
-    let session;
-    try {
-      ({ data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS));
-    } catch {
-      session = null;
-    }
-    const currentUser = session?.user;
-    if (!currentUser) {
-      window.location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("post-job.html");
-      throw new Error("Redirecting to auth");
-    }
-
-    // ---- Handle form submit ----
-    jobForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      statusEl.textContent = "";
-      statusEl.style.color = "";
-
-      const contactEmail = document.getElementById("contact_email").value.trim();
-      if (!contactEmail) {
-        statusEl.textContent = "❌ Please provide the company contact email.";
-        statusEl.style.color = "red";
-        return;
-      }
-
-      const job = {
-        title: document.getElementById("title").value.trim(),
-        company: document.getElementById("company").value.trim(),
-        location: document.getElementById("location").value.trim(),
-        remote: document.getElementById("remote").checked,
-        salary: document.getElementById("salary").value.trim(),
-        description: document.getElementById("description").value.trim(),
-        responsibilities: document.getElementById("responsibilities").value.trim(),
-        contact_email: contactEmail,
-        user_id: currentUser.id,
-        approved: false,
-        is_active: true,
-        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+      const job={
+        title:document.getElementById("title").value.trim(),
+        company:document.getElementById("company").value.trim(),
+        location:document.getElementById("location").value.trim(),
+        remote:document.getElementById("remote").checked,
+        salary:document.getElementById("salary").value.trim(),
+        description:document.getElementById("description").value.trim(),
+        responsibilities:document.getElementById("responsibilities").value.trim(),
+        contact_email:contactEmail,
+        user_id:user.id,
+        approved:false,
+        is_active:true,
+        expires_at:new Date(Date.now()+30*24*60*60*1000).toISOString()
       };
 
-      try {
+      try{
         lock();
         const { error } = await supabase.from("jobs").insert([job]);
-        if (error) throw error;
-
-        statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
-        statusEl.style.color = "green";
+        if(error) throw error;
+        statusEl.textContent="✅ Job posted successfully! Awaiting admin approval.";
+        statusEl.style.color="green";
         jobForm.reset();
-
-        // (Optional) Send them to My Jobs so they can see it listed:
-        // setTimeout(()=> location.href = "my-jobs.html", 800);
-
-      } catch (err) {
-        statusEl.textContent = "❌ " + (err.message || "Could not post job.");
-        statusEl.style.color = "red";
+      }catch(err){
+        statusEl.textContent="❌ "+(err.message||"Could not post job.");
+        statusEl.style.color="red";
         console.error(err);
-      } finally {
-        unlock();
-      }
+      }finally{ unlock(); }
     });
   </script>
 </body>
