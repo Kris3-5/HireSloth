@@ -79,42 +79,53 @@
 
     // ---- Helpers ----
     const FALLBACK_MS = 2000;
-const timeout = (p, ms) => Promise.race([
-  p,
-  new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
-]);
+    const timeout = (p, ms) => Promise.race([
+      p,
+      new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))
+    ]);
 
-async function updateNav() {
-  try {
-    const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-    const user = session?.user;
+    // ✅ NEW: prevent double submits + button UX (these were missing)
+    function lock(){
+      submitBtn.disabled = true;
+      submitBtn.dataset.label = submitBtn.textContent;
+      submitBtn.textContent = "Posting…";
+    }
+    function unlock(){
+      submitBtn.disabled = false;
+      if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label;
+    }
 
-    // Toggle only body classes; DO NOT touch display styles of My Jobs / Post a Job
-    document.body.classList.toggle('auth-in', !!user);
-    document.body.classList.toggle('auth-out', !user);
+    // ---- Nav (stable; only toggles body classes, no display flips) ----
+    async function updateNav() {
+      try {
+        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
+        const user = session?.user;
 
-    // Auth button only
-    authBtn.textContent = user ? "Sign Out" : "Sign In";
-    authBtn.href = user ? "#" : "auth.html";
-    authBtn.onclick = user ? async (e) => {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      window.location.href = "index.html";
-    } : null;
+        // Toggle only body classes → CSS handles #myJobsBtn / #postJobBtn visibility smoothly
+        document.body.classList.toggle('auth-in', !!user);
+        document.body.classList.toggle('auth-out', !user);
 
-  } catch (err) {
-    // Fallback to signed-out state if slow/blocked
-    document.body.classList.remove('auth-in');
-    document.body.classList.add('auth-out');
-    authBtn.textContent = "Sign In";
-    authBtn.href = "auth.html";
-    authBtn.onclick = null;
-  }
-}
+        // Auth button only
+        authBtn.textContent = user ? "Sign Out" : "Sign In";
+        authBtn.href = user ? "#" : "auth.html";
+        authBtn.onclick = user ? async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "index.html";
+        } : null;
 
-updateNav();
-supabase.auth.onAuthStateChange(() => updateNav());
+      } catch (err) {
+        // Fallback to signed-out state if slow/blocked
+        document.body.classList.remove('auth-in');
+        document.body.classList.add('auth-out');
+        authBtn.textContent = "Sign In";
+        authBtn.href = "auth.html";
+        authBtn.onclick = null;
+      }
+    }
 
+    updateNav();
+    supabase.auth.onAuthStateChange(() => updateNav());
 
     // ---- Protect this page (redirect to Sign In if not logged in) ----
     let session;
@@ -165,6 +176,10 @@ supabase.auth.onAuthStateChange(() => updateNav());
         statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
         statusEl.style.color = "green";
         jobForm.reset();
+
+        // (Optional) Send them to My Jobs so they can see it listed:
+        // setTimeout(()=> location.href = "my-jobs.html", 800);
+
       } catch (err) {
         statusEl.textContent = "❌ " + (err.message || "Could not post job.");
         statusEl.style.color = "red";
