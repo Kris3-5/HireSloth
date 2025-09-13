@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+  
   <!-- Force HTTPS in production; allow localhost for dev -->
 <script>
   if (location.protocol === 'http:' &&
@@ -20,6 +17,22 @@
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
   <title>HireSloth - My Jobs</title>
+  <!-- Favicons -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="shortcut icon" href="/favicon.ico">
+
+<!-- iOS home screen icon -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="HireSloth">
+
+<!-- PWA manifest (Android/Chrome uses this for 192/512) -->
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Address bar color (light/dark) -->
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
+<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
+
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
