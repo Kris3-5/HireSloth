@@ -342,3 +342,26 @@ header{
   word-break: break-word;
   hyphens: auto;
 }
+/* Prevent nav twitch: keep auth buttons in flow, fade in/out */
+#postJobBtn,
+#myJobsBtn{
+  display: inline-block !important;   /* override inline display:none */
+  visibility: hidden;                 /* reserve space but hide */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .20s ease;
+}
+
+/* Show when authenticated */
+.auth-in #postJobBtn,
+.auth-in #myJobsBtn{
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Keep Sign In/Out width stable so text swap doesn't jiggle */
+#authBtn{
+  min-width: 8ch;           /* enough for “Sign Out” */
+  text-align: center;
+}
