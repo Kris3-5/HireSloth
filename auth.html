@@ -97,29 +97,36 @@
     const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
     const authBtn=document.getElementById("authBtn");
-    const myJobsBtn=document.getElementById("myJobsBtn");
-    const postJobBtn=document.getElementById("postJobBtn");
+    let currentUser=null;
 
-    const FALLBACK_MS=2000;
-    const timeout=(p,ms=FALLBACK_MS)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("auth-timeout")),ms))]);
-    async function getUser(){ try{ const {data:{session}}=await timeout(supabase.auth.getSession()); return session?.user||null; }catch{return null;} }
-
-    async function updateAuthBtn(){
-      const user=await getUser();
-      if(user){ authBtn.textContent="Sign Out"; authBtn.href="#";
-        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
-      } else { authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null; }
+    async function initAuth(){
+      const { data:{ session } } = await supabase.auth.getSession();
+      currentUser=session?.user||null;
+      updateAuthBtn();
     }
-    function gateLink(el,target){ if(!el) return; el.addEventListener("click",async(e)=>{ const u=await getUser(); if(!u){ e.preventDefault(); location.href=`auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }}); }
+    function updateAuthBtn(){
+      if(currentUser){
+        authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
+      }else{
+        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
+      }
+    }
+    supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
+        currentUser=session?.user||null; updateAuthBtn();
+      }
+    });
+    initAuth();
 
-    updateAuthBtn(); supabase.auth.onAuthStateChange(()=>updateAuthBtn());
-    gateLink(myJobsBtn,"my-jobs.html"); gateLink(postJobBtn,"post-job.html");
-
-    // ---- Tabs ----
+    // Tabs
     const tabSignin=document.getElementById("tab-signin");
     const tabSignup=document.getElementById("tab-signup");
     const panelSignin=document.getElementById("panel-signin");
     const panelSignup=document.getElementById("panel-signup");
+    const params=new URLSearchParams(location.search);
+    const returnTo=params.get("returnTo")||"";
+
     function setTab(mode){
       const isSignin=mode==="signin";
       tabSignin.setAttribute("aria-selected",isSignin?"true":"false");
@@ -131,11 +138,9 @@
     }
     tabSignin.addEventListener("click",()=>setTab("signin"));
     tabSignup.addEventListener("click",()=>setTab("signup"));
-    const params=new URLSearchParams(location.search);
-    const returnTo=params.get("returnTo")||"";
     setTab(params.get("mode")==="signup"?"signup":"signin");
 
-    // ---- Show/Hide password ----
+    // Show/Hide password
     document.getElementById("signinShowPw").addEventListener("change", e => {
       document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
     });
@@ -143,55 +148,42 @@
       document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
     });
 
-    // ---- Helpers to lock buttons during async ----
+    // Button lock helpers
     function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
     function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
 
-    // ---- Signup ----
+    // Signup
     const signupForm=document.getElementById("signupForm");
     const signupBtn=document.getElementById("signupBtn");
     const signupStatus=document.getElementById("signupStatus");
-
     signupForm.addEventListener("submit", async (e)=>{
       e.preventDefault(); signupStatus.textContent=""; lock(signupForm,signupBtn);
       const email=document.getElementById("signupEmail").value.trim();
       const password=document.getElementById("signupPassword").value.trim();
       try{
-        const AUTH_MS=15000;
-        const { error } = await Promise.race([
-          supabase.auth.signUp({ email, password }),
-          new Promise((_,rej)=>setTimeout(()=>rej(new Error("signup-timeout")),AUTH_MS))
-        ]);
+        const { error } = await supabase.auth.signUp({ email, password });
         if(error) throw error;
         signupStatus.textContent="✅ Sign up successful! Check your email for confirmation.";
-        signupStatus.style.color="green";
-        signupForm.reset(); setTab("signin");
+        signupStatus.style.color="green"; signupForm.reset(); setTab("signin");
       }catch(err){
-        signupStatus.textContent=err.message==="signup-timeout"?"❌ Sign-up took too long. Try again.":"❌ "+(err.message||"Sign-up failed");
-        signupStatus.style.color="red";
+        signupStatus.textContent="❌ "+(err.message||"Sign-up failed"); signupStatus.style.color="red";
       }finally{ unlock(signupForm,signupBtn); }
     });
 
-    // ---- Signin ----
+    // Signin
     const signinForm=document.getElementById("signinForm");
     const signinBtn=document.getElementById("signinBtn");
     const signinStatus=document.getElementById("signinStatus");
-
     signinForm.addEventListener("submit", async (e)=>{
       e.preventDefault(); signinStatus.textContent=""; lock(signinForm,signinBtn);
       const email=document.getElementById("signinEmail").value.trim();
       const password=document.getElementById("signinPassword").value.trim();
       try{
-        const AUTH_MS=15000;
-        const { error } = await Promise.race([
-          supabase.auth.signInWithPassword({ email, password }),
-          new Promise((_,rej)=>setTimeout(()=>rej(new Error("signin-timeout")),AUTH_MS))
-        ]);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if(error) throw error;
         location.href = returnTo || "post-job.html";
       }catch(err){
-        signinStatus.textContent=err.message==="signin-timeout"?"❌ Sign-in took too long. Try again.":"❌ "+(err.message||"Sign-in failed");
-        signinStatus.style.color="red";
+        signinStatus.textContent="❌ "+(err.message||"Sign-in failed"); signinStatus.style.color="red";
       }finally{ unlock(signinForm,signinBtn); }
     });
 
