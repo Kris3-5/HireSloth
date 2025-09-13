@@ -6,6 +6,7 @@
   <title>HireSloth - About</title>
   <!-- Speed: preconnect to CDN + your Supabase project -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- ⬇️ Replace YOUR-REF with your Supabase ref -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
@@ -47,7 +48,7 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-    // ✅ REPLACE with your real project values
+    // ⬇️ Replace with your real project values
     const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
 
@@ -55,53 +56,55 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    const authBtn   = document.getElementById("authBtn");
-    const postJobBtn= document.getElementById("postJobBtn");
-    const myJobsBtn = document.getElementById("myJobsBtn");
+    // Default to signed-out visuals until we know
+    document.body.classList.add('auth-out');
 
-    // Use a short timeout so nav never “hangs”
-    const FALLBACK_MS = 2000;
-    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("auth-timeout")), ms))]);
+    const authBtn = document.getElementById("authBtn");
+    // we intentionally don't read or toggle postJobBtn/myJobsBtn in JS
 
-    async function updateNav() {
-      try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
-        // after: const user = session?.user;
-          document.body.classList.toggle('auth-in', !!user);
-          document.body.classList.toggle('auth-out', !user);
-          document.body.classList.remove('auth-pending'); // if you use it anywhere
+    function applyAuthUI(isAuthed) {
+      document.body.classList.toggle('auth-in',  !!isAuthed);
+      document.body.classList.toggle('auth-out', !isAuthed);
 
-        if (user) {
-          authBtn.textContent = "Sign Out";
-          authBtn.href = "#";
-          authBtn.onclick = async (e) => {
-            e.preventDefault();
-            await supabase.auth.signOut();
-            window.location.href = "index.html";
-          };
-          if (postJobBtn) postJobBtn.style.display = "inline-block";
-          if (myJobsBtn)  myJobsBtn.style.display  = "inline-block";
-        } else {
-          authBtn.textContent = "Sign In";
-          authBtn.href = "auth.html";
-          authBtn.onclick = null;
-          if (postJobBtn) postJobBtn.style.display = "none";
-          if (myJobsBtn)  myJobsBtn.style.display  = "none";
-        }
-      } catch (err) {
-        // Fallback to signed-out state if slow/blocked
-        console.warn("Auth check failed/slow; showing signed-out nav.", err?.message || err);
+      if (!authBtn) return;
+      if (isAuthed) {
+        authBtn.textContent = "Sign Out";
+        authBtn.href = "#";
+        authBtn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          // onAuthStateChange will re-apply the UI
+        };
+      } else {
         authBtn.textContent = "Sign In";
         authBtn.href = "auth.html";
         authBtn.onclick = null;
-        if (postJobBtn) postJobBtn.style.display = "none";
-        if (myJobsBtn)  myJobsBtn.style.display  = "none";
+      }
+    }
+
+    let lastAuthed;
+    async function updateNav() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const isAuthed = !!session?.user;
+        if (isAuthed !== lastAuthed) {
+          lastAuthed = isAuthed;
+          applyAuthUI(isAuthed);
+        }
+      } catch (err) {
+        // Do nothing on transient errors to avoid flicker
+        console.warn("Auth check issue:", err?.message || err);
       }
     }
 
     updateNav();
-    supabase.auth.onAuthStateChange(() => updateNav());
+    supabase.auth.onAuthStateChange((_event, session) => {
+      const isAuthed = !!session?.user;
+      if (isAuthed !== lastAuthed) {
+        lastAuthed = isAuthed;
+        applyAuthUI(isAuthed);
+      }
+    });
   </script>
 </body>
 </html>
