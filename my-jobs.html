@@ -32,41 +32,46 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-
     const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
     const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 
-    const jobsList=document.getElementById("jobsList");
     const authBtn=document.getElementById("authBtn");
-    const myJobsBtn=document.getElementById("myJobsBtn");
-    const postJobBtn=document.getElementById("postJobBtn");
-
-    const FALLBACK_MS=2000;
-    const timeout=(p,ms=FALLBACK_MS)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("auth-timeout")),ms))]);
-    async function getUser(){ try{ const {data:{session}}=await timeout(supabase.auth.getSession()); return session?.user||null; }catch{return null;} }
+    const jobsList=document.getElementById("jobsList");
     const esc=(s)=>(s??"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-    async function updateAuthBtn(){
-      const user=await getUser();
-      if(user){ authBtn.textContent="Sign Out"; authBtn.href="#";
-        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
-      } else { authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null; }
+    let currentUser=null;
+
+    // Get session once; no timeouts
+    const { data:{ session } } = await supabase.auth.getSession();
+    currentUser = session?.user || null;
+
+    // Hard gate
+    if(!currentUser){
+      location.replace("auth.html?mode=signin&returnTo="+encodeURIComponent("my-jobs.html"));
     }
-    function gateLink(el,target){ if(!el) return; el.addEventListener("click",async(e)=>{ const u=await getUser(); if(!u){ e.preventDefault(); location.href=`auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }}); }
 
-    updateAuthBtn(); supabase.auth.onAuthStateChange(()=>updateAuthBtn());
-    gateLink(myJobsBtn,"my-jobs.html"); gateLink(postJobBtn,"post-job.html");
+    // Auth button (confirm on logout)
+    function updateAuthBtn(){
+      if(currentUser){
+        authBtn.textContent="Sign Out"; authBtn.href="#";
+        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
+      }else{
+        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
+      }
+    }
+    updateAuthBtn();
+    supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
+        currentUser=session?.user||null; updateAuthBtn();
+      }
+    });
 
-    // HARD-GATE page access
-    const user=await getUser();
-    if(!user){ location.href="auth.html?mode=signin&returnTo="+encodeURIComponent("my-jobs.html"); throw new Error("Redirecting to auth"); }
-
-    // Load user's jobs
     async function loadJobs(){
+      if(!currentUser) return;
       jobsList.innerHTML="<p>Loading jobs...</p>";
       const { data, error } = await supabase
         .from("jobs").select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUser.id)
         .order("created_at",{ascending:false});
       if(error){ jobsList.innerHTML="<p>❌ Error loading jobs.</p>"; console.error(error); return; }
       if(!data || data.length===0){ jobsList.innerHTML=`<p>No jobs posted yet. <a href="post-job.html">Post your first job</a>.</p>`; return; }
@@ -90,7 +95,7 @@
           const jobId=e.currentTarget.dataset.id;
           if(!confirm("Delete this job?")) return;
           e.currentTarget.disabled=true; e.currentTarget.textContent="Deleting…";
-          const { error } = await supabase.from("jobs").delete().eq("id",jobId).eq("user_id",user.id);
+          const { error } = await supabase.from("jobs").delete().eq("id",jobId).eq("user_id",currentUser.id);
           if(error){ alert("❌ Error deleting job: "+error.message); e.currentTarget.disabled=false; e.currentTarget.textContent="🗑 Delete"; }
           else{ loadJobs(); }
         });
