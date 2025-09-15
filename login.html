@@ -16,5 +16,11 @@
     const target = "auth.html?mode=signin" + (params.has("returnTo") ? "&returnTo="+encodeURIComponent(params.get("returnTo")) : "");
     location.replace(target);
   </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    // Ensure we register the new file (and replace any old one)
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  }
+</script>
 </body>
 </html>
