@@ -1,11 +1,4 @@
 User-agent: *
 Allow: /
+
 Sitemap: https://hiresloth.com/sitemap.xml
-
-
-# utility pages you don't want indexed
-Disallow: /auth.html
-Disallow: /login.html
-Disallow: /signup.html
-Disallow: /post-job.html
-Disallow: /my-jobs.html
