@@ -54,7 +54,7 @@
   <header>
   <a href="index.html" class="logo">
   <img
-    src="/logo.jpg?v=1"
+    src="/logo.jpg?v=2"
     alt="HireSloth Logo"
     width="120"
     height="120"
@@ -62,17 +62,11 @@
     fetchpriority="high"
     decoding="async"
     onerror="
-      // First fallback: try relative path (handles root-path issues)
-      if (this.src.indexOf('logo.jpg') !== -1 && !this.dataset.triedRel) {
-        this.dataset.triedRel = '1';
-        this.src = 'logo.jpg?v=1';
-      } else {
-        // Final fallback: remove handler to avoid loops and keep alt text
-        this.onerror=null;
-      }
-    ">
+      if (!this.dataset.fallbackTried) {
+        this.dataset.fallbackTried = '1';
+        this.src = 'logo.jpg?v=2'; // try relative path as fallback
+      } else { this.onerror=null; }">
 </a>
-
     
   <nav>
     <a href="index.html" class="active">Home</a>
