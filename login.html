@@ -1,60 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  
-  <!-- Force HTTPS in production; allow localhost for dev -->
-<script>
-  if (location.protocol === 'http:' &&
-      location.hostname !== 'localhost' &&
-      location.hostname !== '127.0.0.1') {
-    location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-  }
-</script>
-
-<!-- Auto-upgrade any accidental http:// subresources to https:// -->
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HireSloth – Redirecting to Sign In…</title>
-  <!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="shortcut icon" href="/favicon.ico">
-
-<!-- iOS home screen icon -->
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="HireSloth">
-
-<!-- PWA manifest (Android/Chrome uses this for 192/512) -->
-<link rel="manifest" href="/site.webmanifest">
-  <!-- Help Google pick your site name -->
-<meta name="application-name" content="HireSloth">
-<meta property="og:site_name" content="HireSloth">
-
-<!-- Address bar color (light/dark) -->
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
-<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
-
   <meta http-equiv="refresh" content="0; url=auth.html?mode=signin">
   <meta name="robots" content="noindex,follow">
   <link rel="canonical" href="auth.html?mode=signin">
-  <!-- Fonts: faster than @import -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <p>If you’re not redirected, <a href="auth.html?mode=signin">click here to Sign In</a>.</p>
   <script>
     const params = new URLSearchParams(location.search);
-    const returnTo = params.get("returnTo");
-    const target = "auth.html?mode=signin" + (returnTo ? "&returnTo=" + encodeURIComponent(returnTo) : "");
+    const target = "auth.html?mode=signin" + (params.has("returnTo") ? "&returnTo="+encodeURIComponent(params.get("returnTo")) : "");
     location.replace(target);
   </script>
-  <noscript><p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p></noscript>
 </body>
 </html>
