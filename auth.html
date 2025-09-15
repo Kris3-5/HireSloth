@@ -1,46 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  
-  <!-- Force HTTPS in production; allow localhost for dev -->
-<script>
-  if (location.protocol === 'http:' &&
-      location.hostname !== 'localhost' &&
-      location.hostname !== '127.0.0.1') {
-    location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-  }
-</script>
-
-<!-- Auto-upgrade any accidental http:// subresources to https:// -->
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script>
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>HireSloth - Sign In / Sign Up</title>
-  <!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="shortcut icon" href="/favicon.ico">
-
-<!-- iOS home screen icon -->
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="HireSloth">
-
-<!-- PWA manifest (Android/Chrome uses this for 192/512) -->
-<link rel="manifest" href="/site.webmanifest">
-  <!-- Help Google pick your site name -->
-<meta name="application-name" content="HireSloth">
-<meta property="og:site_name" content="HireSloth">
-
-<!-- Address bar color (light/dark) -->
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
-<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
-
-  <!-- Fonts: faster than @import -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-
+  <link rel="canonical" href="https://hiresloth.com/auth.html">
+  <meta name="description" content="Sign in or create a HireSloth account to post jobs.">
+  <link rel="icon" href="/favicon.ico">
+  <!-- Fonts & perf -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a"/>
@@ -58,17 +32,7 @@
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo">
-  <picture>
-    <source srcset="/logo.avif" type="image/avif">
-    <source srcset="/logo.webp" type="image/webp">
-    <img src="/logo.jpg"
-         alt="HireSloth Logo"
-         width="120" height="120"
-         loading="eager" fetchpriority="high" decoding="async">
-  </picture>
-</a>
-
+    <a href="index.html" class="logo"><img src="/logo.jpg" alt="HireSloth Logo" width="120" height="120"></a>
     <nav>
       <a href="index.html">Home</a>
       <a href="jobs.html">Vacancies</a>
@@ -139,53 +103,53 @@
   <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
-    const authBtn=document.getElementById("authBtn");
-    let currentUser=null;
+    const authBtn   = document.getElementById("authBtn");
+    const postJobBtn= document.getElementById("postJobBtn");
+    const myJobsBtn = document.getElementById("myJobsBtn");
 
-    async function initAuth(){
-      const { data:{ session } } = await supabase.auth.getSession();
-      currentUser=session?.user||null;
-      updateAuthBtn();
+    async function initAuthUI(){
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+
+      authBtn.textContent = user ? "Sign Out" : "Sign In";
+      authBtn.href = user ? "#" : "auth.html";
+      authBtn.onclick = user ? async (e) => {
+        e.preventDefault();
+        if (!confirm("Are you sure you want to sign out?")) return;
+        await supabase.auth.signOut();
+        location.href = "index.html";
+      } : null;
+
+      const gate = (el, target) => el && el.addEventListener("click", (e) => {
+        if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
+      });
+      gate(postJobBtn, "post-job.html");
+      gate(myJobsBtn, "my-jobs.html");
     }
-    function updateAuthBtn(){
-      if(currentUser){
-        authBtn.textContent="Sign Out"; authBtn.href="#";
-        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
-      }else{
-        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
-      }
-    }
-    supabase.auth.onAuthStateChange((event,session)=>{
-      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
-        currentUser=session?.user||null; updateAuthBtn();
-      }
-    });
-    initAuth();
+    initAuthUI();
+    supabase.auth.onAuthStateChange(() => initAuthUI());
 
     // Tabs
-    const tabSignin=document.getElementById("tab-signin");
-    const tabSignup=document.getElementById("tab-signup");
-    const panelSignin=document.getElementById("panel-signin");
-    const panelSignup=document.getElementById("panel-signup");
-    const params=new URLSearchParams(location.search);
-    const returnTo=params.get("returnTo")||"";
-
+    const tabSignin = document.getElementById("tab-signin");
+    const tabSignup = document.getElementById("tab-signup");
+    const panelSignin = document.getElementById("panel-signin");
+    const panelSignup = document.getElementById("panel-signup");
     function setTab(mode){
-      const isSignin=mode==="signin";
-      tabSignin.setAttribute("aria-selected",isSignin?"true":"false");
-      tabSignup.setAttribute("aria-selected",isSignin?"false":"true");
-      panelSignin.classList.toggle("active",isSignin);
-      panelSignup.classList.toggle("active",!isSignin);
-      (isSignin?document.getElementById("signinEmail"):document.getElementById("signupEmail"))?.focus();
-      history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}${returnTo?`&returnTo=${encodeURIComponent(returnTo)}`:""}`);
+      const isSignin = mode === "signin";
+      tabSignin.setAttribute("aria-selected", isSignin ? "true":"false");
+      tabSignup.setAttribute("aria-selected", isSignin ? "false":"true");
+      panelSignin.classList.toggle("active", isSignin);
+      panelSignup.classList.toggle("active", !isSignin);
+      (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
+      history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}`);
     }
-    tabSignin.addEventListener("click",()=>setTab("signin"));
-    tabSignup.addEventListener("click",()=>setTab("signup"));
-    setTab(params.get("mode")==="signup"?"signup":"signin");
+    tabSignin.addEventListener("click", ()=>setTab("signin"));
+    tabSignup.addEventListener("click", ()=>setTab("signup"));
+    (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
 
     // Show/Hide password
     document.getElementById("signinShowPw").addEventListener("change", e => {
@@ -195,50 +159,55 @@
       document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
     });
 
-    // Button lock helpers
+    // Helpers
     function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
     function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
+    const returnTo = new URLSearchParams(location.search).get("returnTo");
 
     // Signup
-    const signupForm=document.getElementById("signupForm");
-    const signupBtn=document.getElementById("signupBtn");
-    const signupStatus=document.getElementById("signupStatus");
+    const signupForm = document.getElementById("signupForm");
+    const signupBtn  = document.getElementById("signupBtn");
+    const signupStatus = document.getElementById("signupStatus");
     signupForm.addEventListener("submit", async (e)=>{
-      e.preventDefault(); signupStatus.textContent=""; lock(signupForm,signupBtn);
-      const email=document.getElementById("signupEmail").value.trim();
-      const password=document.getElementById("signupPassword").value.trim();
-      try{
+      e.preventDefault();
+      signupStatus.textContent = "";
+      lock(signupForm, signupBtn);
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value.trim();
+      try {
         const { error } = await supabase.auth.signUp({ email, password });
-        if(error) throw error;
-        signupStatus.textContent="✅ Sign up successful! Check your email for confirmation.";
-        signupStatus.style.color="green"; signupForm.reset(); setTab("signin");
-      }catch(err){
-        signupStatus.textContent="❌ "+(err.message||"Sign-up failed"); signupStatus.style.color="red";
-      }finally{ unlock(signupForm,signupBtn); }
+        if (error) throw error;
+        signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
+        signupStatus.style.color = "green";
+        signupForm.reset();
+        setTab("signin");
+      } catch (err) {
+        signupStatus.textContent = "❌ " + (err.message || "Sign-up failed");
+        signupStatus.style.color = "red";
+      } finally { unlock(signupForm, signupBtn); }
     });
 
     // Signin
-    const signinForm=document.getElementById("signinForm");
-    const signinBtn=document.getElementById("signinBtn");
-    const signinStatus=document.getElementById("signinStatus");
+    const signinForm = document.getElementById("signinForm");
+    const signinBtn  = document.getElementById("signinBtn");
+    const signinStatus = document.getElementById("signinStatus");
     signinForm.addEventListener("submit", async (e)=>{
-      e.preventDefault(); signinStatus.textContent=""; lock(signinForm,signinBtn);
-      const email=document.getElementById("signinEmail").value.trim();
-      const password=document.getElementById("signinPassword").value.trim();
-      try{
+      e.preventDefault();
+      signinStatus.textContent = "";
+      lock(signinForm, signinBtn);
+      const email = document.getElementById("signinEmail").value.trim();
+      const password = document.getElementById("signinPassword").value.trim();
+      try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if(error) throw error;
+        if (error) throw error;
         location.href = returnTo || "post-job.html";
-      }catch(err){
-        signinStatus.textContent="❌ "+(err.message||"Sign-in failed"); signinStatus.style.color="red";
-      }finally{ unlock(signinForm,signinBtn); }
+      } catch (err) {
+        signinStatus.textContent = "❌ " + (err.message || "Sign-in failed");
+        signinStatus.style.color = "red";
+      } finally { unlock(signinForm, signinBtn); }
     });
 
-    [tabSignin, tabSignup].forEach(btn=>{
-      btn.addEventListener("keydown",(ev)=>{
-        if(ev.key==="ArrowRight"||ev.key==="ArrowLeft"){ ev.preventDefault(); (btn===tabSignin?tabSignup:tabSignin).click(); }
-      });
-    });
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
   </script>
 </body>
 </html>
