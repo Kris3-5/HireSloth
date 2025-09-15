@@ -143,5 +143,14 @@
     // Optional: service worker
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
   </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+      // also dump caches created by old SWs
+      if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    });
+  }
+</script>
 </body>
 </html>
