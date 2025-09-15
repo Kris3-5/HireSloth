@@ -32,7 +32,22 @@
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo"><img src="/logo.jpg" alt="HireSloth Logo" width="120" height="120"></a>
+    <a href="index.html" class="logo">
+  <img
+    src="/logo.jpg?v=2"
+    alt="HireSloth Logo"
+    width="120"
+    height="120"
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
+    onerror="
+      if (!this.dataset.fallbackTried) {
+        this.dataset.fallbackTried = '1';
+        this.src = 'logo.jpg?v=2'; // try relative path as fallback
+      } else { this.onerror=null; }">
+</a>
+
     <nav>
       <a href="index.html">Home</a>
       <a href="jobs.html">Vacancies</a>
