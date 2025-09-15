@@ -52,19 +52,18 @@
 <body>
   <header>
   <a href="index.html" class="logo">
-    <picture>
-      <source srcset="/logo.avif" type="image/avif">
-      <source srcset="/logo.webp" type="image/webp">
-      <img
-        src="/logo.jpg"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async">
-    </picture>
-  </a>
+  <picture>
+    <source srcset="/logo.avif" type="image/avif">
+    <source srcset="/logo.webp" type="image/webp">
+    <img
+      src="/logo.jpg"
+      alt="HireSloth Logo"
+      width="120" height="120"
+      loading="eager" fetchpriority="high" decoding="async"
+      onerror="this.onerror=null; this.src='/logo.jpg';">
+  </picture>
+</a>
+
 
   <nav>
     <a href="index.html" class="active">Home</a>
