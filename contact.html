@@ -1,74 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Force HTTPS in production; allow localhost for dev -->
-<script>
-  if (location.protocol === 'http:' &&
-      location.hostname !== 'localhost' &&
-      location.hostname !== '127.0.0.1') {
-    location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-  }
-</script>
-
-<!-- Auto-upgrade any accidental http:// subresources to https:// -->
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
-  <title>Contact HireSloth</title>
-  <!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="shortcut icon" href="/favicon.ico">
-
-<!-- iOS home screen icon -->
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="HireSloth">
-
-<!-- PWA manifest (Android/Chrome uses this for 192/512) -->
-<link rel="manifest" href="/site.webmanifest">
-  <!-- Help Google pick your site name -->
-<meta name="application-name" content="HireSloth">
-<meta property="og:site_name" content="HireSloth">
-
-<!-- Address bar color (light/dark) -->
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
-<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
-
-<meta name="description" content="Questions or feedback? Contact the HireSloth team.">
-<link rel="canonical" href="https://hiresloth.com/contact.html">
-  <!-- Fonts: faster than @import -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script>
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <title>HireSloth - Contact</title>
+  <link rel="canonical" href="https://hiresloth.com/contact.html">
+  <meta name="description" content="Contact the HireSloth team with questions, feedback, or to report an issue.">
+  <link rel="icon" href="/favicon.ico">
+  <!-- Fonts & perf -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <header>
-   <a href="index.html" class="logo">
-  <picture>
-    <source srcset="/logo.avif" type="image/avif">
-    <source srcset="/logo.webp" type="image/webp">
-    <img src="/logo.jpg"
-         alt="HireSloth Logo"
-         width="120" height="120"
-         loading="eager" fetchpriority="high" decoding="async">
-  </picture>
-</a>
-
-   <nav>
-    <a href="index.html">Home</a>
-    <a href="jobs.html">Vacancies</a>
-    <a href="about.html">About</a>
-    <a href="contact.html" class="active">Contact</a>
-    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-    <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <a href="auth.html" id="authBtn">Sign In</a>
-   </nav>
+    <a href="index.html" class="logo"><img src="/logo.jpg" alt="HireSloth Logo" width="120" height="120"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html" class="active">Contact</a>
+      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+      <a href="post-job.html" id="postJobBtn">Post a Job</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
+    </nav>
   </header>
 
   <main class="content">
@@ -97,62 +59,78 @@
   <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
-    const authBtn=document.getElementById("authBtn");
-    let currentUser=null;
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    const myJobsBtn = document.getElementById("myJobsBtn");
 
-    async function initAuth(){
-      const { data:{ session } } = await supabase.auth.getSession();
-      currentUser=session?.user||null;
-      updateAuthBtn();
+    async function initAuthUI(){
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+
+      authBtn.textContent = user ? "Sign Out" : "Sign In";
+      authBtn.href = user ? "#" : "auth.html";
+      authBtn.onclick = user ? async (e) => {
+        e.preventDefault();
+        if (!confirm("Are you sure you want to sign out?")) return;
+        await supabase.auth.signOut();
+        location.href = "index.html";
+      } : null;
+
+      const gate = (el, target) => el && el.addEventListener("click", (e) => {
+        if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
+      });
+      gate(postJobBtn, "post-job.html");
+      gate(myJobsBtn, "my-jobs.html");
     }
-    function updateAuthBtn(){
-      if(currentUser){
-        authBtn.textContent="Sign Out"; authBtn.href="#";
-        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
-      }else{
-        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
-      }
-    }
-    supabase.auth.onAuthStateChange((event,session)=>{
-      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
-        currentUser=session?.user||null; updateAuthBtn();
-      }
-    });
-    initAuth();
+    initAuthUI();
+    supabase.auth.onAuthStateChange(() => initAuthUI());
 
-    // Prefill for job reports
-    (function(){
-      const params=new URLSearchParams(location.search);
-      const jobId=params.get("report_job"); if(!jobId) return;
-      document.getElementById("type").value="report";
-      document.getElementById("job_id").value=jobId;
-      const t=params.get("title")||""; const c=params.get("company")||"";
-      const preset=`Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
-      const msg=document.getElementById("message"); if(!msg.value) msg.value=preset;
+    (function prefillReport(){
+      const params = new URLSearchParams(location.search);
+      const jobId = params.get("report_job");
+      if (!jobId) return;
+      document.getElementById("type").value = "report";
+      document.getElementById("job_id").value = jobId;
+      const t = params.get("title") || "";
+      const c = params.get("company") || "";
+      const preset = `Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
+      const msg = document.getElementById("message");
+      if (!msg.value) msg.value = preset;
     })();
 
     // Submit
-    const form=document.getElementById("contactForm"); const statusEl=document.getElementById("formStatus");
-    const submitBtn=form.querySelector('button[type="submit"]');
-    const lock=()=>{ submitBtn.disabled=true; submitBtn.dataset.label=submitBtn.textContent; submitBtn.textContent="Sending…"; };
-    const unlock=()=>{ submitBtn.disabled=false; if(submitBtn.dataset.label) submitBtn.textContent=submitBtn.dataset.label; };
+    const form = document.getElementById("contactForm");
+    const statusEl = document.getElementById("formStatus");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const lock = () => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Sending…"; };
+    const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
 
-    form.addEventListener("submit", async (e)=>{
-      e.preventDefault(); lock();
-      const payload={ name:document.getElementById("name").value.trim(),
-                      email:document.getElementById("email").value.trim(),
-                      message:document.getElementById("message").value.trim(),
-                      type:document.getElementById("type").value||"message",
-                      job_id:document.getElementById("job_id").value||null };
-      const { error } = await supabase.from("messages").insert([payload]);
-      if (error){ statusEl.textContent="❌ Something went wrong. Please try again."; statusEl.style.color="red"; console.error(error); }
-      else { statusEl.textContent=payload.type==="report"?"✅ Thank you for your report. We’ll review it shortly.":"✅ Thank you! Your message has been sent."; statusEl.style.color="green"; form.reset(); }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      lock();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const message = document.getElementById("message").value.trim();
+      const type = document.getElementById("type").value || "message";
+      const job_id = document.getElementById("job_id").value || null;
+
+      const { error } = await supabase.from("messages").insert([{ name, email, message, type, job_id }]);
+      if (error) {
+        statusEl.textContent = "❌ Something went wrong. Please try again.";
+        statusEl.style.color = "red";
+      } else {
+        statusEl.textContent = type === "report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent.";
+        statusEl.style.color = "green";
+        form.reset();
+      }
       unlock();
     });
+
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
   </script>
 </body>
 </html>
