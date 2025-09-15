@@ -47,15 +47,31 @@
 <meta property="og:image" content="https://hiresloth.com/logo.jpg">
 <meta name="twitter:card" content="summary_large_image">
 
-<!-- Organization structured data -->
 <script type="application/ld+json">
 {
-  "@context":"https://schema.org",
-  "@type":"Organization",
-  "name":"HireSloth",
-  "url":"https://hiresloth.com/",
-  "logo":"https://hiresloth.com/logo.jpg",
-  "sameAs":[]
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "HireSloth",
+  "url": "https://hiresloth.com/",
+  "logo": "https://hiresloth.com/android-chrome-192x192.png",
+  "sameAs": [
+    "https://www.linkedin.com/company/your-company", 
+    "https://x.com/your-handle"
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "HireSloth",
+  "url": "https://hiresloth.com/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://hiresloth.com/jobs.html?keyword={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
 }
 </script>
 
