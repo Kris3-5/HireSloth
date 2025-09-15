@@ -1,66 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Force HTTPS in production; allow localhost for dev -->
-<script>
-  if (location.protocol === 'http:' &&
-      location.hostname !== 'localhost' &&
-      location.hostname !== '127.0.0.1') {
-    location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-  }
-</script>
-
-<!-- Auto-upgrade any accidental http:// subresources to https:// -->
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
-  <title>Vacancies — Latest Jobs | HireSloth</title>
-  <!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="shortcut icon" href="/favicon.ico">
-
-<!-- iOS home screen icon -->
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="HireSloth">
-
-<!-- PWA manifest (Android/Chrome uses this for 192/512) -->
-<link rel="manifest" href="/site.webmanifest">
-  <!-- Help Google pick your site name -->
-<meta name="application-name" content="HireSloth">
-<meta property="og:site_name" content="HireSloth">
-
-<!-- Address bar color (light/dark) -->
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
-<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
-
-<meta name="description" content="Browse fresh, privacy-friendly job listings. Filter by keyword, location, and remote roles.">
-<link rel="canonical" href="https://hiresloth.com/jobs.html">
-
-  <!-- Fonts: faster than @import -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script>
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <title>HireSloth - Vacancies</title>
+  <link rel="canonical" href="https://hiresloth.com/jobs.html">
+  <meta name="description" content="Browse current job openings on HireSloth. Filter by keyword, location, and remote roles.">
+  <link rel="icon" href="/favicon.ico">
+  <!-- Fonts & perf -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo">
-  <picture>
-    <source srcset="/logo.avif" type="image/avif">
-    <source srcset="/logo.webp" type="image/webp">
-    <img src="/logo.jpg"
-         alt="HireSloth Logo"
-         width="120" height="120"
-         loading="eager" fetchpriority="high" decoding="async">
-  </picture>
-</a>
-
+    <a href="index.html" class="logo"><img src="/logo.jpg" alt="HireSloth Logo" width="120" height="120" loading="eager" decoding="async"></a>
     <nav>
       <a href="index.html">Home</a>
       <a href="jobs.html" class="active">Vacancies</a>
@@ -89,75 +50,94 @@
   <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-    const SUPABASE_URL="https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
-    const authBtn=document.getElementById("authBtn");
-    let currentUser=null;
+    const jobsContainer = document.getElementById("jobsContainer");
+    const searchBtn = document.getElementById("searchBtn");
+    const authBtn = document.getElementById("authBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    const myJobsBtn = document.getElementById("myJobsBtn");
 
-    async function initAuth(){
-      const { data:{ session } } = await supabase.auth.getSession();
-      currentUser=session?.user||null;
-      updateAuthBtn();
+    async function initAuthUI(){
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+
+      authBtn.textContent = user ? "Sign Out" : "Sign In";
+      authBtn.href = user ? "#" : "auth.html";
+      authBtn.onclick = user ? async (e) => {
+        e.preventDefault();
+        if (!confirm("Are you sure you want to sign out?")) return;
+        await supabase.auth.signOut();
+        location.href = "index.html";
+      } : null;
+
+      const gate = (el, target) => el && el.addEventListener("click", (e) => {
+        if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
+      });
+      gate(postJobBtn, "post-job.html");
+      gate(myJobsBtn, "my-jobs.html");
     }
-    function updateAuthBtn(){
-      if(currentUser){
-        authBtn.textContent="Sign Out"; authBtn.href="#";
-        authBtn.onclick=async(e)=>{ e.preventDefault(); if(!confirm("Are you sure you want to log out?")) return; await supabase.auth.signOut(); location.href="index.html"; };
-      }else{
-        authBtn.textContent="Sign In"; authBtn.href="auth.html"; authBtn.onclick=null;
-      }
-    }
-    supabase.auth.onAuthStateChange((event,session)=>{
-      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
-        currentUser=session?.user||null; updateAuthBtn();
-      }
-    });
-    initAuth();
+    initAuthUI();
+    supabase.auth.onAuthStateChange(() => initAuthUI());
 
-    // Jobs list
-    const jobsContainer=document.getElementById("jobsContainer");
-    const esc=(s)=>(s??"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    const esc = (s) => (s ?? "").toString()
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-    async function loadJobs(keyword="",location="",remoteOnly=false){
-      jobsContainer.innerHTML="<p>Loading jobs...</p>";
-      let query=supabase.from("jobs").select("*").eq("approved",true).eq("is_active",true);
-      if(keyword)  query=query.ilike("title",`%${keyword}%`);
-      if(location) query=query.ilike("location",`%${location}%`);
-      if(remoteOnly) query=query.eq("remote",true);
-      const {data,error}=await query.order("created_at",{ascending:false});
-      if(error){ jobsContainer.innerHTML=`<p style="color:red;">Error loading jobs: ${esc(error.message)}</p>`; console.error(error); return; }
-      if(!data||data.length===0){ jobsContainer.innerHTML="<p>No jobs found.</p>"; return; }
-      jobsContainer.innerHTML=data.map(job=>{
-        const salary=job.salary?`<p><strong>Salary:</strong> ${esc(job.salary)}</p>`:"";
-        const resp=job.responsibilities?`<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>`:"";
-        const applyLink=job.contact_email?`<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: "+(job.title||"Position"))}">Apply via Email</a>`:"";
-        const reportLink=`<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title||"")}&company=${encodeURIComponent(job.company||"")}">Report</a>`;
+    async function loadJobs(keyword = "", location = "", remoteOnly = false) {
+      jobsContainer.innerHTML = "<p>Loading jobs...</p>";
+
+      let query = supabase.from("jobs").select("*").eq("approved", true).eq("is_active", true);
+      if (keyword)  query = query.ilike("title", `%${keyword}%`);
+      if (location) query = query.ilike("location", `%${location}%`);
+      if (remoteOnly) query = query.eq("remote", true);
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) {
+        jobsContainer.innerHTML = `<p style="color:red;">Error loading jobs: ${esc(error.message)}</p>`;
+        console.error(error);
+        return;
+      }
+      if (!data || data.length === 0) { jobsContainer.innerHTML = "<p>No jobs found.</p>"; return; }
+
+      jobsContainer.innerHTML = data.map((job) => {
+        const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+        const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
+        const applyLink = job.contact_email
+          ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
+          : "";
+        const reportLink = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title || "")}&company=${encodeURIComponent(job.company || "")}">Report</a>`;
+
         return `
           <div class="job-card">
             <h3>${esc(job.title)}</h3>
             <p><strong>Company:</strong> ${esc(job.company)}</p>
-            <p><strong>Location:</strong> ${esc(job.location||"N/A")} ${job.remote?"(Remote)":""}</p>
+            <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
             ${salary}
-            <p><strong>Summary:</strong> ${esc(job.description||"")}</p>
+            <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
             ${resp}
             <div class="actions">${applyLink} ${reportLink}</div>
           </div>`;
       }).join("");
     }
 
-    loadJobs();
-    const searchBtn=document.getElementById("searchBtn");
     function doSearch(){
-      const keyword=document.getElementById("keyword").value.trim();
-      const location=document.getElementById("location").value.trim();
-      const remoteOnly=document.getElementById("remote").checked;
-      loadJobs(keyword,location,remoteOnly);
+      const keyword = document.getElementById("keyword").value.trim();
+      const location = document.getElementById("location").value.trim();
+      const remoteOnly = document.getElementById("remote").checked;
+      loadJobs(keyword, location, remoteOnly);
     }
-    searchBtn.addEventListener("click",doSearch);
-    document.getElementById("keyword").addEventListener("keydown",e=>{ if(e.key==="Enter") doSearch(); });
-    document.getElementById("location").addEventListener("keydown",e=>{ if(e.key==="Enter") doSearch(); });
+    searchBtn.addEventListener("click", doSearch);
+    document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+    document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+
+    loadJobs();
+
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
   </script>
 </body>
 </html>
