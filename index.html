@@ -51,20 +51,31 @@
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo">
-      <img src="/logo.jpg" width="120" height="120" loading="eager" decoding="async">
-    </a>
+  <a href="index.html" class="logo">
+    <picture>
+      <source srcset="/logo.avif" type="image/avif">
+      <source srcset="/logo.webp" type="image/webp">
+      <img
+        src="/logo.jpg"
+        alt="HireSloth Logo"
+        width="120"
+        height="120"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async">
+    </picture>
+  </a>
 
-    <nav>
-      <a href="index.html" class="active">Home</a>
-      <a href="jobs.html">Vacancies</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" id="authBtn">Sign In</a>
-    </nav>
-  </header>
+  <nav>
+    <a href="index.html" class="active">Home</a>
+    <a href="jobs.html">Vacancies</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
+  </nav>
+</header>
 
   <section class="hero">
     <h1>Welcome to HireSloth</h1>
