@@ -139,5 +139,11 @@
 
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
   </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    // Ensure we register the new file (and replace any old one)
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  }
+ </script>
 </body>
 </html>
