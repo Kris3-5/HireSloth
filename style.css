@@ -336,3 +336,41 @@ img { max-width: 100%; height: auto; }
   form, .job-card { border-color: rgba(0,0,0,.25); }
   .btn, #postJobBtn { box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm); }
 }
+/* === Form readability fixes (light + dark) === */
+
+/* Always define explicit text/bg for fields */
+input, textarea, select {
+  color: #3C3525;              /* dark text for light background */
+  background: #fff;
+  caret-color: #3C3525;
+}
+
+/* Placeholder contrast */
+::placeholder { color: rgba(60,53,37,.6); }
+
+/* Autofill (Chrome/Edge/Safari) */
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #3C3525 !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark){
+  input, textarea, select {
+    background: #2a241e;       /* matches your dark cards */
+    color: #efe6d9;            /* your --ink in dark */
+    border-color: rgba(255,255,255,.18);
+    caret-color: #efe6d9;
+  }
+  ::placeholder { color: rgba(239,230,217,.6); }
+
+  /* Autofill in dark */
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: #efe6d9 !important;
+    box-shadow: 0 0 0 1000px #2a241e inset !important;
+  }
+}
