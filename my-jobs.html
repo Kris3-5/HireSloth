@@ -52,6 +52,7 @@
     <h1>My Job Listings</h1>
     <p>Here you can see and manage the jobs your company has posted.</p>
 
+    <div id="verifyBanner" class="job-card" style="margin-top:1rem; text-align:left;"></div>
     <div id="jobsList" class="jobs"></div>
   </main>
 
@@ -72,6 +73,22 @@
       location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
       throw new Error("Redirecting to auth");
     }
+    async function showVerifyBanner(){
+  const banner = document.getElementById("verifyBanner");
+  const { data } = await supabase.from("profiles").select("verified_until").eq("id", currentUser.id).maybeSingle();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  if (data?.verified_until && new Date(data.verified_until) >= today) {
+    banner.innerHTML = `
+      <p><span class="badge badge--verified"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>Verified</span>
+      &nbsp;Your employer badge is active until <strong>${new Date(data.verified_until).toLocaleDateString()}</strong>.</p>`;
+  } else {
+    banner.innerHTML = `
+      <p><strong>No active employer verification.</strong>
+      &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
+  }
+}
+showVerifyBanner();
 
     // Auth btn (confirm)
     authBtn.textContent = "Sign Out";
