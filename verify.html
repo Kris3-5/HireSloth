@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Get Verified – HireSloth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="robots" content="noindex,follow"/>
+  <link rel="stylesheet" href="style.css?v=20250912a"/>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo"><img src="/logo.jpg" alt="HireSloth Logo" width="120" height="120" loading="eager" decoding="async"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="my-jobs.html">My Jobs</a>
+      <a href="post-job.html">Post a Job</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h1>Verified Employer Badge</h1>
+    <p>Get a gold “Verified” badge on your listings for 12 months. One-off payment. No auto-renewal.</p>
+
+    <a id="verifyBtn" class="btn" href="#" rel="noopener">Continue to Checkout</a>
+    <p id="note" style="margin-top:1rem;"></p>
+  </main>
+
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+    const PAYMENT_LINK = "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00"; // e.g. https://buy.stripe.com/abc123
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+    });
+
+    const authBtn = document.getElementById("authBtn");
+    async function nav(){
+      try{
+        const { data:{ session }} = await supabase.auth.getSession();
+        const user = session?.user;
+        authBtn.textContent = user ? "Sign Out" : "Sign In";
+        authBtn.href = user ? "#" : "auth.html";
+        authBtn.onclick = user ? async (e)=>{ e.preventDefault(); if(!confirm("Sign out?"))return; await supabase.auth.signOut(); location.href="index.html"; } : null;
+      }catch{}
+    }
+    nav(); supabase.auth.onAuthStateChange(()=>nav());
+
+    const btn = document.getElementById("verifyBtn");
+    const note = document.getElementById("note");
+    (async ()=>{
+      const { data:{ session }} = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        btn.textContent = "Sign in to continue";
+        btn.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("verify.html");
+        return;
+      }
+      // Tag the Checkout session with your Supabase user id
+      const url = new URL(PAYMENT_LINK);
+      url.searchParams.set("client_reference_id", user.id);
+      if (user.email) url.searchParams.set("prefilled_email", user.email);
+      btn.href = url.toString();
+      note.textContent = "On successful payment, copy the 'client_reference_id' in Stripe (it equals your user id). Use the Admin page to mark your account verified.";
+    })();
+  </script>
+</body>
+</html>
