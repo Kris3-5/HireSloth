@@ -374,3 +374,21 @@ select:-webkit-autofill {
     box-shadow: 0 0 0 1000px #2a241e inset !important;
   }
 }
+/* ===== Verified badge ===== */
+.badge {
+  display:inline-flex; align-items:center; gap:.35rem;
+  font-weight:700; font-size:.78rem; line-height:1;
+  padding:.28rem .48rem; border-radius:999px; border:1px solid rgba(0,0,0,.08);
+  background:#fff;
+}
+.badge svg { width:14px; height:14px; display:block }
+.badge--verified {
+  background: #fff4d6;           /* light gold */
+  border-color: #e8cf86;
+  color:#7a5a18;
+}
+@media (prefers-color-scheme: dark){
+  .badge--verified {
+    background:#2b2416; border-color:#5b4a1c; color:#f1dea9;
+  }
+}
