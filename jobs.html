@@ -67,121 +67,108 @@
   <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-  // ✅ Your real project values
   const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
 
   const jobsContainer = document.getElementById("jobsContainer");
-  const searchBtn     = document.getElementById("searchBtn");
-  const authBtn       = document.getElementById("authBtn");
+  const searchBtn = document.getElementById("searchBtn");
+  const authBtn = document.getElementById("authBtn");
 
-  // --- Helpers ---
+  // Simple, non-flicker auth button only
+  async function updateNav(){
+    try{
+      const { data:{ session }} = await supabase.auth.getSession();
+      const user = session?.user;
+      authBtn.textContent = user ? "Sign Out" : "Sign In";
+      authBtn.href = user ? "#" : "auth.html";
+      authBtn.onclick = user ? async (e)=>{ e.preventDefault(); if(!confirm("Sign out?")) return; await supabase.auth.signOut(); location.href="index.html"; } : null;
+    }catch{
+      authBtn.textContent = "Sign In"; authBtn.href = "auth.html"; authBtn.onclick = null;
+    }
+  }
+  updateNav(); supabase.auth.onAuthStateChange(() => updateNav());
+
   const esc = (s) => (s ?? "").toString()
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-  const timeout = (p, ms=15000) =>
-    Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error("request-timeout")), ms))]);
-
-  // --- Nav: only switch sign-in/out text (no flicker) ---
-  async function updateNav(){
-    try {
-      const { data: { session } } = await timeout(supabase.auth.getSession(), 2000);
-      const user = session?.user;
-      authBtn.textContent = user ? "Sign Out" : "Sign In";
-      authBtn.href = user ? "#" : "auth.html";
-      authBtn.onclick = user ? async (e) => {
-        e.preventDefault();
-        if (!confirm("Are you sure you want to sign out?")) return;
-        await supabase.auth.signOut();
-        location.href = "index.html";
-      } : null;
-    } catch {
-      authBtn.textContent = "Sign In";
-      authBtn.href = "auth.html";
-      authBtn.onclick = null;
-    }
+  function verifiedBadge(){
+    return `
+      <span class="badge badge--verified" title="Verified employer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
+        Verified
+      </span>`;
   }
-  updateNav();
-  supabase.auth.onAuthStateChange(() => updateNav());
 
-  // --- Load jobs (robust, with fallback ordering and good errors) ---
+  function isVerified(profile){
+    if (!profile?.verified_until) return false;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const until = new Date(profile.verified_until);
+    return until >= today;
+  }
+
   async function loadJobs(keyword = "", location = "", remoteOnly = false) {
     jobsContainer.innerHTML = "<p>Loading jobs...</p>";
 
-    try {
-      // Base query: only approved + active (matches your RLS)
-      let q = supabase
-        .from("jobs")
-        .select("id,title,company,location,remote,salary,description,responsibilities,contact_email,created_at,approved,is_active")
-        .eq("approved", true)
-        .eq("is_active", true);
+    let query = supabase.from("jobs").select("*").eq("approved", true).eq("is_active", true);
+    if (keyword)  query = query.ilike("title", `%${keyword}%`);
+    if (location) query = query.ilike("location", `%${location}%`);
+    if (remoteOnly) query = query.eq("remote", true);
 
-      if (keyword)  q = q.ilike("title", `%${keyword}%`);
-      if (location) q = q.ilike("location", `%${location}%`);
-      if (remoteOnly) q = q.eq("remote", true);
+    const { data: jobs, error } = await query.order("created_at", { ascending: false });
+    if (error) { jobsContainer.innerHTML = `<p style="color:red">Error: ${esc(error.message)}</p>`; return; }
+    if (!jobs?.length) { jobsContainer.innerHTML = "<p>No jobs found.</p>"; return; }
 
-      // Try order by created_at first; if that column doesn't exist, fallback to id
-      let { data, error } = await timeout(q.order("created_at", { ascending: false }).limit(100));
-      if (error && /created_at/i.test(error.message || "")) {
-        ({ data, error } = await timeout(
-          q.order("id", { ascending: false }).limit(100)
-        ));
-      }
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        jobsContainer.innerHTML = "<p>No jobs found yet (or none approved). Check back soon.</p>";
-        return;
-      }
-
-      jobsContainer.innerHTML = data.map((job) => {
-        const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
-        const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
-        const applyLink = job.contact_email
-          ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
-          : "";
-        const reportLink = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title || "")}&company=${encodeURIComponent(job.company || "")}">Report</a>`;
-
-        return `
-          <div class="job-card">
-            <h3>${esc(job.title)}</h3>
-            <p><strong>Company:</strong> ${esc(job.company)}</p>
-            <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
-            ${salary}
-            <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
-            ${resp}
-            <div class="actions">${applyLink} ${reportLink}</div>
-          </div>
-        `;
-      }).join("");
-    } catch (err) {
-      console.error("[jobs] load error:", err);
-      const msg =
-        err?.message === "request-timeout"
-          ? "Request timed out. Check your connection and try again."
-          : (err?.message || "Unknown error while loading jobs.");
-      jobsContainer.innerHTML = `<p style="color:red;">Error loading jobs: ${esc(msg)}</p>`;
+    // Fetch relevant profiles in one call
+    const userIds = [...new Set(jobs.map(j=>j.user_id).filter(Boolean))];
+    let profMap = {};
+    if (userIds.length) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, verified_until")
+        .in("id", userIds);
+      (profiles||[]).forEach(p => profMap[p.id] = p);
     }
+
+    jobsContainer.innerHTML = jobs.map(job => {
+      const prof = profMap[job.user_id];
+      const badge = isVerified(prof) ? " " + verifiedBadge() : "";
+      const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+      const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
+      const apply = job.contact_email
+        ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
+        : "";
+      const report = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title||"")}&company=${encodeURIComponent(job.company||"")}">Report</a>`;
+
+      return `
+        <div class="job-card">
+          <h3>${esc(job.title)}</h3>
+          <p><strong>Company:</strong> ${esc(job.company || "")}${badge}</p>
+          <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
+          ${salary}
+          <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
+          ${resp}
+          <div class="actions">${apply} ${report}</div>
+        </div>
+      `;
+    }).join("");
   }
 
-  // Initial load
+  // Initial + search events
   loadJobs();
-
-  // Search interactions
-  function doSearch() {
-    const keyword   = document.getElementById("keyword").value.trim();
-    const loc       = document.getElementById("location").value.trim();
-    const remoteOnly= document.getElementById("remote").checked;
-    loadJobs(keyword, loc, remoteOnly);
+  function doSearch(){
+    const k = document.getElementById("keyword").value.trim();
+    const l = document.getElementById("location").value.trim();
+    const r = document.getElementById("remote").checked;
+    loadJobs(k,l,r);
   }
   searchBtn.addEventListener("click", doSearch);
   document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
   document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
 </script>
+
 </body>
 </html>
