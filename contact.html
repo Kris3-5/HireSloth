@@ -22,20 +22,20 @@
 <body>
   <header>
     <a href="index.html" class="logo">
-  <img
-    src="/logo.jpg?v=2"
-    alt="HireSloth Logo"
-    width="120"
-    height="120"
-    loading="eager"
-    fetchpriority="high"
-    decoding="async"
-    onerror="
-      if (!this.dataset.fallbackTried) {
-        this.dataset.fallbackTried = '1';
-        this.src = 'logo.jpg?v=2'; // try relative path as fallback
-      } else { this.onerror=null; }">
-</a>
+      <img
+        src="/logo.jpg?v=2"
+        alt="HireSloth Logo"
+        width="120"
+        height="120"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        onerror="
+          if (!this.dataset.fallbackTried) {
+            this.dataset.fallbackTried = '1';
+            this.src = 'logo.jpg?v=2'; // try relative path as fallback
+          } else { this.onerror=null; }">
+    </a>
 
     <nav>
       <a href="index.html">Home</a>
@@ -86,6 +86,7 @@
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user || null;
 
+      // Auth button (no flicker)
       authBtn.textContent = user ? "Sign Out" : "Sign In";
       authBtn.href = user ? "#" : "auth.html";
       authBtn.onclick = user ? async (e) => {
@@ -95,15 +96,23 @@
         location.href = "index.html";
       } : null;
 
-      const gate = (el, target) => el && el.addEventListener("click", (e) => {
-        if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
-      });
+      // Gate protected links — use onclick so handlers don't stack
+      const gate = (el, target) => {
+        if (!el) return;
+        el.onclick = (e) => {
+          if (!user) {
+            e.preventDefault();
+            location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
+          }
+        };
+      };
       gate(postJobBtn, "post-job.html");
       gate(myJobsBtn, "my-jobs.html");
     }
     initAuthUI();
     supabase.auth.onAuthStateChange(() => initAuthUI());
 
+    // Prefill report
     (function prefillReport(){
       const params = new URLSearchParams(location.search);
       const jobId = params.get("report_job");
@@ -145,13 +154,10 @@
       unlock();
     });
 
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+    // Service worker (single registration)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(()=>{});
+    }
   </script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    // Ensure we register the new file (and replace any old one)
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-  }
-</script>
 </body>
 </html>
