@@ -140,40 +140,42 @@
       return user;
     }
 
-    async function showVerifyBanner(currentUser){
-      const banner = document.getElementById("verifyBanner");
-      if (!banner) return;
+    async function showVerifyBanner(){
+  const banner = document.getElementById("verifyBanner");
+  if (!banner) return;
 
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("verified_until")
-          .eq("id", currentUser.id)
-          .maybeSingle();
+  // Show a CTA immediately (no empty box)
+  banner.innerHTML = `
+    <p><strong>No active employer verification.</strong>
+    &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
 
-        if (error) throw error;
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("verified_until")
+      .eq("id", currentUser.id)
+      .maybeSingle();
 
-        const today = new Date(); today.setHours(0,0,0,0);
-        const until = data?.verified_until ? new Date(data.verified_until) : null;
-
-        if (until && until >= today) {
-          banner.innerHTML = `
-            <p>
-              <span class="badge badge--verified" title="Verified employer">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
-                Verified
-              </span>
-              &nbsp;Your employer badge is active until <strong>${until.toLocaleDateString()}</strong>.
-            </p>`;
-        } else {
-          banner.innerHTML = `
-            <p><strong>No active employer verification.</strong>
-            &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
-        }
-      } catch (e) {
-        console.warn("verify banner error:", e?.message || e);
-      }
+    if (error) {
+      console.warn("verify banner read:", error.message);
+      return; // keep the CTA
     }
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const until = data?.verified_until ? new Date(data.verified_until) : null;
+
+    if (until && until >= today) {
+      banner.innerHTML = `
+        <p><span class="badge badge--verified">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
+          Verified
+        </span>
+        &nbsp;Your employer badge is active until <strong>${until.toLocaleDateString()}</strong>.</p>`;
+    }
+  } catch (e) {
+    console.warn("verify banner error:", e?.message || e);
+  }
+}
 
     async function loadJobs(currentUser) {
       jobsList.innerHTML = "<p>Loading jobs...</p>";
