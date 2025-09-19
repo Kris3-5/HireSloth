@@ -4,9 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Force HTTPS (GitHub Pages will also HSTS once HTTPS is enforced) -->
+  <!-- Force HTTPS (except localhost) -->
   <script>
-    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
@@ -15,7 +17,9 @@
   <title>HireSloth — Privacy-first Job Board</title>
   <meta name="description" content="Privacy-first job search. Listings expire in 30 days. Apply directly to companies via email.">
   <link rel="canonical" href="https://hiresloth.com/">
-  <link rel="preload" as="image" href="/logo.jpg?v=1" imagesrcset="/logo.jpg?v=1">
+
+  <!-- Preload the exact logo version you use below -->
+  <link rel="preload" as="image" href="/logo.jpg?v=2">
 
   <!-- Favicons / PWA -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -25,7 +29,7 @@
   <link rel="manifest" href="/site.webmanifest">
   <meta name="application-name" content="HireSloth">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#2a241e">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
 
   <!-- Social -->
   <meta property="og:type" content="website">
@@ -36,14 +40,14 @@
   <meta property="og:site_name" content="HireSloth">
   <meta name="twitter:card" content="summary_large_image">
 
-  <!-- Fonts (faster than @import in CSS) -->
+  <!-- Fonts (faster than @import) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- Performance -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin> <!-- replace with your real Supabase URL if not already -->
 
   <!-- OpenSearch (optional) -->
   <link rel="search" type="application/opensearchdescription+xml" title="HireSloth Jobs" href="/opensearch.xml">
@@ -51,23 +55,23 @@
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
-  <header>
+<header>
   <a href="index.html" class="logo">
-  <img
-    src="/logo.jpg?v=2"
-    alt="HireSloth Logo"
-    width="120"
-    height="120"
-    loading="eager"
-    fetchpriority="high"
-    decoding="async"
-    onerror="
-      if (!this.dataset.fallbackTried) {
-        this.dataset.fallbackTried = '1';
-        this.src = 'logo.jpg?v=2'; // try relative path as fallback
-      } else { this.onerror=null; }">
-</a>
-    
+    <img
+      src="/logo.jpg?v=2"
+      alt="HireSloth Logo"
+      width="120"
+      height="120"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      onerror="
+        if (!this.dataset.fallbackTried) {
+          this.dataset.fallbackTried = '1';
+          this.src = 'logo.jpg?v=2'; // try relative path as fallback
+        } else { this.onerror=null; }">
+  </a>
+
   <nav>
     <a href="index.html" class="active">Home</a>
     <a href="jobs.html">Vacancies</a>
@@ -79,78 +83,81 @@
   </nav>
 </header>
 
-  <section class="hero">
-    <h1>Welcome to HireSloth</h1>
-    <p>Privacy-first job search. No data selling. Just opportunities that matter.</p>
-    <div class="cta-buttons">
-      <a href="jobs.html" class="btn">View Vacancies</a>
-      <a href="post-job.html" class="btn btn-alt" id="heroPostBtn">Post a Job</a>
-    </div>
-  </section>
+<section class="hero">
+  <h1>Welcome to HireSloth</h1>
+  <p>Privacy-first job search. No data selling. Just opportunities that matter.</p>
+  <div class="cta-buttons">
+    <a href="jobs.html" class="btn">View Vacancies</a>
+    <a href="post-job.html" class="btn btn-alt" id="heroPostBtn">Post a Job</a>
+  </div>
+</section>
 
-  <main class="content">
-    <h2>Why HireSloth?</h2>
-    <p>
-      HireSloth is a calm and trustworthy place for job seekers and companies.<br>
-      Listings expire automatically after 30 days, and job seekers apply directly to companies via email.
-    </p>
-  </main>
+<main class="content">
+  <h2>Why HireSloth?</h2>
+  <p>
+    HireSloth is a calm and trustworthy place for job seekers and companies.<br>
+    Listings expire automatically after 30 days, and job seekers apply directly to companies via email.
+  </p>
+</main>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";            // ← your real URL
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";       // ← your real anon key
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-    const authBtn = document.getElementById("authBtn");
-    const myJobsBtn = document.getElementById("myJobsBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const heroPostBtn = document.getElementById("heroPostBtn");
+  // 🔧 Replace with your real values if not already
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
 
-    async function initAuthUI(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
 
-      // Auth button (confirm on sign out)
-      authBtn.textContent = user ? "Sign Out" : "Sign In";
-      authBtn.href = user ? "#" : "auth.html";
-      authBtn.onclick = user ? async (e) => {
-        e.preventDefault();
-        if (!confirm("Are you sure you want to sign out?")) return;
-        await supabase.auth.signOut();
-        location.href = "index.html";
-      } : null;
+  const authBtn    = document.getElementById("authBtn");
+  const myJobsBtn  = document.getElementById("myJobsBtn");
+  const postJobBtn = document.getElementById("postJobBtn");
+  const heroPostBtn= document.getElementById("heroPostBtn");
 
-      // Gate protected pages: intercept click if signed out
-      const gate = (el, target) => el && el.addEventListener("click", (e) => {
-        if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
-      });
-      gate(myJobsBtn, "my-jobs.html");
-      gate(postJobBtn, "post-job.html");
-      gate(heroPostBtn, "post-job.html");
-    }
-    initAuthUI();
-    supabase.auth.onAuthStateChange(() => initAuthUI());
+  async function initAuthUI() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user || null;
 
-    // Optional: service worker
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
-  </script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
-      // also dump caches created by old SWs
-      if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-    });
+    // Auth button (confirm on sign out)
+    authBtn.textContent = user ? "Sign Out" : "Sign In";
+    authBtn.href = user ? "#" : "auth.html";
+    authBtn.onclick = user ? async (e) => {
+      e.preventDefault();
+      if (!confirm("Are you sure you want to sign out?")) return;
+      await supabase.auth.signOut();
+      location.href = "index.html";
+    } : null;
+
+    // Gate protected pages (overwrite handler to avoid stacking listeners)
+    const gate = (el, target) => {
+      if (!el) return;
+      el.onclick = (e) => {
+        if (!user) {
+          e.preventDefault();
+          location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
+        }
+        // if logged-in, default link behavior proceeds
+      };
+    };
+    gate(myJobsBtn, "my-jobs.html");
+    gate(postJobBtn, "post-job.html");
+    gate(heroPostBtn, "post-job.html");
   }
+
+  initAuthUI();
+  supabase.auth.onAuthStateChange(() => initAuthUI());
 </script>
-  <script>
+
+<!-- Single service worker registration (no duplicates) -->
+<script>
   if ('serviceWorker' in navigator) {
-    // Ensure we register the new file (and replace any old one)
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
   }
 </script>
 </body>
 </html>
+
