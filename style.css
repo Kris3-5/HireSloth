@@ -392,3 +392,16 @@ select:-webkit-autofill {
     background:#2b2416; border-color:#5b4a1c; color:#f1dea9;
   }
 }
+/* Keep form controls’ typography consistent across browsers */
+button, input, textarea, select { font: inherit }
+
+/* iOS: avoid zoom-on-focus for small inputs (keeps 16px min) */
+input, textarea { font-size: 16px }
+
+/* Dark mode: subtle border for generic .badge (not the gold verified pill) */
+@media (prefers-color-scheme: dark){
+  .badge { border-color: rgba(255,255,255,.18); background:#241e18; color:#efe6d9; }
+}
+
+/* Make text inputs look consistent on Safari/Chrome mobile */
+input[type="text"], input[type="search"] { appearance: none; -webkit-appearance: none; }
