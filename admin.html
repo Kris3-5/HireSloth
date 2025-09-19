@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <title>Admin – HireSloth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Don’t let search engines index this -->
   <meta name="robots" content="noindex,nofollow" />
-
-  <!-- Force HTTPS (except localhost) -->
   <script>
     if (location.protocol === 'http:' &&
         location.hostname !== 'localhost' &&
@@ -16,321 +13,268 @@
     }
   </script>
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
-  <!-- Favicons / styles -->
   <link rel="icon" href="/favicon.ico">
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
-  <header>
-    <a href="index.html" class="logo">
-      <img
-        src="/logo.jpg?v=2"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        onerror="
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = '1';
-            this.src = 'logo.jpg?v=2'; // try relative path as fallback
-          } else { this.onerror=null; }">
-    </a>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="jobs.html">Vacancies</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" id="authBtn">Sign In</a>
-    </nav>
-  </header>
+<header>
+  <a href="index.html" class="logo">
+    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  </a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="jobs.html">Vacancies</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
+  </nav>
+</header>
 
-  <main class="content" style="text-align:left">
-    <h1>Admin Dashboard</h1>
-    <p class="visually-hidden" id="adminStatus" aria-live="polite"></p>
+<main class="content" style="text-align:left">
+  <h1>Admin Dashboard</h1>
+  <p class="visually-hidden" id="adminStatus" aria-live="polite"></p>
 
-    <section id="guard"></section>
+  <section id="guard"></section>
 
-    <section id="pendingSection" style="display:none;">
-      <h2>Pending approvals</h2>
-      <div class="jobs" id="pendingList"></div>
-    </section>
+  <section id="pendingSection" style="display:none;">
+    <h2>Pending approvals</h2>
+    <div class="jobs" id="pendingList"></div>
+  </section>
 
-    <section style="margin-top:2rem;">
-      <h2>Mark employer verified (by User ID)</h2>
-      <form id="verifyByIdForm" style="max-width:560px;margin:1rem 0;">
-        <label for="verifUserId">Supabase User ID</label>
-        <input type="text" id="verifUserId" required placeholder="paste client_reference_id from Stripe">
-        <label for="verifUntilId">Verified until</label>
-        <input type="date" id="verifUntilId" required>
-        <button type="submit">Save</button>
-      </form>
-      <p id="verifyByIdMsg" aria-live="polite"></p>
-    </section>
+  <section style="margin-top:2rem;">
+    <h2>Mark employer verified (by User ID)</h2>
+    <form id="verifyByIdForm" style="max-width:560px;margin:1rem 0;">
+      <label for="verifUserId">Supabase User ID</label>
+      <input type="text" id="verifUserId" required placeholder="paste client_reference_id from Stripe">
+      <label for="verifUntilId">Verified until</label>
+      <input type="date" id="verifUntilId" required>
+      <button type="submit">Save</button>
+    </form>
+    <p id="verifyByIdMsg" aria-live="polite"></p>
+  </section>
 
-    <section id="recentSection" style="display:none; margin-top:2rem;">
-      <h2>Recent jobs</h2>
-      <div class="jobs" id="recentList"></div>
-    </section>
-  </main>
+  <section id="recentSection" style="display:none; margin-top:2rem;">
+    <h2>Recent jobs</h2>
+    <div class="jobs" id="recentList"></div>
+  </section>
+</main>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-    // 🔧 Replace with your real values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";       // e.g. https://abc123.supabase.co
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
 
-    const authBtn        = document.getElementById("authBtn");
-    const guardEl        = document.getElementById("guard");
-    const adminStatus    = document.getElementById("adminStatus");
-    const pendingSection = document.getElementById("pendingSection");
-    const recentSection  = document.getElementById("recentSection");
-    const pendingList    = document.getElementById("pendingList");
-    const recentList     = document.getElementById("recentList");
+  const guardEl = document.getElementById("guard");
+  const adminStatus = document.getElementById("adminStatus");
+  const pendingSection = document.getElementById("pendingSection");
+  const recentSection = document.getElementById("recentSection");
+  const pendingList = document.getElementById("pendingList");
+  const recentList = document.getElementById("recentList");
 
-    const FALLBACK_MS = 2000;
-    const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(()=>rej(new Error("auth-timeout")), ms))]);
+  function esc(s){ return (s ?? "").toString()
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
-    // Minimal, non-flickery nav: only toggle Sign In/Out text, keep other buttons visible
-    async function initNav() {
-      try {
-        const { data: { session } } = await timeout(supabase.auth.getSession(), FALLBACK_MS);
-        const user = session?.user;
-        authBtn.textContent = user ? "Sign Out" : "Sign In";
-        authBtn.href = user ? "#" : "auth.html";
-        authBtn.onclick = user ? async (e) => {
-          e.preventDefault();
-          if (!confirm("Are you sure you want to sign out?")) return;
-          await supabase.auth.signOut();
-          location.href = "index.html";
-        } : null;
-      } catch {
-        authBtn.textContent = "Sign In";
-        authBtn.href = "auth.html";
-        authBtn.onclick = null;
-      }
+  async function requireAdmin() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) {
+      location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("admin.html");
+      throw new Error("Redirecting to sign in");
     }
+    const { data, error } = await supabase
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    function esc(s){ return (s ?? "").toString()
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+    if (error) throw error;
 
-    async function requireAdmin() {
-      // 1) Must be signed in
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) {
-        location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("admin.html");
-        throw new Error("Redirecting to sign in");
-      }
-      // 2) Must be listed in public.admins
-      const { data, error } = await supabase
-        .from("admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        guardEl.innerHTML = `
-          <p style="color:#a33;"><strong>Access denied.</strong> You’re signed in, but not an admin.</p>
-          <p><a class="btn" href="index.html">Back to site</a></p>
-        `;
-        throw new Error("Not admin");
-      }
-
-      // show sections
-      pendingSection.style.display = "block";
-      recentSection.style.display  = "block";
-      guardEl.innerHTML = "";
-      return user;
-    }
-
-    function setTodayAsMinDate(inputEl){
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,'0');
-      const dd = String(d.getDate()).padStart(2,'0');
-      inputEl.min = `${yyyy}-${mm}-${dd}`;
-    }
-
-    function jobCard(job, adminActions = true){
-      const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
-      const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
-      const status = `
-        <small>
-          ${job.approved ? "✅ Approved" : "⏳ Pending"}
-          • ${job.is_active ? "🟢 Active" : "⚪ Inactive"}
-          • Expires: ${job.expires_at ? new Date(job.expires_at).toLocaleDateString() : "—"}
-        </small>
+    if (!data) {
+      guardEl.innerHTML = `
+        <p style="color:#a33;"><strong>Access denied.</strong> You’re signed in, but not an admin.</p>
+        <p><a class="btn" href="index.html">Back to site</a></p>
       `;
-      const actions = adminActions ? `
-        <div class="actions" style="margin-top:.5rem">
-          <button class="btn" data-action="approve"    data-id="${job.id}">Approve</button>
-          <button class="btn" data-action="deactivate" data-id="${job.id}">Deactivate</button>
-          <button class="btn secondary" data-action="delete" data-id="${job.id}">Delete</button>
-        </div>
-      ` : "";
-      return `
-        <div class="job-card" id="job-${job.id}">
-          <h3>${esc(job.title)}</h3>
-          <p><strong>Company:</strong> ${esc(job.company || "")}</p>
-          <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
-          ${salary}
-          <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
-          ${resp}
-          ${status}
-          ${actions}
-        </div>
-      `;
+      throw new Error("Not admin");
     }
 
-    async function loadPending(){
-      pendingList.innerHTML = "<p>Loading…</p>";
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("approved", false)
-        .order("created_at", { ascending: false });
+    pendingSection.style.display = "block";
+    recentSection.style.display = "block";
+    guardEl.innerHTML = "";
+    return user;
+  }
 
-      if (error) {
-        pendingList.innerHTML = `<p style="color:red;">Error: ${esc(error.message)}</p>`;
-        return;
-      }
+  function jobCard(job, adminActions = true){
+    const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+    const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
+    const status = `
+      <small>
+        ${job.approved ? "✅ Approved" : "⏳ Pending"}
+        • ${job.is_active ? "🟢 Active" : "⚪ Inactive"}
+        • Expires: ${job.expires_at ? new Date(job.expires_at).toLocaleDateString() : "—"}
+      </small>
+    `;
+    const actions = adminActions ? `
+      <div class="actions" style="margin-top:.5rem">
+        <button class="btn" data-action="approve" data-id="${job.id}">Approve</button>
+        <button class="btn" data-action="deactivate" data-id="${job.id}">Deactivate</button>
+        <button class="btn secondary" data-action="delete" data-id="${job.id}">Delete</button>
+      </div>
+    ` : "";
+    return `
+      <div class="job-card" id="job-${job.id}">
+        <h3>${esc(job.title)}</h3>
+        <p><strong>Company:</strong> ${esc(job.company || "")}</p>
+        <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
+        ${salary}
+        <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
+        ${resp}
+        ${status}
+        ${actions}
+      </div>
+    `;
+  }
 
-      if (!data || data.length === 0) {
-        pendingList.innerHTML = "<p>No pending jobs 🎉</p>";
-        return;
-      }
+  async function loadPending(){
+    pendingList.innerHTML = "<p>Loading…</p>";
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("approved", false)
+      .order("created_at", { ascending: false });
 
-      pendingList.innerHTML = data.map(j => jobCard(j, true)).join("");
-      wireButtons(pendingList);
-    }
+    if (error) { pendingList.innerHTML = `<p style="color:red;">Error: ${esc(error.message)}</p>`; return; }
+    if (!data || data.length === 0) { pendingList.innerHTML = "<p>No pending jobs 🎉</p>"; return; }
 
-    async function loadRecent(){
-      recentList.innerHTML = "<p>Loading…</p>";
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(12);
+    pendingList.innerHTML = data.map(j => jobCard(j, true)).join("");
+    wireButtons(pendingList);
+  }
 
-      if (error) {
-        recentList.innerHTML = `<p style="color:red;">Error: ${esc(error.message)}</p>`;
-        return;
-      }
+  async function loadRecent(){
+    recentList.innerHTML = "<p>Loading…</p>";
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(12);
 
-      if (!data || data.length === 0) {
-        recentList.innerHTML = "<p>No jobs yet.</p>";
-        return;
-      }
+    if (error) { recentList.innerHTML = `<p style="color:red;">Error: ${esc(error.message)}</p>`; return; }
+    if (!data || data.length === 0) { recentList.innerHTML = "<p>No jobs yet.</p>"; return; }
 
-      recentList.innerHTML = data.map(j => jobCard(j, true)).join("");
-      wireButtons(recentList);
-    }
+    recentList.innerHTML = data.map(j => jobCard(j, true)).join("");
+    wireButtons(recentList);
+  }
 
-    function wireButtons(container){
-      container.querySelectorAll("button[data-action]").forEach(btn=>{
-        btn.addEventListener("click", async (e)=>{
-          const el = e.currentTarget;
-          const action = el.dataset.action;
-          const id = el.dataset.id;
-          el.disabled = true;
-          try {
-            if (action === "approve") {
-              const { error } = await supabase.from("jobs").update({ approved: true, is_active: true }).eq("id", id);
-              if (error) throw error;
-              adminStatus.textContent = "Approved ✔";
-            } else if (action === "deactivate") {
-              const { error } = await supabase.from("jobs").update({ is_active: false }).eq("id", id);
-              if (error) throw error;
-              adminStatus.textContent = "Deactivated";
-            } else if (action === "delete") {
-              if (!confirm("Delete this job permanently?")) { el.disabled = false; return; }
-              const { error } = await supabase.from("jobs").delete().eq("id", id);
-              if (error) throw error;
-              adminStatus.textContent = "Deleted";
-            }
-          } catch (err) {
-            alert("Error: " + (err.message || err));
-          } finally {
-            await Promise.all([loadPending(), loadRecent()]);
-          }
-        });
-      });
-    }
-
-    function wireVerifyByIdForm(){
-      const form   = document.getElementById("verifyByIdForm");
-      const userIdEl = document.getElementById("verifUserId");
-      const untilEl  = document.getElementById("verifUntilId");
-      const msgEl    = document.getElementById("verifyByIdMsg");
-      if (!form) return;
-
-      // Prevent past dates
-      setTodayAsMinDate(untilEl);
-
-      form.addEventListener("submit", async (e)=>{
-        e.preventDefault();
-        msgEl.textContent = "";
-        msgEl.style.color = "";
-
-        const userId = (userIdEl.value || "").trim();
-        const until  = (untilEl.value || "").trim(); // YYYY-MM-DD
-
-        if (!userId || !until) return;
-
-        // Optional client-side date check
-        const today = new Date(); today.setHours(0,0,0,0);
-        const untilDate = new Date(until + "T00:00:00Z");
-        if (isNaN(untilDate) || untilDate < today) {
-          msgEl.style.color = "red";
-          msgEl.textContent = "Please choose today or a future date.";
-          return;
-        }
-
+  function wireButtons(container){
+    container.querySelectorAll("button[data-action]").forEach(btn=>{
+      btn.addEventListener("click", async (e)=>{
+        const el = e.currentTarget;
+        const action = el.dataset.action;
+        const id = el.dataset.id;
+        el.disabled = true;
         try {
-          // Upsert (create if missing, else update)
-          const { error } = await supabase
-            .from("profiles")
-            .upsert([{ id: userId, verified_until: until }], { onConflict: "id" });
-
-          if (error) throw error;
-
-          msgEl.style.color = "green";
-          msgEl.textContent = "Verified until saved ✓";
-          form.reset();
-          setTodayAsMinDate(untilEl);
+          if (action === "approve") {
+            const { error } = await supabase.from("jobs").update({ approved: true, is_active: true }).eq("id", id);
+            if (error) throw error;
+            adminStatus.textContent = "Approved ✔";
+          } else if (action === "deactivate") {
+            const { error } = await supabase.from("jobs").update({ is_active: false }).eq("id", id);
+            if (error) throw error;
+            adminStatus.textContent = "Deactivated";
+          } else if (action === "delete") {
+            if (!confirm("Delete this job permanently?")) return;
+            const { error } = await supabase.from("jobs").delete().eq("id", id);
+            if (error) throw error;
+            adminStatus.textContent = "Deleted";
+          }
         } catch (err) {
-          msgEl.style.color = "red";
-          msgEl.textContent = "Error: " + (err?.message || err);
+          alert("Error: " + (err.message || err));
+        } finally {
+          await Promise.all([loadPending(), loadRecent()]);
         }
       });
-    }
+    });
+  }
 
-    // Boot
-    (async ()=>{
-      await initNav();
-      try {
-        await requireAdmin();
-        wireVerifyByIdForm();                     // ← wire form AFTER admin confirmed
-        await Promise.all([loadPending(), loadRecent()]);
-      } catch (err) {
-        console.warn(err?.message || err);
+  function setTodayAsMinDate(inputEl){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    inputEl.min = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function wireVerifyByIdForm(){
+    const form = document.getElementById("verifyByIdForm");
+    const userIdEl = document.getElementById("verifUserId");
+    const untilEl  = document.getElementById("verifUntilId");
+    const msgEl    = document.getElementById("verifyByIdMsg");
+    if (!form) return;
+
+    setTodayAsMinDate(untilEl);
+
+    form.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      msgEl.textContent = "";
+      msgEl.style.color = "";
+
+      const userId = (userIdEl.value || "").trim();
+      const until  = (untilEl.value || "").trim();
+
+      if (!userId || !until) return;
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      const untilDate = new Date(until + "T00:00:00Z");
+      if (isNaN(untilDate) || untilDate < today) {
+        msgEl.style.color = "red";
+        msgEl.textContent = "Please choose today or a future date.";
+        return;
       }
-    })();
-  </script>
+
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .upsert([{ id: userId, verified_until: until }], { onConflict: "id" });
+
+        if (error) throw error;
+
+        msgEl.style.color = "green";
+        msgEl.textContent = "Verified until saved ✓";
+        form.reset();
+        setTodayAsMinDate(untilEl);
+      } catch (err) {
+        msgEl.style.color = "red";
+        msgEl.textContent = "Error: " + (err?.message || err);
+      }
+    });
+  }
+
+  (async ()=>{
+    try {
+      await requireAdmin();
+      wireVerifyByIdForm();
+      await Promise.all([loadPending(), loadRecent()]);
+    } catch (err) {
+      console.warn(err?.message || err);
+    }
+  })();
+</script>
+
+<!-- Shared nav/auth logic -->
+<script type="module" src="/nav.js"></script>
+<script>
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+</script>
 </body>
 </html>
