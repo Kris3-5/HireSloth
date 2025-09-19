@@ -165,25 +165,24 @@
         return;
       }
 
-      // Fetch publisher profiles once (for badges)
-      const userIds = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
-      const profMap = {};
-      if (userIds.length) {
-        const { data: profiles, error: profErr } = await supabase
-          .from("profiles")
-          .select("id, verified_until")
-          .in("id", userIds);
+      // Fetch verified publishers via secure function (works for guests)
+const userIds = [...new Set(jobs.map(j=>j.user_id).filter(Boolean))];
 
-        if (!profErr && profiles) {
-          profiles.forEach(p => { profMap[p.id] = p; });
-        } else {
-          console.warn("profiles fetch error (badges will be hidden):", profErr?.message || profErr);
-        }
-      }
+const verifiedSet = new Set();
+if (userIds.length) {
+  const { data: vrows, error: verr } = await supabase
+    .rpc("get_verified_profiles", { ids: userIds });
+
+  if (!verr && vrows?.length) {
+    vrows.forEach(r => verifiedSet.add(r.id));
+  } else if (verr) {
+    console.warn("verified lookup failed:", verr.message || verr);
+  }
+}
 
       jobsContainer.innerHTML = jobs.map(job => {
         const prof = profMap[job.user_id];
-        const showBadge = isVerified(prof) && job.company;
+        const showBadge = verifiedSet.has(job.user_id) && job.company;
         const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
         const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
         const apply  = job.contact_email
