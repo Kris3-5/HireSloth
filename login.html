@@ -1,48 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HireSloth – Redirecting to Sign In…</title>
-
-  <!-- Force HTTPS (except localhost) -->
-  <script>
-    if (location.protocol === 'http:' &&
-        location.hostname !== 'localhost' &&
-        location.hostname !== '127.0.0.1') {
-      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-    }
-  </script>
-  <!-- Auto-upgrade any accidental http:// subresources -->
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
-  <!-- SEO: keep this shim out of the index -->
-  <meta name="robots" content="noindex,follow" />
-  <link rel="canonical" href="https://hiresloth.com/auth.html?mode=signin" />
-
-  <!-- Minimal styling is fine; this page instantly redirects -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="stylesheet" href="style.css?v=20250912a" />
-
-  <!-- Meta refresh as a non-JS fallback (doesn't carry query params) -->
-  <meta http-equiv="refresh" content="0; url=auth.html?mode=signin" />
+  <meta http-equiv="refresh" content="0; url=auth.html?mode=signin">
+  <meta name="robots" content="noindex,follow">
+  <link rel="canonical" href="auth.html?mode=signin">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <p>If you’re not redirected, <a href="auth.html?mode=signin">click here to Sign In</a>.</p>
-
-  <!-- JS redirect: preserve ALL incoming params and force mode=signin -->
   <script>
-    (function () {
-      const params = new URLSearchParams(location.search);
-      params.set("mode", "signin"); // force signin tab
-      const target = "auth.html?" + params.toString();
-      location.replace(target);
-    })();
+    const params = new URLSearchParams(location.search);
+    const target = "auth.html?mode=signin" + (params.has("returnTo") ? "&returnTo="+encodeURIComponent(params.get("returnTo")) : "");
+    location.replace(target);
   </script>
-
-  <noscript>
-    <p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p>
-  </noscript>
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  </script>
 </body>
 </html>
