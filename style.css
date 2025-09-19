@@ -48,19 +48,10 @@ header{
   -webkit-backdrop-filter: saturate(1.1) blur(6px);
   backdrop-filter: saturate(1.1) blur(6px);
 }
-/* Fallback when backdrop-filter is unsupported */
-@supports not (backdrop-filter: blur(1px)) {
-  header{ background:#fff; }
-}
+@supports not (backdrop-filter: blur(1px)) { header{ background:#fff; } }
 
 .logo{ display:inline-flex; align-items:center; }
-.logo picture{ display:inline-block; line-height:0; }
-.logo img{
-  display:block;              /* removes baseline gap */
-  height:50px;
-  width:auto;                 /* respect intrinsic ratio */
-  border-radius:12px;
-}
+.logo img{ display:block; height:50px; width:auto; border-radius:12px; }
 
 nav{ display:flex; align-items:center; gap:.8rem }
 nav a{
@@ -102,6 +93,12 @@ nav a:hover::after, nav a.active::after{ transform:scaleX(1) }
 
 /* Keep Sign In/Out width stable so text swap doesn't jiggle */
 #authBtn{ min-width:8ch; text-align:center }
+
+/* Make the nav CTA look like a button (and hide underline bar) */
+nav a.btn { color: var(--cream); background:linear-gradient(135deg, var(--brand-2), var(--brand)); border-radius:12px; box-shadow:var(--shadow-sm); }
+nav a.btn:hover{ transform:translateY(-1px); box-shadow:var(--shadow); }
+nav a.btn::after { display: none; }
+#verifyBtnNav { padding:.55rem .9rem; }
 
 /* =========================
    Hero
@@ -213,9 +210,7 @@ nav a:hover::after, nav a.active::after{ transform:scaleX(1) }
 .job-card p{ margin:.35rem 0; color:#4a4233 }
 .job-card small{ display:block; margin-top:.75rem; color:#7b7162 }
 /* Prevent long titles/URLs from overflowing in job cards */
-.job-card h3, .job-card p{
-  overflow-wrap:anywhere; word-break:break-word; hyphens:auto;
-}
+.job-card h3, .job-card p{ overflow-wrap:anywhere; word-break:break-word; hyphens:auto; }
 .actions{ display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.8rem }
 
 /* =========================
@@ -297,11 +292,8 @@ footer{
   nav a{ color:var(--ink) }
   footer{ background:#2a241e }
 }
-/* Dark-mode fallback when no backdrop-filter */
 @media (prefers-color-scheme: dark){
-  @supports not (backdrop-filter: blur(1px)) {
-    header{ background:#1e1a16; }
-  }
+  @supports not (backdrop-filter: blur(1px)) { header{ background:#1e1a16; } }
 }
 
 /* =========================
@@ -336,44 +328,21 @@ img { max-width: 100%; height: auto; }
   form, .job-card { border-color: rgba(0,0,0,.25); }
   .btn, #postJobBtn { box-shadow: 0 0 0 3px rgba(0,0,0,.12), var(--shadow-sm); }
 }
-/* === Form readability fixes (light + dark) === */
 
-/* Always define explicit text/bg for fields */
-input, textarea, select {
-  color: #3C3525;              /* dark text for light background */
-  background: #fff;
-  caret-color: #3C3525;
-}
-
-/* Placeholder contrast */
+/* === Form readability (light + dark) === */
+input, textarea, select { color:#3C3525; background:#fff; caret-color:#3C3525; }
 ::placeholder { color: rgba(60,53,37,.6); }
-
-/* Autofill (Chrome/Edge/Safari) */
-input:-webkit-autofill,
-textarea:-webkit-autofill,
-select:-webkit-autofill {
-  -webkit-text-fill-color: #3C3525 !important;
-  box-shadow: 0 0 0 1000px #fff inset !important;
+input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+  -webkit-text-fill-color:#3C3525 !important; box-shadow:0 0 0 1000px #fff inset !important;
 }
-
-/* Dark mode overrides */
 @media (prefers-color-scheme: dark){
-  input, textarea, select {
-    background: #2a241e;       /* matches your dark cards */
-    color: #efe6d9;            /* your --ink in dark */
-    border-color: rgba(255,255,255,.18);
-    caret-color: #efe6d9;
-  }
+  input, textarea, select { background:#2a241e; color:#efe6d9; border-color:rgba(255,255,255,.18); caret-color:#efe6d9; }
   ::placeholder { color: rgba(239,230,217,.6); }
-
-  /* Autofill in dark */
-  input:-webkit-autofill,
-  textarea:-webkit-autofill,
-  select:-webkit-autofill {
-    -webkit-text-fill-color: #efe6d9 !important;
-    box-shadow: 0 0 0 1000px #2a241e inset !important;
+  input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+    -webkit-text-fill-color:#efe6d9 !important; box-shadow:0 0 0 1000px #2a241e inset !important;
   }
 }
+
 /* ===== Verified badge ===== */
 .badge {
   display:inline-flex; align-items:center; gap:.35rem;
@@ -383,25 +352,8 @@ select:-webkit-autofill {
 }
 .badge svg { width:14px; height:14px; display:block }
 .badge--verified {
-  background: #fff4d6;           /* light gold */
-  border-color: #e8cf86;
-  color:#7a5a18;
+  background:#fff4d6; border-color:#e8cf86; color:#7a5a18;
 }
 @media (prefers-color-scheme: dark){
-  .badge--verified {
-    background:#2b2416; border-color:#5b4a1c; color:#f1dea9;
-  }
+  .badge--verified { background:#2b2416; border-color:#5b4a1c; color:#f1dea9; }
 }
-/* Keep form controls’ typography consistent across browsers */
-button, input, textarea, select { font: inherit }
-
-/* iOS: avoid zoom-on-focus for small inputs (keeps 16px min) */
-input, textarea { font-size: 16px }
-
-/* Dark mode: subtle border for generic .badge (not the gold verified pill) */
-@media (prefers-color-scheme: dark){
-  .badge { border-color: rgba(255,255,255,.18); background:#241e18; color:#efe6d9; }
-}
-
-/* Make text inputs look consistent on Safari/Chrome mobile */
-input[type="text"], input[type="search"] { appearance: none; -webkit-appearance: none; }
