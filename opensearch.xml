@@ -1,23 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
   <ShortName>HireSloth Jobs</ShortName>
-  <LongName>Search vacancies on HireSloth</LongName>
-  <Description>Search jobs on HireSloth.</Description>
-  <Tags>jobs hiring vacancies careers</Tags>
-
-  <!-- 16x16 icon shown in some browsers -->
-  <Image height="16" width="16" type="image/x-icon">https://hiresloth.com/favicon.ico</Image>
-
+  <Description>Search jobs on HireSloth</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Language>en</Language>
-
-  <!-- Sends ?keyword={searchTerms} to jobs.html -->
-  <Url type="text/html" method="get" template="https://hiresloth.com/jobs.html">
-    <Param name="keyword" value="{searchTerms}"/>
-  </Url>
-
-  <!-- Optional: if you ever add typeahead suggestions
-  <Url type="application/x-suggestions+json" method="get"
-       template="https://hiresloth.com/api/suggest?q={searchTerms}"/>
-  -->
+  <Url type="text/html" method="get" template="https://hiresloth.com/jobs.html?keyword={searchTerms}"/>
 </OpenSearchDescription>
