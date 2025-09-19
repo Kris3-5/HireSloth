@@ -2,196 +2,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <!-- Force HTTPS (allow localhost) -->
   <script>
     if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
   <title>HireSloth - Post a Job</title>
   <link rel="canonical" href="https://hiresloth.com/post-job.html">
   <meta name="description" content="Post a vacancy on HireSloth. Listings expire in 30 days.">
   <link rel="icon" href="/favicon.ico">
-
   <!-- Fonts & perf -->
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin">
-
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
-  <header>
-    <a href="index.html" class="logo">
-      <img
-        src="/logo.jpg?v=2"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        onerror="
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = '1';
-            this.src = 'logo.jpg?v=2';
-          } else { this.onerror=null; }">
-    </a>
+<header>
+  <a href="index.html" class="logo">
+    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  </a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="jobs.html">Vacancies</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn" class="active">Post a Job</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
+  </nav>
+</header>
 
-    <nav>
-  <a href="index.html">Home</a>
-  <a href="jobs.html">Vacancies</a>
-  <a href="about.html">About</a>
-  <a href="contact.html">Contact</a>
-  <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-  <a href="post-job.html" id="postJobBtn">Post a Job</a>
-  <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
-  <a href="auth.html" id="authBtn">Sign In</a>
-</nav>
+<main class="content" id="jobContent">
+  <h1>Post a Job</h1>
+  <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
 
-  </header>
+  <p><a class="btn" href="verify.html">Get Verified</a> — stand out with a badge on your listings.</p>
 
-  <main class="content" id="jobContent">
-    <h1>Post a Job</h1>
-    <p>Fill out the form below to list your vacancy. Jobs automatically expire after 30 days.</p>
+  <form id="jobForm">
+    <label for="title">Job Title</label><br>
+    <input type="text" id="title" required><br><br>
 
-    <form id="jobForm" novalidate>
-      <label for="title">Job Title</label><br>
-      <input type="text" id="title" required autocomplete="organization-title"><br><br>
+    <label for="company">Company</label><br>
+    <input type="text" id="company" required><br><br>
 
-      <label for="company">Company</label><br>
-      <input type="text" id="company" required autocomplete="organization"><br><br>
+    <label for="location">Location</label><br>
+    <input type="text" id="location"><br><br>
 
-      <label for="location">Location</label><br>
-      <input type="text" id="location" autocomplete="address-level2"><br><br>
+    <label><input type="checkbox" id="remote"> Remote Position</label><br><br>
 
-      <label><input type="checkbox" id="remote"> Remote Position</label><br><br>
+    <label for="salary">Salary (optional)</label><br>
+    <input type="text" id="salary"><br><br>
 
-      <label for="salary">Salary (optional)</label><br>
-      <input type="text" id="salary" inputmode="text"><br><br>
+    <label for="description">Job Summary</label><br>
+    <textarea id="description" rows="3" required></textarea><br><br>
 
-      <label for="description">Job Summary</label><br>
-      <textarea id="description" rows="3" required></textarea><br><br>
+    <label for="responsibilities">Responsibilities</label><br>
+    <textarea id="responsibilities" rows="5"></textarea><br><br>
 
-      <label for="responsibilities">Responsibilities</label><br>
-      <textarea id="responsibilities" rows="5"></textarea><br><br>
+    <label for="contact_email">Company Contact Email</label><br>
+    <input type="email" id="contact_email" required><br><br>
 
-      <label for="contact_email">Company Contact Email</label><br>
-      <input type="email" id="contact_email" required autocomplete="email"><br><br>
+    <button id="submitBtn" type="submit">Post Job</button>
+  </form>
 
-      <button id="submitBtn" type="submit">Post Job</button>
-    </form>
+  <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+</main>
 
-    <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
-  </main>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+  const { data: { session } } = await supabase.auth.getSession();
+  const currentUser = session?.user || null;
+  if (!currentUser) {
+    location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("post-job.html");
+    throw new Error("Redirecting to auth");
+  }
 
-    // 🔧 Replace with your real values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const submitBtn = document.getElementById("submitBtn");
+  const jobForm = document.getElementById("jobForm");
+  const statusEl = document.getElementById("formStatus");
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
-    });
+  function lock(){ submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Posting…"; }
+  function unlock(){ submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; }
 
-    const authBtn   = document.getElementById("authBtn");
-    const submitBtn = document.getElementById("submitBtn");
-    const jobForm   = document.getElementById("jobForm");
-    const statusEl  = document.getElementById("formStatus");
+  jobForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    statusEl.textContent = ""; statusEl.style.color = "";
 
-    // --- Require auth to use this page ---
-    let session;
-    try {
-      ({ data:{ session } } = await supabase.auth.getSession());
-    } catch { session = null; }
-    const currentUser = session?.user || null;
-
-    if (!currentUser) {
-      location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("post-job.html");
-      throw new Error("Redirecting to auth");
-    }
-
-    // --- Auth button (buttons never disappear; only text/handler change) ---
-    authBtn.textContent = "Sign Out";
-    authBtn.href = "#";
-    authBtn.onclick = async (e) => {
-      e.preventDefault();
-      if (!confirm("Are you sure you want to sign out?")) return;
-      await supabase.auth.signOut();
-      location.href = "index.html";
+    const job = {
+      title: document.getElementById("title").value.trim(),
+      company: document.getElementById("company").value.trim(),
+      location: document.getElementById("location").value.trim(),
+      remote: document.getElementById("remote").checked,
+      salary: document.getElementById("salary").value.trim(),
+      description: document.getElementById("description").value.trim(),
+      responsibilities: document.getElementById("responsibilities").value.trim(),
+      contact_email: document.getElementById("contact_email").value.trim(),
+      user_id: currentUser.id,
+      approved: false,
+      is_active: true,
+      expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
     };
 
-    // --- Form submit ---
-    function lock(){
-      submitBtn.disabled = true;
-      submitBtn.dataset.label = submitBtn.textContent;
-      submitBtn.textContent = "Posting…";
-    }
-    function unlock(){
-      submitBtn.disabled = false;
-      if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label;
+    if (!job.contact_email) {
+      statusEl.textContent = "❌ Please provide the company contact email.";
+      statusEl.style.color = "red";
+      return;
     }
 
-    jobForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      statusEl.textContent = "";
-      statusEl.style.color = "";
+    try {
+      lock();
+      const { error } = await supabase.from("jobs").insert([job]);
+      if (error) throw error;
+      statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
+      statusEl.style.color = "green";
+      jobForm.reset();
+    } catch (err) {
+      statusEl.textContent = "❌ " + (err.message || "Could not post job.");
+      statusEl.style.color = "red";
+    } finally { unlock(); }
+  });
+</script>
 
-      // Basic client validation
-      const title = document.getElementById("title").value.trim();
-      const company = document.getElementById("company").value.trim();
-      const contactEmail = document.getElementById("contact_email").value.trim();
-
-      if (!title || !company || !contactEmail) {
-        statusEl.textContent = "❌ Please fill in required fields (Title, Company, Contact Email).";
-        statusEl.style.color = "red";
-        return;
-      }
-
-      const job = {
-        title,
-        company,
-        location: document.getElementById("location").value.trim(),
-        remote: document.getElementById("remote").checked,
-        salary: document.getElementById("salary").value.trim(),
-        description: document.getElementById("description").value.trim(),
-        responsibilities: document.getElementById("responsibilities").value.trim(),
-        contact_email: contactEmail,
-        user_id: currentUser.id,
-        approved: false,
-        is_active: true,
-        expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
-      };
-
-      try {
-        lock();
-        const { error } = await supabase.from("jobs").insert([job]);
-        if (error) throw error;
-
-        statusEl.textContent = "✅ Job posted successfully! Awaiting admin approval.";
-        statusEl.style.color = "green";
-        jobForm.reset();
-      } catch (err) {
-        statusEl.textContent = "❌ " + (err.message || "Could not post job.");
-        statusEl.style.color = "red";
-        console.error(err);
-      } finally {
-        unlock();
-      }
-    });
-
-    // Register SW once
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(()=>{});
-    }
-  </script>
+<!-- Shared nav/auth logic -->
+<script type="module" src="/nav.js"></script>
+<script>
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+</script>
 </body>
 </html>
