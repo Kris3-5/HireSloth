@@ -12,37 +12,58 @@
   const authBtn   = document.getElementById("authBtn");
   const myJobsBtn = document.getElementById("myJobsBtn");
   const postBtn   = document.getElementById("postJobBtn");
+  const verifyBtn = document.getElementById("verifyBtnNav"); // <-- toggle this
 
-  async function initAuthUI() {
-    try {
-      const { data:{ session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
-
-      if (authBtn) {
-        authBtn.textContent = user ? "Sign Out" : "Sign In";
-        authBtn.href = user ? "#" : "auth.html";
-        authBtn.onclick = user ? async (e) => {
-          e.preventDefault();
-          if (!confirm("Are you sure you want to sign out?")) return;
-          await supabase.auth.signOut();
-          location.href = "index.html";
-        } : null;
-      }
-
-      // Gate protected pages if signed out
-      const gate = (el, target) => el && el.addEventListener("click", (e) => {
-        if (!user) {
-          e.preventDefault();
-          location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
-        }
-      });
-      gate(myJobsBtn, "my-jobs.html");
-      gate(postBtn,   "post-job.html");
-    } catch {
-      if (authBtn) { authBtn.textContent = "Sign In"; authBtn.href = "auth.html"; authBtn.onclick = null; }
+  function applyUI(isLoggedIn){
+    if (authBtn){
+      authBtn.textContent = isLoggedIn ? "Sign Out" : "Sign In";
+      authBtn.href        = isLoggedIn ? "#" : "auth.html";
+      authBtn.onclick     = isLoggedIn ? async (e)=>{
+        e.preventDefault();
+        if (!confirm("Are you sure you want to sign out?")) return;
+        await supabase.auth.signOut();
+        localStorage.setItem("hs_authed","0"); // keep nav consistent on reload
+        location.href = "index.html";
+      } : null;
     }
+    if (verifyBtn){
+      // Only show “Get Verified” when logged in (no layout jump on load)
+      verifyBtn.style.display = isLoggedIn ? "" : "none";
+    }
+
+    // Gate protected pages when signed out
+    const gate = (el, target) => el && el.addEventListener("click", (e) => {
+      const logged = isLoggedIn || localStorage.getItem("hs_authed")==="1";
+      if (!logged) {
+        e.preventDefault();
+        location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
+      }
+    }, { once:true }); // once to avoid stacking listeners
+    gate(myJobsBtn, "my-jobs.html");
+    gate(postBtn,   "post-job.html");
   }
 
-  initAuthUI();
-  supabase.auth.onAuthStateChange(() => initAuthUI());
+  // 🔹 Anti-flicker: optimistic state from last session
+  const cached = localStorage.getItem("hs_authed") === "1";
+  applyUI(cached);
+
+  // 🔹 Real state from Supabase; then keep cache in sync
+  (async ()=>{
+    try{
+      const { data:{ session } } = await supabase.auth.getSession();
+      const isLoggedIn = !!session?.user;
+      applyUI(isLoggedIn);
+      localStorage.setItem("hs_authed", isLoggedIn ? "1" : "0");
+    }catch{
+      applyUI(false);
+      localStorage.setItem("hs_authed","0");
+    }
+  })();
+
+  // Keep UI fresh if auth changes on-page
+  supabase.auth.onAuthStateChange((_e, session)=>{
+    const isLoggedIn = !!session?.user;
+    applyUI(isLoggedIn);
+    localStorage.setItem("hs_authed", isLoggedIn ? "1" : "0");
+  });
 </script>
