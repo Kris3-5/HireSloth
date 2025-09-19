@@ -2,35 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Get Verified – HireSloth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Get Verified – HireSloth</title>
   <meta name="robots" content="noindex,follow"/>
+
+  <!-- Force HTTPS (except localhost) -->
+  <script>
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <!-- Auto-upgrade any accidental http:// subresources to https:// -->
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
   <link rel="stylesheet" href="style.css?v=20250912a"/>
 </head>
 <body>
   <header>
     <a href="index.html" class="logo">
-  <img
-    src="/logo.jpg?v=2"
-    alt="HireSloth Logo"
-    width="120"
-    height="120"
-    loading="eager"
-    fetchpriority="high"
-    decoding="async"
-    onerror="
-      if (!this.dataset.fallbackTried) {
-        this.dataset.fallbackTried = '1';
-        this.src = 'logo.jpg?v=2'; // try relative path as fallback
-      } else { this.onerror=null; }">
-</a>
+      <img
+        src="/logo.jpg?v=2"
+        alt="HireSloth Logo"
+        width="120"
+        height="120"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        onerror="
+          if (!this.dataset.fallbackTried) {
+            this.dataset.fallbackTried = '1';
+            this.src = 'logo.jpg?v=2'; // try relative path as fallback
+          } else { this.onerror=null; }">
+    </a>
     <nav>
       <a href="index.html">Home</a>
       <a href="jobs.html">Vacancies</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
-      <a href="my-jobs.html">My Jobs</a>
-      <a href="post-job.html">Post a Job</a>
+      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+      <a href="post-job.html" id="postJobBtn">Post a Job</a>
       <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
@@ -39,7 +51,12 @@
     <h1>Verified Employer Badge</h1>
     <p>Get a gold “Verified” badge on your listings for 12 months. One-off payment. No auto-renewal.</p>
 
-    <a id="verifyBtn" class="btn" href="#" rel="noopener">Continue to Checkout</a>
+    <!-- Status surface -->
+    <div id="statusCard" class="job-card" style="max-width:720px;margin:1.25rem auto;text-align:left;">
+      <p id="badgeStatus">Checking your verification status…</p>
+    </div>
+
+    <a id="verifyBtn" class="btn" href="#" rel="noopener noreferrer">Continue to Checkout</a>
     <p id="note" style="margin-top:1rem;"></p>
   </main>
 
@@ -47,43 +64,116 @@
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+
+    // 🔧 Replace with your real values
     const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const PAYMENT_LINK = "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00"; // e.g. https://buy.stripe.com/abc123
+
+    // Your Stripe Payment Link, e.g. https://buy.stripe.com/...
+    const PAYMENT_LINK = "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
     });
 
-    const authBtn = document.getElementById("authBtn");
-    async function nav(){
-      try{
+    const authBtn    = document.getElementById("authBtn");
+    const myJobsBtn  = document.getElementById("myJobsBtn");
+    const postJobBtn = document.getElementById("postJobBtn");
+    const verifyBtn  = document.getElementById("verifyBtn");
+    const note       = document.getElementById("note");
+    const badgeStatus= document.getElementById("badgeStatus");
+
+    // Small helpers
+    const esc = (s) => (s ?? "").toString()
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
+    function renderBadge(activeUntil) {
+      const untilStr = activeUntil ? new Date(activeUntil).toLocaleDateString() : null;
+      if (untilStr) {
+        badgeStatus.innerHTML = `
+          <span class="badge badge--verified">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/>
+            </svg>
+            Verified
+          </span>
+          &nbsp;Your employer badge is active until <strong>${esc(untilStr)}</strong>.`;
+      } else {
+        badgeStatus.innerHTML = `<strong>No active employer verification.</strong>`;
+      }
+    }
+
+    // Minimal, non-flickery nav: only toggle Sign In/Out text; keep other buttons visible
+    async function initNav() {
+      try {
         const { data:{ session }} = await supabase.auth.getSession();
-        const user = session?.user;
+        const user = session?.user || null;
+
         authBtn.textContent = user ? "Sign Out" : "Sign In";
         authBtn.href = user ? "#" : "auth.html";
-        authBtn.onclick = user ? async (e)=>{ e.preventDefault(); if(!confirm("Sign out?"))return; await supabase.auth.signOut(); location.href="index.html"; } : null;
-      }catch{}
-    }
-    nav(); supabase.auth.onAuthStateChange(()=>nav());
+        authBtn.onclick = user ? async (e) => {
+          e.preventDefault();
+          if (!confirm("Are you sure you want to sign out?")) return;
+          await supabase.auth.signOut();
+          location.href = "index.html";
+        } : null;
 
-    const btn = document.getElementById("verifyBtn");
-    const note = document.getElementById("note");
-    (async ()=>{
-      const { data:{ session }} = await supabase.auth.getSession();
-      const user = session?.user;
+        // Gate protected pages: if signed out, redirect through Sign In preserving returnTo
+        const gate = (el, target) => el && el.addEventListener("click", (e) => {
+          if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
+        });
+        gate(myJobsBtn, "my-jobs.html");
+        gate(postJobBtn, "post-job.html");
+
+      } catch {}
+    }
+
+    // Page boot
+    (async () => {
+      await initNav();
+
+      // Determine session for button setup + status
+      const { data:{ session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+
       if (!user) {
-        btn.textContent = "Sign in to continue";
-        btn.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("verify.html");
+        renderBadge(null);
+        verifyBtn.textContent = "Sign in to continue";
+        verifyBtn.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("verify.html");
+        note.textContent = "";
         return;
       }
-      // Tag the Checkout session with your Supabase user id
+
+      // Show current status
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("verified_until")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        const until = profile?.verified_until ? new Date(profile.verified_until) : null;
+        const active = until && until >= today;
+        renderBadge(active ? profile.verified_until : null);
+      } catch {
+        renderBadge(null);
+      }
+
+      // Build Payment Link with helpful params
       const url = new URL(PAYMENT_LINK);
-      url.searchParams.set("client_reference_id", user.id);
-      if (user.email) url.searchParams.set("prefilled_email", user.email);
-      btn.href = url.toString();
-      note.textContent = "On successful payment, copy the 'client_reference_id' in Stripe (it equals your user id). Use the Admin page to mark your account verified.";
+      url.searchParams.set("client_reference_id", user.id);    // helps you map payment -> user (visible in Stripe)
+      if (user.email) url.searchParams.set("prefilled_email", user.email); // prefill email in Checkout
+
+      verifyBtn.href = url.toString();
+      note.textContent = "After payment, your admin can set your verification until date using the same client reference (your user ID).";
     })();
+
+    // Optional: service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(()=>{});
+    }
   </script>
 </body>
 </html>
