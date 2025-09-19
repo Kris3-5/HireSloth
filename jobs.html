@@ -1,228 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <!-- Force HTTPS (except localhost) -->
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script>
-    if (location.protocol === 'http:' &&
-        location.hostname !== 'localhost' &&
-        location.hostname !== '127.0.0.1') {
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
   <title>HireSloth - Vacancies</title>
   <link rel="canonical" href="https://hiresloth.com/jobs.html">
   <meta name="description" content="Browse current job openings on HireSloth. Filter by keyword, location, and remote roles.">
-
   <link rel="icon" href="/favicon.ico">
-
   <!-- Fonts & perf -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin> <!-- replace with your real Supabase project URL if not already -->
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
-  <header>
-    <a href="index.html" class="logo">
-      <img
-        src="/logo.jpg?v=2"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        onerror="
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = '1';
-            this.src = 'logo.jpg?v=2'; // try relative path as fallback
-          } else { this.onerror=null; }">
-    </a>
+<header>
+  <a href="index.html" class="logo">
+    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  </a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="jobs.html" class="active">Vacancies</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
+  </nav>
+</header>
 
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="jobs.html" class="active">Vacancies</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" id="authBtn">Sign In</a>
-    </nav>
-  </header>
+<main class="content">
+  <h1>Vacancies</h1>
+  <p>Browse current job openings. Use filters or search by keyword to find your next opportunity.</p>
 
-  <main class="content">
-    <h1>Vacancies</h1>
-    <p>Browse current job openings. Use filters or search by keyword to find your next opportunity.</p>
+  <div class="search-bar">
+    <input type="text" id="keyword" placeholder="Keyword (e.g., Frontend)">
+    <input type="text" id="location" placeholder="Location">
+    <label><input type="checkbox" id="remote"> Remote only</label>
+    <button id="searchBtn">Search</button>
+  </div>
 
-    <div class="search-bar">
-      <input type="text" id="keyword" placeholder="Keyword (e.g., Frontend)">
-      <input type="text" id="location" placeholder="Location">
-      <label><input type="checkbox" id="remote"> Remote only</label>
-      <button id="searchBtn">Search</button>
-    </div>
+  <div class="jobs" id="jobsContainer"></div>
+</main>
 
-    <div class="jobs" id="jobsContainer" aria-live="polite"></div>
-  </main>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
 
-    // 🔧 Replace with your real values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const jobsContainer = document.getElementById("jobsContainer");
+  const searchBtn     = document.getElementById("searchBtn");
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
+  const esc = (s) => (s ?? "").toString()
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-    const jobsContainer = document.getElementById("jobsContainer");
-    const searchBtn     = document.getElementById("searchBtn");
-    const authBtn       = document.getElementById("authBtn");
-    const myJobsBtn     = document.getElementById("myJobsBtn");
-    const postJobBtn    = document.getElementById("postJobBtn");
+  const verifiedBadge = () => `
+    <span class="badge badge--verified" title="Verified employer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
+      Verified
+    </span>`;
 
-    // --- Minimal, non-flicker auth UI (only Sign In/Out changes) + gate protected links ---
-    async function initAuthUI(){
-      const { data:{ session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
+  const isVerified = (profile) => {
+    if (!profile?.verified_until) return false;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const until = new Date(profile.verified_until);
+    return until >= today;
+  };
 
-      authBtn.textContent = user ? "Sign Out" : "Sign In";
-      authBtn.href        = user ? "#" : "auth.html";
-      authBtn.onclick     = user ? async (e) => {
-        e.preventDefault();
-        if (!confirm("Are you sure you want to sign out?")) return;
-        await supabase.auth.signOut();
-        location.href = "index.html";
-      } : null;
+  async function loadJobs(keyword = "", location = "", remoteOnly = false) {
+    jobsContainer.innerHTML = "<p>Loading jobs...</p>";
 
-      // Gate protected pages: overwrite onclick so we don't stack listeners
-      const gate = (el, target) => {
-        if (!el) return;
-        el.onclick = (e) => {
-          if (!user) {
-            e.preventDefault();
-            location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
-          }
-        };
-      };
-      gate(myJobsBtn, "my-jobs.html");
-      gate(postJobBtn, "post-job.html");
+    let query = supabase.from("jobs").select("*").eq("approved", true).eq("is_active", true);
+    if (keyword)  query = query.ilike("title", `%${keyword}%`);
+    if (location) query = query.ilike("location", `%${location}%`);
+    if (remoteOnly) query = query.eq("remote", true);
+
+    const { data: jobs, error } = await query.order("created_at", { ascending: false });
+
+    if (error) {
+      jobsContainer.innerHTML = `<p style="color:red">Error: ${esc(error.message)}</p>`;
+      console.error(error);
+      return;
     }
-    initAuthUI();
-    supabase.auth.onAuthStateChange(() => initAuthUI());
+    if (!jobs?.length) { jobsContainer.innerHTML = "<p>No jobs found.</p>"; return; }
 
-    // --- Helpers ---
-    const esc = (s) => (s ?? "").toString()
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    // Get publisher profiles once (for badges)
+    const userIds = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
+    const profMap = {};
+    if (userIds.length) {
+      const { data: profiles, error: profErr } = await supabase
+        .from("profiles")
+        .select("id, verified_until")
+        .in("id", userIds);
+      if (!profErr && profiles) profiles.forEach(p => { profMap[p.id] = p; });
+    }
 
-    const verifiedBadge = () => `
-      <span class="badge badge--verified" title="Verified employer">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
-        Verified
-      </span>`;
+    jobsContainer.innerHTML = jobs.map(job => {
+      const prof = profMap[job.user_id];
+      const showBadge = isVerified(prof) && job.company;
+      const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
+      const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
+      const apply  = job.contact_email
+        ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
+        : "";
+      const report = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title||"")}&company=${encodeURIComponent(job.company||"")}">Report</a>`;
 
-    const isVerified = (profile) => {
-      if (!profile?.verified_until) return false;
-      const today = new Date(); today.setHours(0,0,0,0);
-      const until = new Date(profile.verified_until);
-      return until >= today;
-    };
-
-    // --- Load jobs ---
-    async function loadJobs(keyword = "", location = "", remoteOnly = false) {
-      jobsContainer.innerHTML = "<p>Loading jobs...</p>";
-
-      let query = supabase
-        .from("jobs")
-        .select("*")
-        .eq("approved", true)
-        .eq("is_active", true);
-
-      if (keyword)  query = query.ilike("title", `%${keyword}%`);
-      if (location) query = query.ilike("location", `%${location}%`);
-      if (remoteOnly) query = query.eq("remote", true);
-
-      const { data: jobs, error } = await query.order("created_at", { ascending: false });
-
-      if (error) {
-        jobsContainer.innerHTML = `<p style="color:red">Error: ${esc(error.message)}</p>`;
-        console.error(error);
-        return;
-      }
-      if (!jobs?.length) {
-        jobsContainer.innerHTML = "<p>No jobs found.</p>";
-        return;
-      }
-
-      // Fetch verified publishers via secure function (works for guests)
-const userIds = [...new Set(jobs.map(j=>j.user_id).filter(Boolean))];
-
-const verifiedSet = new Set();
-if (userIds.length) {
-  const { data: vrows, error: verr } = await supabase
-    .rpc("get_verified_profiles", { ids: userIds });
-
-  if (!verr && vrows?.length) {
-    vrows.forEach(r => verifiedSet.add(r.id));
-  } else if (verr) {
-    console.warn("verified lookup failed:", verr.message || verr);
+      return `
+        <div class="job-card">
+          <h3>${esc(job.title)}</h3>
+          <p><strong>Company:</strong> ${esc(job.company || "")}${showBadge ? " " + verifiedBadge() : ""}</p>
+          <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
+          ${salary}
+          <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
+          ${resp}
+          <div class="actions">${apply} ${report}</div>
+        </div>
+      `;
+    }).join("");
   }
-}
 
-      jobsContainer.innerHTML = jobs.map(job => {
-        const prof = profMap[job.user_id];
-        const showBadge = verifiedSet.has(job.user_id) && job.company;
-        const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
-        const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
-        const apply  = job.contact_email
-          ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
-          : "";
-        const report = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title||"")}&company=${encodeURIComponent(job.company||"")}">Report</a>`;
+  loadJobs();
+  function doSearch(){
+    const k = document.getElementById("keyword").value.trim();
+    const l = document.getElementById("location").value.trim();
+    const r = document.getElementById("remote").checked;
+    loadJobs(k, l, r);
+  }
+  searchBtn.addEventListener("click", doSearch);
+  document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+  document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+</script>
 
-        return `
-          <div class="job-card">
-            <h3>${esc(job.title)}</h3>
-            <p><strong>Company:</strong> ${esc(job.company || "")}${showBadge ? " " + verifiedBadge() : ""}</p>
-            <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
-            ${salary}
-            <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
-            ${resp}
-            <div class="actions">${apply} ${report}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    // Initial + search events
-    loadJobs();
-
-    function doSearch(){
-      const k = document.getElementById("keyword").value.trim();
-      const l = document.getElementById("location").value.trim();
-      const r = document.getElementById("remote").checked;
-      loadJobs(k, l, r);
-    }
-    searchBtn.addEventListener("click", doSearch);
-    document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
-    document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
-  </script>
-
-  <!-- Single service worker registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-    }
-  </script>
+<!-- Shared nav/auth logic -->
+<script type="module" src="/nav.js"></script>
+<script>
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+</script>
 </body>
 </html>
