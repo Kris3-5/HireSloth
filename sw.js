@@ -1,5 +1,5 @@
 // sw.js
-const VERSION = 'v8';   // bump when you change files
+const VERSION = 'v9';   // bump when you change files
 const STATIC_CACHE = `static-${VERSION}`;
 const IMG_CACHE    = `images-${VERSION}`;
 
