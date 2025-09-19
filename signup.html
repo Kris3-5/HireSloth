@@ -1,43 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HireSloth – Redirecting to Sign Up…</title>
-
-  <!-- Force HTTPS in production; allow localhost for dev -->
-  <script>
-    if (location.protocol === 'http:' &&
-        location.hostname !== 'localhost' &&
-        location.hostname !== '127.0.0.1') {
-      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-    }
-  </script>
-
-  <!-- Auto-upgrade any accidental http:// subresources to https:// -->
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
-  <!-- Meta refresh as no-JS fallback -->
   <meta http-equiv="refresh" content="0; url=auth.html?mode=signup">
-  <meta name="robots" content="noindex,follow" />
-  <link rel="canonical" href="https://hiresloth.com/auth.html?mode=signup" />
-
-  <link rel="icon" href="/favicon.ico" />
-  <link rel="stylesheet" href="style.css?v=20250912a" />
+  <meta name="robots" content="noindex,follow">
+  <link rel="canonical" href="auth.html?mode=signup">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
   <p>If you’re not redirected, <a href="auth.html?mode=signup">click here to Sign Up</a>.</p>
-
-  <!-- JS redirect (preferred) – preserve existing params (e.g., returnTo) and force mode=signup -->
   <script>
     const params = new URLSearchParams(location.search);
-    params.set("mode", "signup");
+    params.set("mode","signup");
     location.replace("auth.html?" + params.toString());
   </script>
-
-  <noscript>
-    <p><strong>Note:</strong> JavaScript is disabled. Use the link above to continue.</p>
-  </noscript>
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  </script>
 </body>
 </html>
