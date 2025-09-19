@@ -31,215 +31,160 @@
   </style>
 </head>
 <body>
-  <header>
-    <a href="index.html" class="logo">
-      <img
-        src="/logo.jpg?v=2"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        onerror="
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = '1';
-            this.src = 'logo.jpg?v=2';
-          } else { this.onerror=null; }">
-    </a>
+<header>
+  <a href="index.html" class="logo">
+    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  </a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="jobs.html">Vacancies</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+    <a href="auth.html" id="authBtn" class="active">Sign In</a>
+  </nav>
+</header>
 
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="jobs.html">Vacancies</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" id="authBtn">Sign In</a>
-    </nav>
-  </header>
+<main class="content">
+  <h1>Welcome to HireSloth</h1>
+  <p>Sign in or create an account to post job listings.</p>
 
-  <main class="content">
-    <h1>Welcome to HireSloth</h1>
-    <p>Sign in or create an account to post job listings.</p>
+  <div class="tabs" role="tablist" aria-label="Authentication">
+    <button id="tab-signin" class="tab-btn" role="tab" aria-controls="panel-signin" aria-selected="true">Sign In</button>
+    <button id="tab-signup" class="tab-btn" role="tab" aria-controls="panel-signup" aria-selected="false">Sign Up</button>
+  </div>
 
-    <div class="tabs" role="tablist" aria-label="Authentication">
-      <button id="tab-signin" class="tab-btn" role="tab" aria-controls="panel-signin" aria-selected="true">Sign In</button>
-      <button id="tab-signup" class="tab-btn" role="tab" aria-controls="panel-signup" aria-selected="false">Sign Up</button>
-    </div>
+  <div class="auth-forms">
+    <section id="panel-signin" class="tab-panel active" role="tabpanel" aria-labelledby="tab-signin" tabindex="0">
+      <form id="signinForm">
+        <label for="signinEmail">Email</label><br>
+        <input type="email" id="signinEmail" autocomplete="email" required><br><br>
 
-    <div class="auth-forms">
-      <section id="panel-signin" class="tab-panel active" role="tabpanel" aria-labelledby="tab-signin" tabindex="0">
-        <form id="signinForm">
-          <label for="signinEmail">Email</label><br>
-          <input type="email" id="signinEmail" autocomplete="email" required><br><br>
-
-          <div class="field-row">
-            <div style="flex:1">
-              <label for="signinPassword">Password</label><br>
-              <input type="password" id="signinPassword" autocomplete="current-password" required>
-            </div>
-            <small>
-              <input type="checkbox" id="signinShowPw">
-              <label for="signinShowPw">Show</label>
-            </small>
+        <div class="field-row">
+          <div style="flex:1">
+            <label for="signinPassword">Password</label><br>
+            <input type="password" id="signinPassword" autocomplete="current-password" required>
           </div>
-          <br>
+          <small>
+            <input type="checkbox" id="signinShowPw">
+            <label for="signinShowPw">Show</label>
+          </small>
+        </div>
+        <br>
 
-          <button id="signinBtn" type="submit">Sign In</button>
-        </form>
-        <p id="signinStatus" aria-live="polite"></p>
-      </section>
+        <button id="signinBtn" type="submit">Sign In</button>
+      </form>
+      <p id="signinStatus" aria-live="polite"></p>
+    </section>
 
-      <section id="panel-signup" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" tabindex="0">
-        <form id="signupForm">
-          <label for="signupEmail">Email</label><br>
-          <input type="email" id="signupEmail" autocomplete="email" required><br><br>
+    <section id="panel-signup" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" tabindex="0">
+      <form id="signupForm">
+        <label for="signupEmail">Email</label><br>
+        <input type="email" id="signupEmail" autocomplete="email" required><br><br>
 
-          <div class="field-row">
-            <div style="flex:1">
-              <label for="signupPassword">Password</label><br>
-              <input type="password" id="signupPassword" autocomplete="new-password" required minlength="6">
-            </div>
-            <small>
-              <input type="checkbox" id="signupShowPw">
-              <label for="signupShowPw">Show</label>
-            </small>
+        <div class="field-row">
+          <div style="flex:1">
+            <label for="signupPassword">Password</label><br>
+            <input type="password" id="signupPassword" autocomplete="new-password" required minlength="6">
           </div>
-          <br>
+          <small>
+            <input type="checkbox" id="signupShowPw">
+            <label for="signupShowPw">Show</label>
+          </small>
+        </div>
+        <br>
 
-          <button id="signupBtn" type="submit">Sign Up</button>
-        </form>
-        <p id="signupStatus" aria-live="polite"></p>
-      </section>
-    </div>
-  </main>
+        <button id="signupBtn" type="submit">Sign Up</button>
+      </form>
+      <p id="signupStatus" aria-live="polite"></p>
+    </section>
+  </div>
+</main>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
-    // 🔧 Replace with your real values
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const tabSignin = document.getElementById("tab-signin");
+  const tabSignup = document.getElementById("tab-signup");
+  const panelSignin = document.getElementById("panel-signin");
+  const panelSignup = document.getElementById("panel-signup");
+  function setTab(mode){
+    const isSignin = mode === "signin";
+    tabSignin.setAttribute("aria-selected", isSignin ? "true":"false");
+    tabSignup.setAttribute("aria-selected", isSignin ? "false":"true");
+    panelSignin.classList.toggle("active", isSignin);
+    panelSignup.classList.toggle("active", !isSignin);
+    (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
+    history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}`);
+  }
+  tabSignin.addEventListener("click", ()=>setTab("signin"));
+  tabSignup.addEventListener("click", ()=>setTab("signup"));
+  (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
-    });
+  document.getElementById("signinShowPw").addEventListener("change", e => {
+    document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
+  });
+  document.getElementById("signupShowPw").addEventListener("change", e => {
+    document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
+  });
 
-    const authBtn    = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const myJobsBtn  = document.getElementById("myJobsBtn");
+  function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
+  function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
+  const returnTo = new URLSearchParams(location.search).get("returnTo");
 
-    async function initAuthUI(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
+  const signupForm = document.getElementById("signupForm");
+  const signupBtn  = document.getElementById("signupBtn");
+  const signupStatus = document.getElementById("signupStatus");
+  signupForm.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    signupStatus.textContent = "";
+    lock(signupForm, signupBtn);
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value.trim();
+    try {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
+      signupStatus.style.color = "green";
+      signupForm.reset();
+      setTab("signin");
+    } catch (err) {
+      signupStatus.textContent = "❌ " + (err.message || "Sign-up failed");
+      signupStatus.style.color = "red";
+    } finally { unlock(signupForm, signupBtn); }
+  });
 
-      // Auth button
-      authBtn.textContent = user ? "Sign Out" : "Sign In";
-      authBtn.href = user ? "#" : "auth.html";
-      authBtn.onclick = user ? async (e) => {
-        e.preventDefault();
-        if (!confirm("Are you sure you want to sign out?")) return;
-        await supabase.auth.signOut();
-        location.href = "index.html";
-      } : null;
+  const signinForm = document.getElementById("signinForm");
+  const signinBtn  = document.getElementById("signinBtn");
+  const signinStatus = document.getElementById("signinStatus");
+  signinForm.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    signinStatus.textContent = "";
+    lock(signinForm, signinBtn);
+    const email = document.getElementById("signinEmail").value.trim();
+    const password = document.getElementById("signinPassword").value.trim();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      location.href = returnTo || "post-job.html";
+    } catch (err) {
+      signinStatus.textContent = "❌ " + (err.message || "Sign-in failed");
+      signinStatus.style.color = "red";
+    } finally { unlock(signinForm, signinBtn); }
+  });
+</script>
 
-      // Gate protected links (overwrite handler each time; no stacking)
-      const gate = (el, target) => {
-        if (!el) return;
-        el.onclick = (e) => {
-          if (!user) {
-            e.preventDefault();
-            location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
-          }
-        };
-      };
-      gate(postJobBtn, "post-job.html");
-      gate(myJobsBtn, "my-jobs.html");
-    }
-    initAuthUI();
-    supabase.auth.onAuthStateChange(() => initAuthUI());
-
-    // Tabs
-    const tabSignin = document.getElementById("tab-signin");
-    const tabSignup = document.getElementById("tab-signup");
-    const panelSignin = document.getElementById("panel-signin");
-    const panelSignup = document.getElementById("panel-signup");
-    function setTab(mode){
-      const isSignin = mode === "signin";
-      tabSignin.setAttribute("aria-selected", isSignin ? "true":"false");
-      tabSignup.setAttribute("aria-selected", isSignin ? "false":"true");
-      panelSignin.classList.toggle("active", isSignin);
-      panelSignup.classList.toggle("active", !isSignin);
-      (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
-      history.replaceState(null,"",`auth.html?mode=${isSignin?"signin":"signup"}`);
-    }
-    tabSignin.addEventListener("click", ()=>setTab("signin"));
-    tabSignup.addEventListener("click", ()=>setTab("signup"));
-    (()=>{ const m=new URLSearchParams(location.search).get("mode"); setTab(m==="signup"?"signup":"signin"); })();
-
-    // Show/Hide password
-    document.getElementById("signinShowPw").addEventListener("change", e => {
-      document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
-    });
-    document.getElementById("signupShowPw").addEventListener("change", e => {
-      document.getElementById("signupPassword").type = e.target.checked ? "text":"password";
-    });
-
-    // Helpers
-    function lock(formEl, btnEl){ formEl.classList.add("busy"); btnEl.disabled=true; btnEl.dataset.label=btnEl.textContent; btnEl.textContent="Working…"; }
-    function unlock(formEl, btnEl){ formEl.classList.remove("busy"); btnEl.disabled=false; if(btnEl.dataset.label) btnEl.textContent=btnEl.dataset.label; }
-    const returnTo = new URLSearchParams(location.search).get("returnTo");
-
-    // Signup
-    const signupForm = document.getElementById("signupForm");
-    const signupBtn  = document.getElementById("signupBtn");
-    const signupStatus = document.getElementById("signupStatus");
-    signupForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      signupStatus.textContent = "";
-      lock(signupForm, signupBtn);
-      const email = document.getElementById("signupEmail").value.trim();
-      const password = document.getElementById("signupPassword").value.trim();
-      try {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
-        signupStatus.style.color = "green";
-        signupForm.reset();
-        setTab("signin");
-      } catch (err) {
-        signupStatus.textContent = "❌ " + (err.message || "Sign-up failed");
-        signupStatus.style.color = "red";
-      } finally { unlock(signupForm, signupBtn); }
-    });
-
-    // Signin
-    const signinForm = document.getElementById("signinForm");
-    const signinBtn  = document.getElementById("signinBtn");
-    const signinStatus = document.getElementById("signinStatus");
-    signinForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      signinStatus.textContent = "";
-      lock(signinForm, signinBtn);
-      const email = document.getElementById("signinEmail").value.trim();
-      const password = document.getElementById("signinPassword").value.trim();
-      try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        location.href = returnTo || "post-job.html";
-      } catch (err) {
-        signinStatus.textContent = "❌ " + (err.message || "Sign-in failed");
-        signinStatus.style.color = "red";
-      } finally { unlock(signinForm, signinBtn); }
-    });
-
-    // Service worker (single registration)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(()=>{});
-    }
-  </script>
+<!-- Shared nav/auth logic -->
+<script type="module" src="/nav.js"></script>
+<script>
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+</script>
 </body>
 </html>
