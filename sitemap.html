@@ -1,10 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://hiresloth.com/</loc></url>
-  <url><loc>https://hiresloth.com/jobs.html</loc></url>
-  <url><loc>https://hiresloth.com/post-job.html</loc></url>
-  <url><loc>https://hiresloth.com/my-jobs.html</loc></url>
-  <url><loc>https://hiresloth.com/about.html</loc></url>
-  <url><loc>https://hiresloth.com/contact.html</loc></url>
-</urlset>
-
+{
+  "id": "/",
+  "name": "HireSloth",
+  "short_name": "HireSloth",
+  "description": "Privacy-first job board. Listings expire in 30 days. Apply by email.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFF8F2",
+  "theme_color": "#715336",
+  "icons": [
+    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Browse jobs", "url": "/jobs.html" },
+    { "name": "Post a job", "url": "/post-job.html" }
+  ],
+  "prefer_related_applications": false
+}
