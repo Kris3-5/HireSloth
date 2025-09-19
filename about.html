@@ -1,132 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <!-- Force HTTPS (except localhost) -->
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script>
-    if (location.protocol === 'http:' &&
-        location.hostname !== 'localhost' &&
-        location.hostname !== '127.0.0.1') {
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
-  <!-- Auto-upgrade any accidental http:// subresources to https:// -->
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-
   <title>About HireSloth</title>
   <meta name="description" content="HireSloth is a privacy-first job board. No data selling — just honest listings for seekers and companies.">
   <link rel="canonical" href="https://hiresloth.com/about.html">
-
-  <!-- Favicons -->
   <link rel="icon" href="/favicon.ico">
-
   <!-- Fonts & perf -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-
-  <!-- CDN + Supabase preconnect (swap to your real Supabase domain) -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
-
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
-  <header>
-    <a href="index.html" class="logo">
-      <img
-        src="/logo.jpg?v=2"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        onerror="
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = '1';
-            this.src = 'logo.jpg?v=2'; // try relative path as fallback
-          } else { this.onerror=null; }">
-    </a>
+<header>
+  <a href="index.html" class="logo">
+    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  </a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="jobs.html">Vacancies</a>
+    <a href="about.html" class="active">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
+  </nav>
+</header>
 
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="jobs.html">Vacancies</a>
-      <a href="about.html" class="active">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" id="authBtn">Sign In</a>
-    </nav>
-  </header>
+<main class="content">
+  <h1>About HireSloth</h1>
+  <p>
+    HireSloth is a privacy-first job board built to protect job seekers and provide
+    transparent listings for employers. Unlike traditional platforms, we never sell
+    or misuse personal data.
+  </p>
+  <p>
+    Our goal is to make job hunting stress-free, honest, and effective. We encourage
+    employers to share clear details about their openings including job responsibilities,
+    salary ranges, and company information.
+  </p>
+  <p>
+    HireSloth automatically removes expired listings after 30 days, and allows users
+    to report duplicates, scams, or errors to ensure only high-quality jobs remain visible.
+  </p>
+  <p>🦥 Slow, steady, and safe — that’s the HireSloth way.</p>
+</main>
 
-  <main class="content">
-    <h1>About HireSloth</h1>
-    <p>
-      HireSloth is a privacy-first job board built to protect job seekers and provide
-      transparent listings for employers. Unlike traditional platforms, we never sell
-      or misuse personal data.
-    </p>
-    <p>
-      Our goal is to make job hunting stress-free, honest, and effective. We encourage
-      employers to share clear details about their openings including job responsibilities,
-      salary ranges, and company information.
-    </p>
-    <p>
-      HireSloth automatically removes expired listings after 30 days, and allows users
-      to report duplicates, scams, or errors to ensure only high-quality jobs remain visible.
-    </p>
-    <p>🦥 Slow, steady, and safe — that’s the HireSloth way.</p>
-  </main>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
-
-  <!-- App logic -->
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
-
-    // 🔧 REPLACE with your real values (no extra spaces)
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";        // e.g. https://abc123.supabase.co
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-
-    const authBtn    = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const myJobsBtn  = document.getElementById("myJobsBtn");
-
-    async function initAuthUI(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
-
-      // Only swap text/handler for auth button (no hiding nav)
-      authBtn.textContent = user ? "Sign Out" : "Sign In";
-      authBtn.href = user ? "#" : "auth.html";
-      authBtn.onclick = user ? async (e) => {
-        e.preventDefault();
-        if (!confirm("Are you sure you want to sign out?")) return;
-        await supabase.auth.signOut();
-        location.href = "index.html";
-      } : null;
-
-      // Gate protected links (no flicker, all buttons always visible)
-      const gate = (el, target) => el && el.addEventListener("click", (e) => {
-        if (!user) { e.preventDefault(); location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`; }
-      });
-      gate(postJobBtn, "post-job.html");
-      gate(myJobsBtn, "my-jobs.html");
-    }
-    initAuthUI();
-    supabase.auth.onAuthStateChange(() => initAuthUI());
-
-    // Service worker (single registration)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(()=>{});
-    }
-  </script>
+<!-- Shared nav/auth logic -->
+<script type="module" src="/nav.js"></script>
+<script>
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+</script>
 </body>
 </html>
