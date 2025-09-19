@@ -1,6 +1,8 @@
 {
+  "id": "/",
   "name": "HireSloth",
   "short_name": "HireSloth",
+  "description": "Privacy-first job board. Listings expire in 30 days. Apply by email.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,5 +11,10 @@
   "icons": [
     { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ]
+  ],
+  "shortcuts": [
+    { "name": "Browse jobs", "url": "/jobs.html" },
+    { "name": "Post a job", "url": "/post-job.html" }
+  ],
+  "prefer_related_applications": false
 }
