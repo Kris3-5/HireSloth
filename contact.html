@@ -20,144 +20,98 @@
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
-  <header>
-    <a href="index.html" class="logo">
-      <img
-        src="/logo.jpg?v=2"
-        alt="HireSloth Logo"
-        width="120"
-        height="120"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-        onerror="
-          if (!this.dataset.fallbackTried) {
-            this.dataset.fallbackTried = '1';
-            this.src = 'logo.jpg?v=2'; // try relative path as fallback
-          } else { this.onerror=null; }">
-    </a>
+<header>
+  <a href="index.html" class="logo">
+    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  </a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="jobs.html">Vacancies</a>
+    <a href="about.html">About</a>
+    <a href="contact.html" class="active">Contact</a>
+    <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+    <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+    <a href="auth.html" id="authBtn">Sign In</a>
+  </nav>
+</header>
 
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="jobs.html">Vacancies</a>
-      <a href="about.html">About</a>
-      <a href="contact.html" class="active">Contact</a>
-      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-      <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <a href="auth.html" id="authBtn">Sign In</a>
-    </nav>
-  </header>
+<main class="content">
+  <h1>Contact Us</h1>
+  <p>Have questions, feedback, or spotted an issue? Get in touch below.</p>
 
-  <main class="content">
-    <h1>Contact Us</h1>
-    <p>Have questions, feedback, or spotted an issue? Get in touch below.</p>
+  <form id="contactForm">
+    <label for="name">Name</label><br>
+    <input type="text" id="name" required autocomplete="name"><br><br>
 
-    <form id="contactForm">
-      <label for="name">Name</label><br>
-      <input type="text" id="name" required autocomplete="name"><br><br>
+    <input type="hidden" id="type" value="message">
+    <input type="hidden" id="job_id">
 
-      <input type="hidden" id="type" value="message">
-      <input type="hidden" id="job_id">
+    <label for="email">Email</label><br>
+    <input type="email" id="email" required autocomplete="email"><br><br>
 
-      <label for="email">Email</label><br>
-      <input type="email" id="email" required autocomplete="email"><br><br>
+    <label for="message">Message</label><br>
+    <textarea id="message" rows="5" required></textarea><br><br>
 
-      <label for="message">Message</label><br>
-      <textarea id="message" rows="5" required></textarea><br><br>
+    <button type="submit">Send Message</button>
+  </form>
 
-      <button type="submit">Send Message</button>
-    </form>
+  <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+</main>
 
-    <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
-  </main>
+<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
-  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
+  (function prefillReport(){
+    const params = new URLSearchParams(location.search);
+    const jobId = params.get("report_job");
+    if (!jobId) return;
+    document.getElementById("type").value = "report";
+    document.getElementById("job_id").value = jobId;
+    const t = params.get("title") || "";
+    const c = params.get("company") || "";
+    const preset = `Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
+    const msg = document.getElementById("message");
+    if (!msg.value) msg.value = preset;
+  })();
 
-    const authBtn = document.getElementById("authBtn");
-    const postJobBtn = document.getElementById("postJobBtn");
-    const myJobsBtn = document.getElementById("myJobsBtn");
+  const form = document.getElementById("contactForm");
+  const statusEl = document.getElementById("formStatus");
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const lock = () => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Sending…"; };
+  const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
 
-    async function initAuthUI(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    lock();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const message = document.getElementById("message").value.trim();
+    const type = document.getElementById("type").value || "message";
+    const job_id = document.getElementById("job_id").value || null;
 
-      // Auth button (no flicker)
-      authBtn.textContent = user ? "Sign Out" : "Sign In";
-      authBtn.href = user ? "#" : "auth.html";
-      authBtn.onclick = user ? async (e) => {
-        e.preventDefault();
-        if (!confirm("Are you sure you want to sign out?")) return;
-        await supabase.auth.signOut();
-        location.href = "index.html";
-      } : null;
-
-      // Gate protected links — use onclick so handlers don't stack
-      const gate = (el, target) => {
-        if (!el) return;
-        el.onclick = (e) => {
-          if (!user) {
-            e.preventDefault();
-            location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
-          }
-        };
-      };
-      gate(postJobBtn, "post-job.html");
-      gate(myJobsBtn, "my-jobs.html");
+    const { error } = await supabase.from("messages").insert([{ name, email, message, type, job_id }]);
+    if (error) {
+      statusEl.textContent = "❌ Something went wrong. Please try again.";
+      statusEl.style.color = "red";
+    } else {
+      statusEl.textContent = type === "report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent.";
+      statusEl.style.color = "green";
+      form.reset();
     }
-    initAuthUI();
-    supabase.auth.onAuthStateChange(() => initAuthUI());
+    unlock();
+  });
+</script>
 
-    // Prefill report
-    (function prefillReport(){
-      const params = new URLSearchParams(location.search);
-      const jobId = params.get("report_job");
-      if (!jobId) return;
-      document.getElementById("type").value = "report";
-      document.getElementById("job_id").value = jobId;
-      const t = params.get("title") || "";
-      const c = params.get("company") || "";
-      const preset = `Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
-      const msg = document.getElementById("message");
-      if (!msg.value) msg.value = preset;
-    })();
-
-    // Submit
-    const form = document.getElementById("contactForm");
-    const statusEl = document.getElementById("formStatus");
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const lock = () => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Sending…"; };
-    const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      lock();
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const message = document.getElementById("message").value.trim();
-      const type = document.getElementById("type").value || "message";
-      const job_id = document.getElementById("job_id").value || null;
-
-      const { error } = await supabase.from("messages").insert([{ name, email, message, type, job_id }]);
-      if (error) {
-        statusEl.textContent = "❌ Something went wrong. Please try again.";
-        statusEl.style.color = "red";
-      } else {
-        statusEl.textContent = type === "report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent.";
-        statusEl.style.color = "green";
-        form.reset();
-      }
-      unlock();
-    });
-
-    // Service worker (single registration)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(()=>{});
-    }
-  </script>
+<!-- Shared nav/auth logic -->
+<script type="module" src="/nav.js"></script>
+<script>
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+</script>
 </body>
 </html>
