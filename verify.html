@@ -78,7 +78,7 @@
     const fromBtn = btn?.dataset?.link?.trim();
     const fromNav = nav?.dataset?.link?.trim();
     const fromWin = (typeof window !== "undefined" && window.STRIPE_PAYMENT_LINK) ? String(window.STRIPE_PAYMENT_LINK).trim() : "";
-    const fromConst = (PAYMENT_LINK_CONST && PAYMENT_LINK_CONST !== "mylink") ? PAYMENT_LINK_CONST.trim() : "";
+    const fromConst = (PAYMENT_LINK_CONST && PAYMENT_LINK_CONST !== "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00") ? PAYMENT_LINK_CONST.trim() : "";
 
     return fromBtn || fromNav || fromWin || fromConst || "";
   }
