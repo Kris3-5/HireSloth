@@ -14,6 +14,9 @@ const postBtn   = document.getElementById("postJobBtn");
 const verifyBtn = document.getElementById("verifyBtnNav");
 
 function applyUI(isLoggedIn){
+  // Toggle a global class so CSS can handle visibility
+  document.documentElement.classList.toggle("authed", !!isLoggedIn);
+
   if (authBtn){
     authBtn.textContent = isLoggedIn ? "Sign Out" : "Sign In";
     authBtn.href        = isLoggedIn ? "#" : "auth.html";
@@ -26,8 +29,8 @@ function applyUI(isLoggedIn){
     } : null;
   }
 
+  // Extra safety: also force show/hide inline
   if (verifyBtn){
-    // Force visibility (override any CSS) when logged in
     verifyBtn.hidden = !isLoggedIn;
     verifyBtn.style.display = isLoggedIn ? "inline-block" : "none";
   }
@@ -44,7 +47,7 @@ function applyUI(isLoggedIn){
   gate(postBtn,   "post-job.html");
 }
 
-// Anti-flicker
+// Anti-flicker from cached flag
 applyUI(localStorage.getItem("hs_authed")==="1");
 
 // Real state
@@ -60,9 +63,10 @@ applyUI(localStorage.getItem("hs_authed")==="1");
   }
 })();
 
-// React to changes
+// Live changes
 supabase.auth.onAuthStateChange((_e, session)=>{
   const isLoggedIn = !!session?.user;
   applyUI(isLoggedIn);
   localStorage.setItem("hs_authed", isLoggedIn ? "1" : "0");
 });
+
