@@ -3,21 +3,43 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HireSloth – Redirecting to Sign Up…</title>
-  <meta http-equiv="refresh" content="0; url=auth.html?mode=signup">
   <meta name="robots" content="noindex,follow">
   <link rel="canonical" href="auth.html?mode=signup">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
+  <!-- Optional meta refresh fallback -->
+  <meta http-equiv="refresh" content="2; url=auth.html?mode=signup">
 </head>
 <body>
-  <p>If you’re not redirected, <a href="auth.html?mode=signup">click here to Sign Up</a>.</p>
+  <p>Redirecting to sign up… If you’re not redirected, <a id="fallbackLink" href="auth.html?mode=signup">click here</a>.</p>
+
+  <noscript>
+    <p><strong>Note:</strong> JavaScript is required. Continue to
+      <a href="auth.html?mode=signup">Sign Up</a>.
+    </p>
+  </noscript>
+
   <script>
-    const params = new URLSearchParams(location.search);
-    params.set("mode","signup");
-    location.replace("auth.html?" + params.toString());
+    (function () {
+      const base = new URL(window.location.href);
+      const target = new URL('auth.html', base);
+      const params = new URLSearchParams(base.search);
+
+      // Force signup mode, preserve other params like returnTo
+      params.set('mode', 'signup');
+      target.search = params.toString();
+
+      const link = document.getElementById('fallbackLink');
+      if (link) link.href = target.toString();
+
+      window.location.replace(target.toString());
+    })();
   </script>
+
   <script>
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+    }
   </script>
 </body>
 </html>
