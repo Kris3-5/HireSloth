@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script>
+    // Force HTTPS off localhost
     if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
+  <!-- CSP is fine for email/password auth; if you add OAuth popups, expand as needed -->
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>HireSloth - Sign In / Sign Up</title>
   <link rel="canonical" href="https://hiresloth.com/auth.html">
   <meta name="description" content="Sign in or create a HireSloth account to post jobs.">
   <link rel="icon" href="favicon.ico">
   <!-- Fonts & perf -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a"/>
   <style>
     .tabs{display:inline-flex;gap:.4rem;background:#fff;border:1px solid rgba(113,83,54,.12);border-radius:12px;padding:.35rem;box-shadow:0 4px 12px rgba(0,0,0,.08);margin:1rem auto 0}
@@ -32,20 +34,20 @@
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <!-- Always present; nav.js gates the click if signed out -->
+    <!-- Always present; nav.js can gate the click if signed out -->
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
-    <a href="auth.html" id="authBtn" class="active">Sign In</a>
+    <a href="auth.html" id="authBtn" class="active" aria-current="page">Sign In</a>
   </nav>
 </header>
 
@@ -108,26 +110,43 @@
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
   });
 
-  // Clean Supabase OAuth fragments / query params once handled
-  const cleanAuthParams = () => {
-    const u = new URL(window.location.href);
-    if (u.hash.includes('access_token=') || u.searchParams.has('code')) {
-      u.hash = '';
-      u.searchParams.delete('code');
-      history.replaceState({}, "", u.pathname + (u.search ? '?' + u.searchParams.toString() : ''));
-    }
-  };
-
+  // --- Utils ---
   const qs = new URLSearchParams(location.search);
-  const returnTo = qs.get("returnTo") || "post-job.html";
+
+  // Only allow same-origin returnTo (avoid open redirects)
+  function safeReturnTo(val) {
+    try {
+      if (!val) return "post-job.html";
+      const url = new URL(val, location.origin);
+      if (url.origin !== location.origin) return "post-job.html";
+      // Normalize to path+query+hash
+      return url.pathname + url.search + url.hash || "post-job.html";
+    } catch { return "post-job.html"; }
+  }
+  const returnTo = safeReturnTo(qs.get("returnTo")) || "post-job.html";
   const initialMode = (qs.get("mode") === "signup") ? "signup" : "signin";
 
+  // Clean Supabase OAuth fragments / query params once handled
+  function cleanAuthParams() {
+    const u = new URL(window.location.href);
+    let changed = false;
+    if (u.hash.includes('access_token=')) { u.hash = ''; changed = true; }
+    if (u.searchParams.has('code')) { u.searchParams.delete('code'); changed = true; }
+    if (changed) {
+      const newSearch = u.searchParams.toString();
+      const next = u.pathname + (newSearch ? ("?" + newSearch) : "") + (u.hash || "");
+      history.replaceState({}, "", next);
+    }
+  }
+
+  // Tabs
   const tabSignin = document.getElementById("tab-signin");
   const tabSignup = document.getElementById("tab-signup");
   const panelSignin = document.getElementById("panel-signin");
@@ -141,17 +160,19 @@
     panelSignup.classList.toggle("active", !isSignin);
     (isSignin ? document.getElementById("signinEmail") : document.getElementById("signupEmail"))?.focus();
 
-    // preserve returnTo while changing mode
+    // Preserve returnTo while changing mode (no stray "?")
     const u = new URL(window.location.href);
     u.searchParams.set("mode", isSignin ? "signin" : "signup");
     if (returnTo) u.searchParams.set("returnTo", returnTo);
-    history.replaceState(null, "", u.pathname + "?" + u.searchParams.toString());
+    const next = u.pathname + "?" + u.searchParams.toString();
+    history.replaceState(null, "", next);
   }
 
   tabSignin.addEventListener("click", ()=>setTab("signin"));
   tabSignup.addEventListener("click", ()=>setTab("signup"));
   setTab(initialMode);
 
+  // Show/hide pw
   document.getElementById("signinShowPw").addEventListener("change", e => {
     document.getElementById("signinPassword").type = e.target.checked ? "text":"password";
   });
@@ -176,6 +197,7 @@
     }
   })();
 
+  // --- Sign up ---
   const signupForm = document.getElementById("signupForm");
   const signupBtn  = document.getElementById("signupBtn");
   const signupStatus = document.getElementById("signupStatus");
@@ -186,6 +208,7 @@
     const email = document.getElementById("signupEmail").value.trim();
     const password = document.getElementById("signupPassword").value.trim();
     try {
+      if (!email || !password) throw new Error("Please enter email and password.");
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       signupStatus.textContent = "✅ Sign up successful! Check your email for confirmation.";
@@ -198,6 +221,7 @@
     } finally { unlock(signupForm, signupBtn); }
   });
 
+  // --- Sign in ---
   const signinForm = document.getElementById("signinForm");
   const signinBtn  = document.getElementById("signinBtn");
   const signinStatus = document.getElementById("signinStatus");
@@ -208,10 +232,11 @@
     const email = document.getElementById("signinEmail").value.trim();
     const password = document.getElementById("signinPassword").value.trim();
     try {
+      if (!email || !password) throw new Error("Please enter email and password.");
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       localStorage.setItem("hs_authed","1");
-      location.href = returnTo;
+      location.replace(returnTo);
     } catch (err) {
       signinStatus.textContent = "❌ " + (err.message || "Sign-in failed");
       signinStatus.style.color = "red";
