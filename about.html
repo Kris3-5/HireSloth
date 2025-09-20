@@ -99,7 +99,7 @@
 <!-- Service worker: keep it updated; nav.js can handle gating the verify click -->
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=15', { scope: './' }).catch(() => {});
   }
 </script>
 
