@@ -3,11 +3,21 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HireSloth – Redirecting to Sign Up…</title>
+
+  <!-- Force HTTPS outside localhost -->
+  <script>
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+
   <meta name="robots" content="noindex,follow">
-  <link rel="canonical" href="auth.html?mode=signup">
+  <link rel="canonical" href="https://hiresloth.com/auth.html?mode=signup">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
-  <!-- Optional meta refresh fallback -->
+  <!-- Meta refresh fallback (JS below builds safe URL incl. returnTo) -->
   <meta http-equiv="refresh" content="2; url=auth.html?mode=signup">
 </head>
 <body>
@@ -22,11 +32,24 @@
   <script>
     (function () {
       const base = new URL(window.location.href);
-      const target = new URL('auth.html', base);
-      const params = new URLSearchParams(base.search);
 
-      // Force signup mode, preserve other params like returnTo
+      // Only allow same-origin returnTo (avoid open redirects)
+      function safeReturnTo(val) {
+        try {
+          if (!val) return "post-job.html";
+          const u = new URL(val, base.origin);
+          if (u.origin !== base.origin) return "post-job.html";
+          return (u.pathname + u.search + u.hash) || "post-job.html";
+        } catch { return "post-job.html"; }
+      }
+
+      const rawReturnTo = new URLSearchParams(base.search).get('returnTo');
+      const rt = safeReturnTo(rawReturnTo);
+
+      const target = new URL('auth.html', base);
+      const params = new URLSearchParams();
       params.set('mode', 'signup');
+      if (rt) params.set('returnTo', rt);
       target.search = params.toString();
 
       const link = document.getElementById('fallbackLink');
