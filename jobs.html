@@ -16,7 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- Replace "mylink" with your full Supabase URL -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
   <style>
@@ -44,6 +43,7 @@
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <!-- Always present; nav.js gates click if signed out -->
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
@@ -87,47 +87,58 @@
       Verified
     </span>`;
 
-  // Support either schema:
-  // - profiles: { id, verified_until }
-  // - companies: { id, user_id, is_verified } (optional)
-  function profileIsVerified(profile){
-    if (!profile) return false;
-    if ('is_verified' in profile) return !!profile.is_verified;
-    if ('verified_until' in profile && profile.verified_until){
+  function isProfileVerifiedRow(row){
+    if (!row) return false;
+    if ('is_verified' in row) return !!row.is_verified; // if using companies
+    if ('verified_until' in row && row.verified_until){
       const today = new Date(); today.setHours(0,0,0,0);
-      const until = new Date(profile.verified_until);
+      const until = new Date(row.verified_until);
       return until >= today;
     }
     return false;
   }
 
-  async function fetchVerificationMaps(userIds, companyIds){
-    const profMap = {};
-    const compMap = {};
+  // Use RPC to respect RLS (your SECURITY DEFINER function)
+  async function getVerifiedProfilesMap(userIds){
+    const map = {};
+    if (!userIds.length) return map;
 
-    // profiles (safe if table exists)
-    if (userIds.length){
-      const { data: profiles, error: profErr } = await supabase
+    // Try RPC first
+    let rpcOk = false;
+    try {
+      const { data, error } = await supabase.rpc("get_verified_profiles", { ids: userIds });
+      if (!error && Array.isArray(data)) {
+        data.forEach(r => { map[r.id] = { id: r.id, verified_until: r.verified_until }; });
+        rpcOk = true;
+      }
+    } catch (_) {}
+
+    if (rpcOk) return map;
+
+    // Fallback: direct select (only if your profiles RLS permits it)
+    try {
+      const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, verified_until")
         .in("id", userIds);
+      if (!error && profiles) profiles.forEach(p => { map[p.id] = p; });
+    } catch (_) {}
 
-      if (!profErr && profiles) profiles.forEach(p => { profMap[p.id] = p; });
-    }
+    return map;
+  }
 
-    // companies (optional; ignore if table doesn't exist or columns differ)
-    if (companyIds.length){
-      try {
-        const { data: companies, error: compErr } = await supabase
-          .from("companies")
-          .select("id, user_id, is_verified")
-          .in("id", companyIds);
-
-        if (!compErr && companies) companies.forEach(c => { compMap[c.id] = c; });
-      } catch(_) {/* table may not exist; ignore */}
-    }
-
-    return { profMap, compMap };
+  // Optional companies table support
+  async function getCompaniesMap(companyIds){
+    const map = {};
+    if (!companyIds.length) return map;
+    try {
+      const { data: companies, error } = await supabase
+        .from("companies")
+        .select("id, user_id, is_verified")
+        .in("id", companyIds);
+      if (!error && companies) companies.forEach(c => { map[c.id] = c; });
+    } catch (_) {}
+    return map;
   }
 
   async function loadJobs(keyword = "", location = "", remoteOnly = false) {
@@ -143,7 +154,6 @@
     if (location)  query = query.ilike("location", `%${location}%`);
     if (remoteOnly) query = query.eq("remote", true);
 
-    // Order newest first
     const { data: jobs, error } = await query.order("created_at", { ascending: false });
 
     if (error) {
@@ -156,16 +166,18 @@
       return;
     }
 
-    // Collect ids for verification lookups
-    const userIds = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
+    const userIds    = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
     const companyIds = [...new Set(jobs.map(j => j.company_id).filter(Boolean))];
 
-    const { profMap, compMap } = await fetchVerificationMaps(userIds, companyIds);
+    const [profMap, compMap] = await Promise.all([
+      getVerifiedProfilesMap(userIds),
+      getCompaniesMap(companyIds)
+    ]);
 
     jobsContainer.innerHTML = jobs.map(job => {
       const prof = job.user_id ? profMap[job.user_id] : null;
       const comp = job.company_id ? compMap[job.company_id] : null;
-      const verified = comp?.is_verified || profileIsVerified(prof);
+      const verified = (comp && comp.is_verified) || isProfileVerifiedRow(prof);
 
       const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
       const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
@@ -202,7 +214,7 @@
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920a"></script>
+<script type="module" src="nav.js?v=20250920d"></script>
 <script>
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{}); }
 </script>
