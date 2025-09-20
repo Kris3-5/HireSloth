@@ -1,16 +1,17 @@
 // sw.js
-const VERSION = 'v13'; // bump on every deploy to force update
+const VERSION = 'v14'; // bump on every deploy to force update
 const STATIC_CACHE = `static-${VERSION}`;
 const IMG_CACHE    = `images-${VERSION}`;
 
-// Helper: resolve a path inside the current SW scope (works on GitHub Pages /repo/)
+// Helper: resolve a URL inside the current SW scope (works on GitHub Pages /repo/)
 const scopeURL = new URL(self.registration.scope);
-const inScope = (p) => new URL(p, scopeURL).pathname;
+const inScope = (p) => new URL(p, scopeURL).href;
 
-// Precache *scoped* URLs. Include index.html for SPA-ish fallback.
+// Precache *scoped* URLs. Include index.html for offline fallback.
 const PRECACHE = [
   inScope('index.html'),
   inScope('style.css'),
+  inScope('nav.js'),
   inScope('logo.jpg'),
   inScope('favicon-32x32.png'),
   inScope('favicon-16x16.png'),
@@ -39,6 +40,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Optional: allow manual skipWaiting from the page
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 const BYPASS_HOSTS = new Set([
   'cdn.jsdelivr.net',
   'fonts.googleapis.com',
@@ -60,25 +66,20 @@ self.addEventListener('fetch', (event) => {
     if (BYPASS_HOSTS.has(url.hostname) || /(\.|^)supabase\.(co|in)$/.test(url.hostname)) {
       return; // do nothing: browser goes to network
     }
-    // Non same-origin but not in bypass list -> also do nothing
-    return;
+    return; // non same-origin: do nothing
   }
 
   // Navigations: network-first, fallback to cached index.html within scope
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
-        .then((res) => {
-          // Optionally: cache a fresh copy of index.html when network succeeds
-          if (res.ok) return res;
-          return caches.match(inScope('index.html'), { ignoreSearch: true });
-        })
+        .then((res) => (res.ok ? res : caches.match(inScope('index.html'), { ignoreSearch: true })))
         .catch(() => caches.match(inScope('index.html'), { ignoreSearch: true }))
     );
     return;
   }
 
-  // Images: cache-first
+  // Images: cache-first (ignore querystrings like ?v=…)
   if (req.destination === 'image') {
     event.respondWith(
       caches.open(IMG_CACHE).then(async (cache) => {
@@ -89,7 +90,6 @@ self.addEventListener('fetch', (event) => {
           if (res && res.ok) cache.put(req, res.clone());
           return res;
         } catch {
-          // fallback to any cached version (might be null)
           return cache.match(req, { ignoreSearch: true });
         }
       })
@@ -97,34 +97,33 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // CSS/JS: stale-while-revalidate
+  // CSS/JS: stale-while-revalidate (ignore querystrings so precached unversioned files satisfy ?v=…)
   if (req.destination === 'style' || req.destination === 'script') {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(req);
+        const cached = await cache.match(req, { ignoreSearch: true });
         const fetchPromise = fetch(req)
           .then((res) => {
             if (res && res.ok) cache.put(req, res.clone());
             return res;
           })
           .catch(() => null);
-        // Serve cached immediately if there, otherwise wait for network
+        // Serve cached immediately if present; otherwise return network (or null)
         return cached || fetchPromise || fetch(req);
       })
     );
     return;
   }
 
-  // Default same-origin GET: network-first, fallback to cache
+  // Default same-origin GET: network-first, fallback to cache (ignoreSearch helps with small query diffs)
   event.respondWith(
     fetch(req)
       .then((res) => {
-        // Optionally cache successful GETs under STATIC_CACHE
         if (res && res.ok) {
           caches.open(STATIC_CACHE).then((cache) => cache.put(req, res.clone()));
         }
         return res;
       })
-      .catch(() => caches.match(req))
+      .catch(() => caches.match(req, { ignoreSearch: true }))
   );
 });
