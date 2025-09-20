@@ -4,22 +4,154 @@
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Thanks – HireSloth</title>
   <meta name="robots" content="noindex,follow"/>
-  <link rel="stylesheet" href="/style.css?v=20250912a">
+  <link rel="stylesheet" href="style.css?v=20250912a">
+  <style>
+    .status { margin-top:1rem; font-weight:600 }
+    .muted { opacity:.8 }
+  </style>
 </head>
 <body>
   <header>
-    <a href="/index.html" class="logo"><img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120"></a>
+    <a href="index.html" class="logo">
+      <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" decoding="async">
+    </a>
     <nav>
-      <a href="/index.html">Home</a>
-      <a href="/my-jobs.html">My Jobs</a>
-      <a href="/jobs.html">Vacancies</a>
+      <a href="index.html">Home</a>
+      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
+
   <main class="content">
     <h1>Payment received 🎉</h1>
     <p>Thanks for supporting HireSloth. Your “Verified employer” badge will be applied shortly.</p>
-    <p>If you used the same email as your account, we already have your details. Otherwise, please make sure you’re signed in and your account email matches the payment email.</p>
-    <p><a class="btn" href="/my-jobs.html">Go to My Jobs</a></p>
+
+    <div id="signedOut" style="display:none">
+      <p class="muted">You’re not signed in. To see your badge, sign in to your account.</p>
+      <p><a class="btn" href="auth.html?mode=signin&returnTo=my-jobs.html">Sign in</a></p>
+    </div>
+
+    <div id="signedIn" style="display:none">
+      <p id="status" class="status">Verifying your account…</p>
+      <p class="muted" id="hint">This can take a moment while our servers confirm the payment.</p>
+      <p style="margin-top:1rem;">
+        <a class="btn" id="toMyJobs" href="my-jobs.html" style="display:none">Go to My Jobs</a>
+        <button class="btn btn-alt" id="checkNow" style="display:none">Check again</button>
+      </p>
+    </div>
   </main>
+
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+
+  <!-- Live verify check -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // 🔧 Replace with your real values
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+    });
+
+    const el = (id) => document.getElementById(id);
+    const signedOut = el('signedOut');
+    const signedIn  = el('signedIn');
+    const statusEl  = el('status');
+    const hintEl    = el('hint');
+    const toMyJobs  = el('toMyJobs');
+    const checkNow  = el('checkNow');
+
+    function profileIsVerified(p){
+      if (!p) return false;
+      if ('is_verified' in p) return !!p.is_verified; // companies row path
+      if (p.verified_until){
+        const today = new Date(); today.setHours(0,0,0,0);
+        return new Date(p.verified_until) >= today;
+      }
+      return false;
+    }
+
+    async function checkVerified(userId){
+      // Try profiles.verified_until
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("verified_until")
+          .eq("id", userId)
+          .maybeSingle();
+        if (!error && profileIsVerified(data)) return true;
+      } catch {}
+
+      // Try companies.is_verified
+      try {
+        const { data, error } = await supabase
+          .from("companies")
+          .select("is_verified")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (!error && profileIsVerified(data)) return true;
+      } catch {}
+
+      return false;
+    }
+
+    (async () => {
+      const { data:{ session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        signedOut.style.display = '';
+        return;
+      }
+
+      signedIn.style.display = '';
+      localStorage.setItem("hs_authed","1");
+
+      // Poll up to ~20s
+      const deadline = Date.now() + 20000;
+      let verified = false;
+
+      async function runCheck(){
+        statusEl.textContent = "Verifying your account…";
+        verified = await checkVerified(user.id);
+        if (verified) {
+          statusEl.textContent = "✅ You’re verified! Badge active on your listings.";
+          hintEl.textContent = "You can manage your jobs and see the badge on your company listings.";
+          toMyJobs.style.display = '';
+          checkNow.style.display = 'none';
+          return true;
+        }
+        return false;
+      }
+
+      if (!(await runCheck())) {
+        const timer = setInterval(async () => {
+          if (Date.now() > deadline) {
+            clearInterval(timer);
+            statusEl.textContent = "Still processing…";
+            hintEl.textContent = "If your badge hasn’t appeared after a short while, please refresh or check My Jobs.";
+            checkNow.style.display = '';
+            return;
+          }
+          await runCheck();
+          if (verified) clearInterval(timer);
+        }, 1200);
+      }
+
+      checkNow.addEventListener('click', runCheck);
+    })();
+  </script>
+
+  <!-- Shared nav/auth logic -->
+  <script type="module" src="nav.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+    }
+  </script>
 </body>
 </html>
