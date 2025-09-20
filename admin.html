@@ -13,13 +13,13 @@
     }
   </script>
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">
-    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
   <nav>
@@ -93,13 +93,17 @@
       location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("admin.html");
       throw new Error("Redirecting to sign in");
     }
+    // Ensure your RLS allows admins to read the admins table
     const { data, error } = await supabase
       .from("admins")
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      guardEl.innerHTML = `<p style="color:#a33;"><strong>Error:</strong> ${esc(error.message)}</p>`;
+      throw error;
+    }
 
     if (!data) {
       guardEl.innerHTML = `
@@ -182,8 +186,15 @@
         const el = e.currentTarget;
         const action = el.dataset.action;
         const id = el.dataset.id;
-        el.disabled = true;
+
         try {
+          if (action === "delete") {
+            // ✅ Confirm BEFORE disabling (prevents stuck disabled button)
+            if (!confirm("Delete this job permanently?")) return;
+          }
+
+          el.disabled = true;
+
           if (action === "approve") {
             const { error } = await supabase.from("jobs").update({ approved: true, is_active: true }).eq("id", id);
             if (error) throw error;
@@ -193,7 +204,6 @@
             if (error) throw error;
             adminStatus.textContent = "Deactivated";
           } else if (action === "delete") {
-            if (!confirm("Delete this job permanently?")) return;
             const { error } = await supabase.from("jobs").delete().eq("id", id);
             if (error) throw error;
             adminStatus.textContent = "Deleted";
@@ -243,6 +253,7 @@
       }
 
       try {
+        // Keep your current approach (profiles.verified_until)
         const { error } = await supabase
           .from("profiles")
           .upsert([{ id: userId, verified_until: until }], { onConflict: "id" });
@@ -272,9 +283,9 @@
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="/nav.js"></script>
+<script type="module" src="nav.js"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{}); }
 </script>
 </body>
 </html>
