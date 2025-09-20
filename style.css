@@ -307,7 +307,7 @@ footer{
 }
 .btn:focus-visible { box-shadow: 0 0 0 4px rgba(113,83,54,.25); }
 input[type="checkbox"] { accent-color: var(--brand); }
-.actions .btn:not(.secondary)::before { content: "✉️"; margin-right: .35rem; }
+.actions a.btn:not(.secondary)::before { content: "✉️"; margin-right: .35rem; }
 .actions .btn.secondary::before { content: "🚩"; margin-right: .35rem; }
 .content a { text-decoration: underline; text-underline-offset: 2px; }
 .content a:hover { text-decoration-thickness: 2px; }
@@ -357,3 +357,10 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
 @media (prefers-color-scheme: dark){
   .badge--verified { background:#2b2416; border-color:#5b4a1c; color:#f1dea9; }
 }
+.btn.danger{
+  background:#b3261e; color:#fff; border:none;
+}
+@media (prefers-color-scheme: dark){
+  .btn.danger{ background:#cf3c31; color:#fff; }
+}
+#verifyBtnNav { white-space: nowrap; }
