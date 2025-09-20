@@ -3,16 +3,27 @@
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Checkout cancelled – HireSloth</title>
+
+  <!-- Force HTTPS outside localhost -->
+  <script>
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
   <meta name="robots" content="noindex,follow"/>
   <link rel="stylesheet" href="style.css?v=20250912a">
-  <style>
-    .muted{opacity:.85}
-  </style>
+  <style>.muted{opacity:.85}</style>
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo"><img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" decoding="async"></a>
-    <nav>
+    <a href="index.html" class="logo" aria-label="HireSloth Home">
+      <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" decoding="async">
+    </a>
+    <nav aria-label="Primary">
       <a href="index.html">Home</a>
       <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
       <a href="jobs.html">Vacancies</a>
@@ -37,7 +48,7 @@
   <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
     // 🔧 Replace with your real values
     const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
@@ -63,6 +74,30 @@
       return false;
     }
 
+    function pickPaymentLink(){
+      const nav = document.getElementById("verifyBtnNav");
+      const fromNav = nav?.dataset?.link?.trim();
+      const fromWin = (typeof window !== "undefined" && window.STRIPE_PAYMENT_LINK) ? String(window.STRIPE_PAYMENT_LINK).trim() : "";
+      return fromNav || fromWin || "";
+    }
+
+    function buildCheckoutUrl(base, user, company){
+      try {
+        const url = new URL(base, location.origin);
+        const email = company?.email || user?.email || "";
+        const refId = company?.id || user?.id || "";
+
+        if (refId) url.searchParams.set("client_reference_id", refId);
+        if (email) url.searchParams.set("prefilled_email", email);
+        if (user?.id) url.searchParams.set("prefilled_metadata[user_id]", user.id);
+        if (company?.id) url.searchParams.set("prefilled_metadata[company_id]", company.id);
+        if (company?.name) url.searchParams.set("prefilled_metadata[company_name]", company.name);
+        url.searchParams.set("prefilled_metadata[period]", "annual");
+        url.searchParams.set("prefilled_metadata[site]", location.origin);
+        return url.toString();
+      } catch { return null; }
+    }
+
     (async ()=>{
       const { data:{ session } } = await supabase.auth.getSession();
       const user = session?.user;
@@ -71,12 +106,13 @@
         localStorage.setItem('hs_authed','0');
         signIn.style.display = '';
         hint.textContent = "Sign in to complete verification when you’re ready.";
+        tryAgain.href = "verify.html";
         return;
       }
 
       localStorage.setItem('hs_authed','1');
 
-      // See if they’re already verified (maybe payment completed earlier)
+      // If verified already, steer them to My Jobs
       let verified = false;
       try{
         const { data: prof } = await supabase
@@ -101,6 +137,22 @@
         toMyJobs.style.display = '';
         hint.textContent = "Looks like your badge is already active. You can view it on your listings.";
       } else {
+        // Prefer direct Payment Link if provided
+        const baseLink = pickPaymentLink();
+        if (baseLink) {
+          // Optionally include company context
+          let company = null;
+          try {
+            const { data } = await supabase
+              .from('companies')
+              .select('id,name,email')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            if (data) company = data;
+          } catch {}
+          const built = buildCheckoutUrl(baseLink, user, company);
+          if (built) tryAgain.href = built;
+        }
         hint.textContent = "You can restart checkout when you’re ready.";
       }
     })();
