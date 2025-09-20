@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script>
-    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
@@ -16,23 +18,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- Replace "mylink" with your Supabase URL, e.g. https://abc.supabase.co -->
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
-    <a href="post-job.html" id="postJobBtn" class="active">Post a Job</a>
+    <a href="post-job.html" id="postJobBtn" class="active" aria-current="page">Post a Job</a>
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
@@ -77,9 +77,12 @@
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+  });
 
   // Require auth
   const { data: { session } } = await supabase.auth.getSession();
@@ -91,66 +94,68 @@
   localStorage.setItem("hs_authed","1");
 
   const submitBtn = document.getElementById("submitBtn");
-  const jobForm = document.getElementById("jobForm");
-  const statusEl = document.getElementById("formStatus");
+  const jobForm   = document.getElementById("jobForm");
+  const statusEl  = document.getElementById("formStatus");
 
   const lock = (txt="Posting…") => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = txt; };
   const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
 
-  // Optional: prefill from companies table (if it exists) and/or profile email
+  // Prefill from companies table (if exists) and/or profile email
   let companyRow = null;
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("companies")
       .select("id,name,email")
       .eq("user_id", currentUser.id)
       .maybeSingle();
-    if (!error && data) {
+    if (data) {
       companyRow = data;
-      if (data.name) document.getElementById("company").value = data.name;
+      if (data.name)  document.getElementById("company").value = data.name;
       if (data.email) document.getElementById("contact_email").value = data.email;
     }
-  } catch(_) {}
+  } catch {}
 
-  // As a fallback, prefill contact email from auth user
-  if (!document.getElementById("contact_email").value) {
-    const email = currentUser.email || "";
-    if (email) document.getElementById("contact_email").value = email;
+  // Fallback: contact email from auth user
+  if (!document.getElementById("contact_email").value && currentUser.email) {
+    document.getElementById("contact_email").value = currentUser.email;
   }
 
-  function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+  const isEmail = (v)=> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
   jobForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     statusEl.textContent = ""; statusEl.style.color = "";
 
-    const job = {
-      title: document.getElementById("title").value.trim(),
-      company: document.getElementById("company").value.trim(),
-      location: document.getElementById("location").value.trim(),
-      remote: document.getElementById("remote").checked,
-      salary: document.getElementById("salary").value.trim(),
-      description: document.getElementById("description").value.trim(),
-      responsibilities: document.getElementById("responsibilities").value.trim(),
-      contact_email: document.getElementById("contact_email").value.trim(),
-      user_id: currentUser.id,
-      approved: false,
-      is_active: true,
-      expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
-    };
-
-    // If we have a companies row, attach company_id so badges work later
-    if (companyRow?.id) job.company_id = companyRow.id;
+    const title  = document.getElementById("title").value.trim();
+    const company= document.getElementById("company").value.trim();
+    const location = document.getElementById("location").value.trim();
+    const remote = document.getElementById("remote").checked;
+    const salary = document.getElementById("salary").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const responsibilities = document.getElementById("responsibilities").value.trim();
+    const contact_email = document.getElementById("contact_email").value.trim();
 
     // Client validation
-    if (!job.title || !job.company || !job.description) {
+    if (!title || !company || !description){
       statusEl.textContent = "❌ Please fill in title, company, and summary.";
       statusEl.style.color = "red"; return;
     }
-    if (!job.contact_email || !isEmail(job.contact_email)) {
+    if (contact_email.length > 200 || !isEmail(contact_email)) {
       statusEl.textContent = "❌ Please enter a valid company contact email.";
       statusEl.style.color = "red"; return;
     }
+
+    // Expiry in 30 days
+    const expires_at = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+
+    const job = {
+      title, company, location, remote, salary, description, responsibilities, contact_email,
+      user_id: currentUser.id,
+      approved: false,
+      is_active: true,
+      expires_at
+    };
+    if (companyRow?.id) job.company_id = companyRow.id;
 
     try {
       lock();
