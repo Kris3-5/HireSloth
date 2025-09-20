@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <!-- Your stylesheet (versioned for cache-busting) -->
-  <link rel="stylesheet" href="style.css?v=20250912b">
+  <link rel="stylesheet" href="style.css?v=20250912d">
 </head>
 <body>
 <header>
@@ -94,12 +94,12 @@
 </footer>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920e"></script>
+<script type="module" src="nav.js?v=20250920g"></script>
 
 <!-- Service worker: keep it updated; nav.js can handle gating the verify click -->
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=15', { scope: './' }).catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=16', { scope: './' }).catch(() => {});
   }
 </script>
 
