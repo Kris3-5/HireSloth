@@ -1,5 +1,5 @@
 // nav.js
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
 // 🔧 Your real Supabase values
 const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
@@ -23,9 +23,9 @@ function ensureVerifyBtn() {
       verifyBtn = document.createElement("a");
       verifyBtn.id = "verifyBtnNav";
       verifyBtn.className = "btn";
-      verifyBtn.href = "verify.html";
+      verifyBtn.href = "verify.html";          // default target (safe)
       verifyBtn.textContent = "Get Verified";
-      // Insert before authBtn if present, else at end
+      // Insert before authBtn if present
       if (authBtn && authBtn.parentElement === nav) {
         nav.insertBefore(verifyBtn, authBtn);
       } else {
@@ -35,50 +35,80 @@ function ensureVerifyBtn() {
   }
   return verifyBtn;
 }
-
 const verifyBtn = ensureVerifyBtn();
+
+// Optional: read a Stripe Payment Link if provided
+function getPaymentLink() {
+  // Highest priority: data-link on the anchor
+  const fromData = verifyBtn?.dataset?.link;
+  if (fromData) return fromData;
+  // Next: global variable you can set inline in HTML if you like
+  if (typeof window !== "undefined" && window.STRIPE_PAYMENT_LINK) {
+    return String(window.STRIPE_PAYMENT_LINK);
+  }
+  return null; // fall back to verify.html
+}
 
 // --- UI & gating ---
 function applyUI(isLoggedIn){
-  // Keep nav button always visible; we only gate the click.
+  // Always show the Verify button; gate the *click*, not visibility
   if (verifyBtn) {
-    verifyBtn.style.display = "inline-block"; // force visible regardless of CSS
-    // Gate: if not logged, redirect to sign-in before going to verify.html
+    verifyBtn.style.display = "inline-block"; // belt-and-braces
+    const paymentLink = getPaymentLink();
+
     verifyBtn.onclick = (e) => {
       const logged = isLoggedIn || localStorage.getItem("hs_authed")==="1";
       if (!logged) {
         e.preventDefault();
+        // Safe on-site returnTo
         location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent("verify.html")}`;
+        return;
       }
-      // if logged, normal navigation proceeds
+      // Logged in: if payment link provided, go there; else follow href (verify.html)
+      if (paymentLink) {
+        e.preventDefault();
+        location.href = paymentLink;
+      }
+      // else let default navigation proceed
     };
   }
 
+  // Auth button
   if (authBtn){
-    authBtn.textContent = isLoggedIn ? "Sign Out" : "Sign In";
-    authBtn.href        = isLoggedIn ? "#" : "auth.html";
-    authBtn.onclick     = isLoggedIn ? async (e)=>{
-      e.preventDefault();
-      if (!confirm("Are you sure you want to sign out?")) return;
-      await supabase.auth.signOut();
-      localStorage.setItem("hs_authed","0");
-      location.href = "index.html";
-    } : null;
+    if (isLoggedIn) {
+      authBtn.textContent = "Sign Out";
+      authBtn.href = "#";
+      authBtn.onclick = async (e) => {
+        e.preventDefault();
+        if (!confirm("Are you sure you want to sign out?")) return;
+        await supabase.auth.signOut();
+        localStorage.setItem("hs_authed","0");
+        location.replace("index.html");
+      };
+    } else {
+      authBtn.textContent = "Sign In";
+      authBtn.href = "auth.html";
+      authBtn.onclick = null;
+    }
   }
 
   // Protect private pages when clicked while signed out
-  const gate = (el, target) => el && el.addEventListener("click", (e) => {
-    const logged = isLoggedIn || localStorage.getItem("hs_authed")==="1";
-    if (!logged) {
-      e.preventDefault();
-      location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
-    }
-  }, { once:true });
-  gate(myJobsBtn, "my-jobs.html");
-  gate(postBtn,   "post-job.html");
+  const protect = (el, target) => {
+    if (!el) return;
+    el.onclick = (e) => {
+      const logged = isLoggedIn || localStorage.getItem("hs_authed")==="1";
+      if (!logged) {
+        e.preventDefault();
+        location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent(target)}`;
+      }
+      // else allow default nav
+    };
+  };
+  protect(myJobsBtn, "my-jobs.html");
+  protect(postBtn,   "post-job.html");
 }
 
-// Anti-flicker from cached flag
+// Anti-flicker from cached flag (best effort, overridden by real state later)
 applyUI(localStorage.getItem("hs_authed")==="1");
 
 // Real state, then keep cache in sync
@@ -99,4 +129,3 @@ supabase.auth.onAuthStateChange((_e, session)=>{
   applyUI(isLoggedIn);
   localStorage.setItem("hs_authed", isLoggedIn ? "1" : "0");
 });
-
