@@ -13,23 +13,28 @@
   <meta name="description" content="Contact the HireSloth team with questions, feedback, or to report an issue.">
   <link rel="icon" href="favicon.ico">
   <!-- Fonts & perf -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
+  <style>
+    /* Honeypot hidden field */
+    .hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+    .busy { opacity:.7; pointer-events:none; }
+  </style>
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
-    <a href="contact.html" class="active">Contact</a>
+    <a href="contact.html" class="active" aria-current="page">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
     <!-- Always present; nav.js gates click if signed out -->
@@ -46,8 +51,15 @@
     <label for="name">Name</label><br>
     <input type="text" id="name" required autocomplete="name" maxlength="120"><br><br>
 
+    <!-- hidden context -->
     <input type="hidden" id="type" value="message">
     <input type="hidden" id="job_id">
+
+    <!-- Honeypot (bots fill it; humans don't) -->
+    <div aria-hidden="true" class="hp">
+      <label for="website">Website</label>
+      <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+    </div>
 
     <label for="email">Email</label><br>
     <input type="email" id="email" required autocomplete="email" maxlength="200" inputmode="email"><br><br>
@@ -64,7 +76,7 @@
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
   const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -89,7 +101,7 @@
     } catch {}
   })();
 
-  // If signed in, prefill email (nice UX; safe to ignore if not)
+  // If signed in, prefill email
   (async ()=>{
     try{
       const { data:{ session } } = await supabase.auth.getSession();
@@ -105,11 +117,13 @@
   const submitBtn = form.querySelector('button[type="submit"]');
 
   const lock = (txt="Sending…") => {
+    form.classList.add("busy");
     submitBtn.disabled = true;
     submitBtn.dataset.label = submitBtn.textContent;
     submitBtn.textContent = txt;
   };
   const unlock = () => {
+    form.classList.remove("busy");
     submitBtn.disabled = false;
     if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label;
   };
@@ -121,8 +135,23 @@
 
   function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
+  // simple local rate limit to deter spam
+  const RATE_KEY = "hs_contact_last";
+  function canSendNow(){
+    const last = parseInt(localStorage.getItem(RATE_KEY) || "0", 10);
+    const now = Date.now();
+    return now - last > 30_000; // 30s
+  }
+  function markSent(){ localStorage.setItem(RATE_KEY, String(Date.now())); }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // Honeypot
+    if ((document.getElementById("website").value || "").trim()) {
+      showStatus("❌ Submission blocked.", false);
+      return;
+    }
 
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -135,8 +164,16 @@
       showStatus("Please fill in all fields.", false);
       return;
     }
+    if (name.length > 120 || email.length > 200 || message.length > 5000){
+      showStatus("One or more fields exceed maximum length.", false);
+      return;
+    }
     if (!validEmail(email)){
       showStatus("Please enter a valid email address.", false);
+      return;
+    }
+    if (!canSendNow()){
+      showStatus("Please wait a moment before sending another message.", false);
       return;
     }
 
@@ -151,6 +188,7 @@
         console.error("Supabase insert error:", error);
         showStatus("❌ Something went wrong sending your message. Please try again.", false);
       } else {
+        markSent();
         showStatus(type === "report"
           ? "✅ Thank you for your report. We’ll review it shortly."
           : "✅ Thank you! Your message has been sent.", true);
