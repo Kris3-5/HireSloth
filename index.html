@@ -39,7 +39,6 @@
 
   <!-- Perf -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- Replace "mylink" with your full Supabase URL, e.g. https://abc.supabase.co -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
@@ -56,6 +55,7 @@
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <!-- Always present; nav.js gates click if signed out -->
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
@@ -66,7 +66,7 @@
   <p>Privacy-first job search. No data selling. Just opportunities that matter.</p>
   <div class="cta-buttons">
     <a href="jobs.html" class="btn">View Vacancies</a>
-    <!-- Keep a separate id so we can gate this one too -->
+    <!-- Optional gate; post-job.html itself also enforces auth -->
     <a href="post-job.html" class="btn btn-alt" id="heroPostBtn">Post a Job</a>
   </div>
 </section>
@@ -79,9 +79,9 @@
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920a"></script>
+<script type="module" src="nav.js?v=20250920d"></script>
 <script>
-  // Gate the hero "Post a Job" button for signed-out users (matches nav behavior)
+  // Optional: Gate the hero "Post a Job" for signed-out users (nav + post-job also handle this)
   document.addEventListener('DOMContentLoaded', () => {
     const hero = document.getElementById('heroPostBtn');
     if (!hero) return;
@@ -89,8 +89,7 @@
       const logged = localStorage.getItem('hs_authed') === '1';
       if (!logged) {
         e.preventDefault();
-        const returnTo = encodeURIComponent('post-job.html');
-        location.href = `auth.html?mode=signin&returnTo=${returnTo}`;
+        location.href = `auth.html?mode=signin&returnTo=${encodeURIComponent('post-job.html')}`;
       }
     });
   });
