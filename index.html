@@ -12,14 +12,14 @@
   <title>HireSloth — Privacy-first Job Board</title>
   <meta name="description" content="Privacy-first job search. Listings expire in 30 days. Apply directly to companies via email.">
   <link rel="canonical" href="https://hiresloth.com/">
-  <link rel="preload" as="image" href="/logo.jpg?v=2">
+  <link rel="preload" as="image" href="logo.jpg?v=2">
 
   <!-- Favicons / PWA -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
   <meta name="application-name" content="HireSloth">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#715336">
   <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#2a241e">
@@ -39,12 +39,14 @@
 
   <!-- Perf -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- Replace "mylink" with your full Supabase URL, e.g. https://abc.supabase.co -->
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">
-    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
   <nav>
@@ -64,6 +66,7 @@
   <p>Privacy-first job search. No data selling. Just opportunities that matter.</p>
   <div class="cta-buttons">
     <a href="jobs.html" class="btn">View Vacancies</a>
+    <!-- Keep a separate id so we can gate this one too -->
     <a href="post-job.html" class="btn btn-alt" id="heroPostBtn">Post a Job</a>
   </div>
 </section>
@@ -76,9 +79,25 @@
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="/nav.js"></script>
+<script type="module" src="nav.js"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  // Gate the hero "Post a Job" button for signed-out users (matches nav behavior)
+  document.addEventListener('DOMContentLoaded', () => {
+    const hero = document.getElementById('heroPostBtn');
+    if (!hero) return;
+    hero.addEventListener('click', (e) => {
+      const logged = localStorage.getItem('hs_authed') === '1';
+      if (!logged) {
+        e.preventDefault();
+        const returnTo = encodeURIComponent('post-job.html');
+        location.href = `auth.html?mode=signin&returnTo=${returnTo}`;
+      }
+    });
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+  }
 </script>
 </body>
 </html>
