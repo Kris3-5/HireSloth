@@ -11,18 +11,30 @@
   <title>HireSloth - Vacancies</title>
   <link rel="canonical" href="https://hiresloth.com/jobs.html">
   <meta name="description" content="Browse current job openings on HireSloth. Filter by keyword, location, and remote roles.">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="favicon.ico">
   <!-- Fonts & perf -->
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- Replace "mylink" with your full Supabase URL -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
+  <style>
+    /* small, unobtrusive verified badge */
+    .badge--verified {
+      display:inline-flex; align-items:center; gap:.35rem;
+      padding:.15rem .55rem; border-radius:999px; font-size:.78rem;
+      border:1px solid #2ecc71; color:#2ecc71; vertical-align:middle;
+      line-height:1;
+    }
+    .badge--verified svg { width:14px; height:14px; }
+    .job-card { position:relative; }
+  </style>
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">
-    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
   <nav>
@@ -42,8 +54,8 @@
   <p>Browse current job openings. Use filters or search by keyword to find your next opportunity.</p>
 
   <div class="search-bar">
-    <input type="text" id="keyword" placeholder="Keyword (e.g., Frontend)">
-    <input type="text" id="location" placeholder="Location">
+    <input type="text" id="keyword" placeholder="Keyword (e.g., Frontend)" autocomplete="off">
+    <input type="text" id="location" placeholder="Location" autocomplete="off">
     <label><input type="checkbox" id="remote"> Remote only</label>
     <button id="searchBtn">Search</button>
   </div>
@@ -70,26 +82,68 @@
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
   const verifiedBadge = () => `
-    <span class="badge badge--verified" title="Verified employer">
+    <span class="badge--verified" title="Verified employer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
       Verified
     </span>`;
 
-  const isVerified = (profile) => {
-    if (!profile?.verified_until) return false;
-    const today = new Date(); today.setHours(0,0,0,0);
-    const until = new Date(profile.verified_until);
-    return until >= today;
-  };
+  // Support either schema:
+  // - profiles: { id, verified_until }
+  // - companies: { id, user_id, is_verified } (optional)
+  function profileIsVerified(profile){
+    if (!profile) return false;
+    if ('is_verified' in profile) return !!profile.is_verified;
+    if ('verified_until' in profile && profile.verified_until){
+      const today = new Date(); today.setHours(0,0,0,0);
+      const until = new Date(profile.verified_until);
+      return until >= today;
+    }
+    return false;
+  }
+
+  async function fetchVerificationMaps(userIds, companyIds){
+    const profMap = {};
+    const compMap = {};
+
+    // profiles (safe if table exists)
+    if (userIds.length){
+      const { data: profiles, error: profErr } = await supabase
+        .from("profiles")
+        .select("id, verified_until")
+        .in("id", userIds);
+
+      if (!profErr && profiles) profiles.forEach(p => { profMap[p.id] = p; });
+    }
+
+    // companies (optional; ignore if table doesn't exist or columns differ)
+    if (companyIds.length){
+      try {
+        const { data: companies, error: compErr } = await supabase
+          .from("companies")
+          .select("id, user_id, is_verified")
+          .in("id", companyIds);
+
+        if (!compErr && companies) companies.forEach(c => { compMap[c.id] = c; });
+      } catch(_) {/* table may not exist; ignore */}
+    }
+
+    return { profMap, compMap };
+  }
 
   async function loadJobs(keyword = "", location = "", remoteOnly = false) {
-    jobsContainer.innerHTML = "<p>Loading jobs...</p>";
+    jobsContainer.innerHTML = "<p>Loading jobs…</p>";
 
-    let query = supabase.from("jobs").select("*").eq("approved", true).eq("is_active", true);
-    if (keyword)  query = query.ilike("title", `%${keyword}%`);
-    if (location) query = query.ilike("location", `%${location}%`);
+    let query = supabase
+      .from("jobs")
+      .select("*")
+      .eq("approved", true)
+      .eq("is_active", true);
+
+    if (keyword)   query = query.ilike("title", `%${keyword}%`);
+    if (location)  query = query.ilike("location", `%${location}%`);
     if (remoteOnly) query = query.eq("remote", true);
 
+    // Order newest first
     const { data: jobs, error } = await query.order("created_at", { ascending: false });
 
     if (error) {
@@ -97,22 +151,22 @@
       console.error(error);
       return;
     }
-    if (!jobs?.length) { jobsContainer.innerHTML = "<p>No jobs found.</p>"; return; }
-
-    // Get publisher profiles once (for badges)
-    const userIds = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
-    const profMap = {};
-    if (userIds.length) {
-      const { data: profiles, error: profErr } = await supabase
-        .from("profiles")
-        .select("id, verified_until")
-        .in("id", userIds);
-      if (!profErr && profiles) profiles.forEach(p => { profMap[p.id] = p; });
+    if (!jobs?.length) {
+      jobsContainer.innerHTML = "<p>No jobs found.</p>";
+      return;
     }
 
+    // Collect ids for verification lookups
+    const userIds = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
+    const companyIds = [...new Set(jobs.map(j => j.company_id).filter(Boolean))];
+
+    const { profMap, compMap } = await fetchVerificationMaps(userIds, companyIds);
+
     jobsContainer.innerHTML = jobs.map(job => {
-      const prof = profMap[job.user_id];
-      const showBadge = isVerified(prof) && job.company;
+      const prof = job.user_id ? profMap[job.user_id] : null;
+      const comp = job.company_id ? compMap[job.company_id] : null;
+      const verified = comp?.is_verified || profileIsVerified(prof);
+
       const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
       const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
       const apply  = job.contact_email
@@ -121,9 +175,9 @@
       const report = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title||"")}&company=${encodeURIComponent(job.company||"")}">Report</a>`;
 
       return `
-        <div class="job-card">
-          <h3>${esc(job.title)}</h3>
-          <p><strong>Company:</strong> ${esc(job.company || "")}${showBadge ? " " + verifiedBadge() : ""}</p>
+        <div class="job-card" data-company-id="${esc(job.company_id||'')}" data-user-id="${esc(job.user_id||'')}">
+          <h3>${esc(job.title || "Untitled role")}</h3>
+          <p><strong>Company:</strong> ${esc(job.company || "")}${(verified && job.company) ? " " + verifiedBadge() : ""}</p>
           <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
           ${salary}
           <p><strong>Summary:</strong> ${esc(job.description || "")}</p>
@@ -135,6 +189,7 @@
   }
 
   loadJobs();
+
   function doSearch(){
     const k = document.getElementById("keyword").value.trim();
     const l = document.getElementById("location").value.trim();
@@ -142,14 +197,14 @@
     loadJobs(k, l, r);
   }
   searchBtn.addEventListener("click", doSearch);
-  document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
-  document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+  document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doSearch(); }});
+  document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doSearch(); }});
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="/nav.js"></script>
+<script type="module" src="nav.js"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{}); }
 </script>
 </body>
 </html>
