@@ -16,7 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- Replace "mylink" with your full Supabase URL, e.g. https://abc.supabase.co -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
@@ -33,6 +32,7 @@
     <a href="contact.html" class="active">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <!-- Always present; nav.js gates click if signed out -->
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
@@ -89,6 +89,17 @@
     } catch {}
   })();
 
+  // If signed in, prefill email (nice UX; safe to ignore if not)
+  (async ()=>{
+    try{
+      const { data:{ session } } = await supabase.auth.getSession();
+      const emailInput = document.getElementById("email");
+      if (session?.user?.email && emailInput && !emailInput.value) {
+        emailInput.value = session.user.email;
+      }
+    }catch{}
+  })();
+
   const form = document.getElementById("contactForm");
   const statusEl = document.getElementById("formStatus");
   const submitBtn = form.querySelector('button[type="submit"]');
@@ -137,7 +148,6 @@
         .insert([{ name, email, message, type, job_id }]);
 
       if (error) {
-        // Friendlier message; show raw in console for dev
         console.error("Supabase insert error:", error);
         showStatus("❌ Something went wrong sending your message. Please try again.", false);
       } else {
@@ -156,7 +166,7 @@
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920a"></script>
+<script type="module" src="nav.js?v=20250920d"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
