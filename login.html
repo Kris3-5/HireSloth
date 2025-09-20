@@ -1,26 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HireSloth – Redirecting…</title>
+
+  <!-- Force HTTPS outside localhost -->
+  <script>
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+
   <meta name="robots" content="noindex,follow">
-  <link rel="canonical" href="auth.html?mode=signin">
+  <link rel="canonical" href="https://hiresloth.com/auth.html?mode=signin">
+
+  <!-- Basic meta refresh fallback (JS below builds the precise URL w/ safe returnTo) -->
   <meta http-equiv="refresh" content="2; url=auth.html?mode=signin">
 </head>
 <body>
   <p>Redirecting to sign in… If you’re not redirected, <a id="fallbackLink" href="auth.html?mode=signin">click here</a>.</p>
-  <noscript><p><strong>Note:</strong> JavaScript is required. Continue to <a href="auth.html?mode=signin">Sign In</a>.</p></noscript>
+  <noscript>
+    <p><strong>Note:</strong> JavaScript is required. Continue to
+      <a href="auth.html?mode=signin">Sign In</a>.
+    </p>
+  </noscript>
+
   <script>
     (function () {
       const base = new URL(window.location.href);
+
+      // Only allow same-origin returnTo paths (avoid open redirects)
+      function safeReturnTo(val) {
+        try {
+          if (!val) return "post-job.html";
+          const u = new URL(val, base.origin);
+          if (u.origin !== base.origin) return "post-job.html";
+          // Normalize to path+query+hash
+          return u.pathname + u.search + u.hash || "post-job.html";
+        } catch { return "post-job.html"; }
+      }
+
+      const rawReturnTo = new URLSearchParams(base.search).get('returnTo');
+      const rt = safeReturnTo(rawReturnTo);
+
       const target = new URL('auth.html', base);
       const params = new URLSearchParams();
       params.set('mode', 'signin');
-      const returnTo = new URLSearchParams(base.search).get('returnTo');
-      if (returnTo) params.set('returnTo', returnTo);
+      if (rt) params.set('returnTo', rt);
       target.search = params.toString();
+
+      // Update visible fallback link
       const link = document.getElementById('fallbackLink');
       if (link) link.href = target.toString();
+
+      // Perform redirect
       window.location.replace(target.toString());
     })();
   </script>
