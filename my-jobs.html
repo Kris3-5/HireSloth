@@ -16,20 +16,21 @@
   <title>HireSloth - My Jobs</title>
   <link rel="canonical" href="https://hiresloth.com/my-jobs.html">
   <meta name="description" content="Manage the jobs your company has posted on HireSloth.">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="favicon.ico">
 
   <!-- Fonts & perf -->
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin">
+  <!-- Replace "mylink" with your Supabase URL, e.g. https://abc.supabase.co -->
+  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
 
   <link rel="stylesheet" href="style.css?v=20250912a">
 
   <!-- Make the Verify button match Post a Job (scoped to this page) -->
   <style>
     #verifyBtnNav{
-      display:none; /* shown after auth */
+      display:none; /* shown after auth via nav.js */
       background:linear-gradient(135deg, var(--brand-2), var(--brand));
       color:var(--cream);
       border-radius:12px;
@@ -37,13 +38,20 @@
       box-shadow:var(--shadow-sm);
     }
     #verifyBtnNav:hover{ transform:translateY(-1px); box-shadow:var(--shadow) }
+    /* Tiny verified badge style (used in banner) */
+    .badge--verified{
+      display:inline-flex; align-items:center; gap:.35rem;
+      padding:.15rem .55rem; border-radius:999px; font-size:.78rem;
+      border:1px solid #2ecc71; color:#2ecc71; line-height:1;
+    }
+    .badge--verified svg{ width:14px; height:14px; }
   </style>
 </head>
 <body>
   <header>
     <a href="index.html" class="logo">
       <img
-        src="/logo.jpg?v=2"
+        src="logo.jpg?v=2"
         alt="HireSloth Logo"
         width="120"
         height="120"
@@ -64,8 +72,7 @@
       <a href="contact.html">Contact</a>
       <a href="my-jobs.html" class="active" id="myJobsBtn">My Jobs</a>
       <a href="post-job.html" id="postJobBtn">Post a Job</a>
-      <!-- 🔽 This appears top-right only when logged in -->
-      <a href="verify.html" id="verifyBtnNav">Get Verified</a>
+      <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
       <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
@@ -85,7 +92,6 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
 
-    // 🔧 Your real Supabase values
     const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
 
@@ -93,10 +99,8 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    const jobsList   = document.getElementById("jobsList");
-    const authBtn    = document.getElementById("authBtn");
-    const verifyBtn  = document.getElementById("verifyBtnNav");
-    const bannerEl   = document.getElementById("verifyBanner");
+    const jobsList = document.getElementById("jobsList");
+    const bannerEl = document.getElementById("verifyBanner");
 
     // -------- Require auth (redirect if not) --------
     let session;
@@ -105,67 +109,60 @@
     } catch { session = null; }
     const currentUser = session?.user || null;
     if (!currentUser) {
-      // no flicker: mark cached state as signed-out
       localStorage.setItem("hs_authed","0");
       location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
       throw new Error("Redirecting to auth");
     }
-    // optimistic cache for no-flicker nav
     localStorage.setItem("hs_authed","1");
 
-    // -------- Nav: Sign Out + show Verify (no flicker) --------
-    (function applyNavForAuthed(){
-      if (authBtn){
-        authBtn.textContent = "Sign Out";
-        authBtn.href = "#";
-        authBtn.onclick = async (e) => {
-          e.preventDefault();
-          if (!confirm("Are you sure you want to sign out?")) return;
-          await supabase.auth.signOut();
-          localStorage.setItem("hs_authed","0");
-          location.href = "index.html";
-        };
-      }
-      if (verifyBtn){
-        verifyBtn.style.display = ""; // show in top-right
-        // ensure the link always has you signed-in:
-        // (verify.html itself checks auth again)
-        verifyBtn.addEventListener("click", (e) => {
-          // nothing special needed here since you're already authed
-        }, { once:true });
-      }
-    })();
-
-    // -------- Optional: show verification status banner --------
+    // -------- Verification banner (supports profiles.verified_until or companies.is_verified) --------
     async function showVerifyBanner(){
       if (!bannerEl) return;
+
+      // Try companies first (if you have that table); fall back to profiles
+      let isVerified = false;
+      let untilDate = null;
+
       try {
-        const { data, error } = await supabase
+        // profiles path
+        const { data: prof, error: profErr } = await supabase
           .from("profiles")
           .select("verified_until")
           .eq("id", currentUser.id)
           .maybeSingle();
-        if (error) throw error;
 
-        const today = new Date(); today.setHours(0,0,0,0);
-        const until = data?.verified_until ? new Date(data.verified_until) : null;
-
-        if (until && until >= today) {
-          bannerEl.innerHTML = `
-            <p>
-              <span class="badge badge--verified">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
-                Verified
-              </span>
-              &nbsp;Your employer badge is active until <strong>${until.toLocaleDateString()}</strong>.
-            </p>`;
-        } else {
-          bannerEl.innerHTML = `
-            <p><strong>No active employer verification.</strong>
-            &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
+        if (!profErr && prof?.verified_until) {
+          const today = new Date(); today.setHours(0,0,0,0);
+          const until = new Date(prof.verified_until);
+          if (until >= today) { isVerified = true; untilDate = until; }
         }
-      } catch (e) {
-        console.warn("verify banner error:", e?.message || e);
+      } catch {}
+
+      // Optional companies path (ignore if table/policy missing)
+      if (!isVerified) {
+        try {
+          const { data: comp, error: compErr } = await supabase
+            .from("companies")
+            .select("is_verified")
+            .eq("user_id", currentUser.id)
+            .maybeSingle();
+          if (!compErr && comp?.is_verified) isVerified = true;
+        } catch {}
+      }
+
+      if (isVerified) {
+        bannerEl.innerHTML = `
+          <p>
+            <span class="badge--verified">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.55 17.05 5.5 13l1.4-1.4 2.65 2.6 7.6-7.6L18.55 8z"/></svg>
+              Verified
+            </span>
+            &nbsp;Your employer badge is active${untilDate ? " until <strong>"+untilDate.toLocaleDateString()+"</strong>" : ""}.
+          </p>`;
+      } else {
+        bannerEl.innerHTML = `
+          <p><strong>No active employer verification.</strong>
+          &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
       }
     }
     showVerifyBanner();
@@ -177,7 +174,7 @@
 
     // -------- Load user's jobs --------
     async function loadJobs() {
-      jobsList.innerHTML = "<p>Loading jobs...</p>";
+      jobsList.innerHTML = "<p>Loading jobs…</p>";
 
       const { data, error } = await supabase
         .from("jobs")
@@ -186,7 +183,7 @@
         .order("created_at", { ascending: false });
 
       if (error) {
-        jobsList.innerHTML = "<p>❌ Error loading jobs.</p>";
+        jobsList.innerHTML = `<p style="color:red">❌ Error loading jobs: ${esc(error.message)}</p>`;
         console.error(error);
         return;
       }
@@ -204,7 +201,10 @@
           <p><strong>Location:</strong> ${esc(job.location || "Not specified")}${job.remote ? " (Remote)" : ""}</p>
           <p>${esc(job.description || "")}</p>
           ${job.contact_email ? `<p><strong>Contact Email:</strong> ${esc(job.contact_email)}</p>` : ""}
-          <button class="deleteBtn" data-id="${esc(job.id)}">🗑 Delete</button>
+          <div style="display:flex; gap:.5rem; flex-wrap:wrap">
+            <button class="deleteBtn btn danger" data-id="${esc(job.id)}">🗑 Delete</button>
+            ${job.is_active === false ? `<span class="badge">Inactive</span>` : ``}
+          </div>
         `;
         jobsList.appendChild(card);
       });
@@ -226,10 +226,13 @@
       });
     }
     loadJobs();
+  </script>
 
-    // -------- Service worker: register ONCE --------
+  <!-- Shared nav/auth logic -->
+  <script type="module" src="nav.js"></script>
+  <script>
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(()=>{});
+      navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(()=>{});
     }
   </script>
 </body>
