@@ -11,18 +11,19 @@
   <title>HireSloth - Contact</title>
   <link rel="canonical" href="https://hiresloth.com/contact.html">
   <meta name="description" content="Contact the HireSloth team with questions, feedback, or to report an issue.">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="favicon.ico">
   <!-- Fonts & perf -->
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- Replace "mylink" with your full Supabase URL, e.g. https://abc.supabase.co -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">
-    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
   <nav>
@@ -41,77 +42,125 @@
   <h1>Contact Us</h1>
   <p>Have questions, feedback, or spotted an issue? Get in touch below.</p>
 
-  <form id="contactForm">
+  <form id="contactForm" novalidate>
     <label for="name">Name</label><br>
-    <input type="text" id="name" required autocomplete="name"><br><br>
+    <input type="text" id="name" required autocomplete="name" maxlength="120"><br><br>
 
     <input type="hidden" id="type" value="message">
     <input type="hidden" id="job_id">
 
     <label for="email">Email</label><br>
-    <input type="email" id="email" required autocomplete="email"><br><br>
+    <input type="email" id="email" required autocomplete="email" maxlength="200" inputmode="email"><br><br>
 
     <label for="message">Message</label><br>
-    <textarea id="message" rows="5" required></textarea><br><br>
+    <textarea id="message" rows="6" required maxlength="5000" placeholder="How can we help?"></textarea><br><br>
 
     <button type="submit">Send Message</button>
   </form>
 
-  <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+  <p id="formStatus" style="margin-top: 1rem; font-weight: bold;" aria-live="polite"></p>
 </main>
 
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
+  const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+  });
 
+  // Prefill "report" mode if query string contains ?report_job=...
   (function prefillReport(){
-    const params = new URLSearchParams(location.search);
-    const jobId = params.get("report_job");
-    if (!jobId) return;
-    document.getElementById("type").value = "report";
-    document.getElementById("job_id").value = jobId;
-    const t = params.get("title") || "";
-    const c = params.get("company") || "";
-    const preset = `Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
-    const msg = document.getElementById("message");
-    if (!msg.value) msg.value = preset;
+    try {
+      const params = new URLSearchParams(location.search);
+      const jobId = params.get("report_job");
+      if (!jobId) return;
+      document.getElementById("type").value = "report";
+      document.getElementById("job_id").value = jobId;
+
+      const t = params.get("title") || "";
+      const c = params.get("company") || "";
+      const preset = `Report for job "${t}" at "${c}" (ID: ${jobId})\n\nIssue details:\n- What seems wrong?\n- Where did you see it?\n- Any links or evidence?\n`;
+      const msg = document.getElementById("message");
+      if (!msg.value) msg.value = preset;
+      document.getElementById("name").focus();
+    } catch {}
   })();
 
   const form = document.getElementById("contactForm");
   const statusEl = document.getElementById("formStatus");
   const submitBtn = form.querySelector('button[type="submit"]');
-  const lock = () => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Sending…"; };
-  const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
+
+  const lock = (txt="Sending…") => {
+    submitBtn.disabled = true;
+    submitBtn.dataset.label = submitBtn.textContent;
+    submitBtn.textContent = txt;
+  };
+  const unlock = () => {
+    submitBtn.disabled = false;
+    if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label;
+  };
+
+  function showStatus(msg, ok){
+    statusEl.textContent = msg;
+    statusEl.style.color = ok ? "green" : "red";
+  }
+
+  function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    lock();
+
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const message = document.getElementById("message").value.trim();
     const type = document.getElementById("type").value || "message";
-    const job_id = document.getElementById("job_id").value || null;
+    const job_id_raw = document.getElementById("job_id").value || null;
+    const job_id = job_id_raw && job_id_raw.length ? job_id_raw : null;
 
-    const { error } = await supabase.from("messages").insert([{ name, email, message, type, job_id }]);
-    if (error) {
-      statusEl.textContent = "❌ Something went wrong. Please try again.";
-      statusEl.style.color = "red";
-    } else {
-      statusEl.textContent = type === "report" ? "✅ Thank you for your report. We’ll review it shortly." : "✅ Thank you! Your message has been sent.";
-      statusEl.style.color = "green";
-      form.reset();
+    if (!name || !email || !message){
+      showStatus("Please fill in all fields.", false);
+      return;
     }
-    unlock();
+    if (!validEmail(email)){
+      showStatus("Please enter a valid email address.", false);
+      return;
+    }
+
+    lock();
+
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .insert([{ name, email, message, type, job_id }]);
+
+      if (error) {
+        // Friendlier message; show raw in console for dev
+        console.error("Supabase insert error:", error);
+        showStatus("❌ Something went wrong sending your message. Please try again.", false);
+      } else {
+        showStatus(type === "report"
+          ? "✅ Thank you for your report. We’ll review it shortly."
+          : "✅ Thank you! Your message has been sent.", true);
+        form.reset();
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus("❌ Network error. Please check your connection and try again.", false);
+    } finally {
+      unlock();
+    }
   });
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="/nav.js"></script>
+<script type="module" src="nav.js"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+  }
 </script>
 </body>
 </html>
