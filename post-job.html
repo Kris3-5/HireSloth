@@ -11,18 +11,19 @@
   <title>HireSloth - Post a Job</title>
   <link rel="canonical" href="https://hiresloth.com/post-job.html">
   <meta name="description" content="Post a vacancy on HireSloth. Listings expire in 30 days.">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="favicon.ico">
   <!-- Fonts & perf -->
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- Replace "mylink" with your Supabase URL, e.g. https://abc.supabase.co -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">
-    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
   <nav>
@@ -43,34 +44,34 @@
 
   <p><a class="btn" href="verify.html">Get Verified</a> — stand out with a badge on your listings.</p>
 
-  <form id="jobForm">
+  <form id="jobForm" novalidate>
     <label for="title">Job Title</label><br>
-    <input type="text" id="title" required><br><br>
+    <input type="text" id="title" required maxlength="140" autocomplete="off"><br><br>
 
     <label for="company">Company</label><br>
-    <input type="text" id="company" required><br><br>
+    <input type="text" id="company" required maxlength="120" autocomplete="organization"><br><br>
 
     <label for="location">Location</label><br>
-    <input type="text" id="location"><br><br>
+    <input type="text" id="location" maxlength="120" autocomplete="off"><br><br>
 
     <label><input type="checkbox" id="remote"> Remote Position</label><br><br>
 
     <label for="salary">Salary (optional)</label><br>
-    <input type="text" id="salary"><br><br>
+    <input type="text" id="salary" maxlength="120" autocomplete="off"><br><br>
 
     <label for="description">Job Summary</label><br>
-    <textarea id="description" rows="3" required></textarea><br><br>
+    <textarea id="description" rows="3" required maxlength="1200" placeholder="Brief overview of the role"></textarea><br><br>
 
     <label for="responsibilities">Responsibilities</label><br>
-    <textarea id="responsibilities" rows="5"></textarea><br><br>
+    <textarea id="responsibilities" rows="5" maxlength="3000" placeholder="Bullets or short paragraphs"></textarea><br><br>
 
     <label for="contact_email">Company Contact Email</label><br>
-    <input type="email" id="contact_email" required><br><br>
+    <input type="email" id="contact_email" required maxlength="200" inputmode="email" autocomplete="email"><br><br>
 
     <button id="submitBtn" type="submit">Post Job</button>
   </form>
 
-  <p id="formStatus" style="margin-top: 1rem; font-weight: bold;"></p>
+  <p id="formStatus" style="margin-top: 1rem; font-weight: bold;" aria-live="polite"></p>
 </main>
 
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
@@ -80,19 +81,44 @@
   const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }});
 
+  // Require auth
   const { data: { session } } = await supabase.auth.getSession();
   const currentUser = session?.user || null;
   if (!currentUser) {
     location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("post-job.html");
     throw new Error("Redirecting to auth");
   }
+  localStorage.setItem("hs_authed","1");
 
   const submitBtn = document.getElementById("submitBtn");
   const jobForm = document.getElementById("jobForm");
   const statusEl = document.getElementById("formStatus");
 
-  function lock(){ submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = "Posting…"; }
-  function unlock(){ submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; }
+  const lock = (txt="Posting…") => { submitBtn.disabled = true; submitBtn.dataset.label = submitBtn.textContent; submitBtn.textContent = txt; };
+  const unlock = () => { submitBtn.disabled = false; if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label; };
+
+  // Optional: prefill from companies table (if it exists) and/or profile email
+  let companyRow = null;
+  try {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id,name,email")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+    if (!error && data) {
+      companyRow = data;
+      if (data.name) document.getElementById("company").value = data.name;
+      if (data.email) document.getElementById("contact_email").value = data.email;
+    }
+  } catch(_) {}
+
+  // As a fallback, prefill contact email from auth user
+  if (!document.getElementById("contact_email").value) {
+    const email = currentUser.email || "";
+    if (email) document.getElementById("contact_email").value = email;
+  }
+
+  function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
   jobForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -113,10 +139,17 @@
       expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
     };
 
-    if (!job.contact_email) {
-      statusEl.textContent = "❌ Please provide the company contact email.";
-      statusEl.style.color = "red";
-      return;
+    // If we have a companies row, attach company_id so badges work later
+    if (companyRow?.id) job.company_id = companyRow.id;
+
+    // Client validation
+    if (!job.title || !job.company || !job.description) {
+      statusEl.textContent = "❌ Please fill in title, company, and summary.";
+      statusEl.style.color = "red"; return;
+    }
+    if (!job.contact_email || !isEmail(job.contact_email)) {
+      statusEl.textContent = "❌ Please enter a valid company contact email.";
+      statusEl.style.color = "red"; return;
     }
 
     try {
@@ -127,6 +160,7 @@
       statusEl.style.color = "green";
       jobForm.reset();
     } catch (err) {
+      console.error(err);
       statusEl.textContent = "❌ " + (err.message || "Could not post job.");
       statusEl.style.color = "red";
     } finally { unlock(); }
@@ -134,9 +168,9 @@
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="/nav.js"></script>
+<script type="module" src="nav.js"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{}); }
 </script>
 </body>
 </html>
