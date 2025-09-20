@@ -61,6 +61,30 @@
     <h2>Recent jobs</h2>
     <div class="jobs" id="recentList"></div>
   </section>
+
+  <section id="companySection" style="display:none; margin-top:2rem;">
+  <h2>Companies</h2>
+
+  <div class="search-bar" style="display:flex; gap:.5rem; flex-wrap:wrap;">
+    <input id="companyQuery" placeholder="Search by name, email, company_id or user_id" style="min-width:260px;">
+    <button id="companySearchBtn" class="btn">Search</button>
+    <button id="companyListUnverifiedBtn" class="btn btn-alt">List unverified</button>
+  </div>
+
+  <div id="companyResults" class="jobs" style="margin-top:1rem;"></div>
+
+  <h3 style="margin-top:2rem;">Create / attach company to a user</h3>
+  <form id="companyCreateForm" style="max-width:560px;margin:1rem 0;">
+    <label>User ID</label>
+    <input id="c_user_id" required placeholder="auth.users.id (uuid)">
+    <label>Company name</label>
+    <input id="c_name" placeholder="Acme Inc.">
+    <label>Company email</label>
+    <input id="c_email" type="email" placeholder="hr@acme.com">
+    <button type="submit">Save</button>
+  </form>
+  <p id="companyCreateMsg" aria-live="polite"></p>
+ </section>
 </main>
 
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
@@ -74,6 +98,143 @@
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
+  // ======= Companies admin helpers =======
+const companySection   = document.getElementById("companySection");
+const companyQuery     = document.getElementById("companyQuery");
+const companySearchBtn = document.getElementById("companySearchBtn");
+const companyListBtn   = document.getElementById("companyListUnverifiedBtn");
+const companyResults   = document.getElementById("companyResults");
+
+function companyCard(c){
+  const when = c.verified_at ? new Date(c.verified_at).toLocaleString() : "—";
+  return `
+    <div class="job-card" data-company-id="${c.id}" data-user-id="${c.user_id}">
+      <h3>${esc(c.name || "(no name)")}</h3>
+      <p><strong>Company ID:</strong> ${esc(c.id)}</p>
+      <p><strong>User ID:</strong> ${esc(c.user_id)}</p>
+      <p><strong>Email:</strong> ${esc(c.email || "—")}</p>
+      <p><strong>Verified:</strong> ${c.is_verified ? "✅ yes" : "❌ no"} ${c.is_verified ? `• since: ${when}` : ""}</p>
+      <div class="actions" style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+        <button class="btn" data-action="verify12">Verify for 12 months</button>
+        <button class="btn secondary" data-action="unverify">Unverify</button>
+      </div>
+    </div>
+  `;
+}
+
+async function searchCompanies(q, listUnverified=false){
+  companyResults.innerHTML = "<p>Loading…</p>";
+  let qb = supabase
+    .from("companies")
+    .select("id,user_id,name,email,is_verified,verified_at,created_at")
+    .order("created_at", { ascending:false })
+    .limit(100);
+
+  if (listUnverified){
+    qb = qb.eq("is_verified", false);
+  } else if (q){
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(q);
+    if (isUuid){
+      qb = qb.or(`id.eq.${q},user_id.eq.${q}`);
+    } else {
+      qb = qb.or(`name.ilike.%${q}%,email.ilike.%${q}%`);
+    }
+  }
+
+  const { data, error } = await qb;
+  if (error) { companyResults.innerHTML = `<p style="color:red">Error: ${esc(error.message)}</p>`; return; }
+  if (!data?.length) { companyResults.innerHTML = "<p>No companies found.</p>"; return; }
+  companyResults.innerHTML = data.map(companyCard).join("");
+  wireCompanyButtons();
+}
+
+function addDays(date, n){ const d = new Date(date); d.setUTCDate(d.getUTCDate()+n); return d; }
+
+async function verifyCompanyFor12Months(companyId, userId){
+  const until = addDays(new Date(), 365).toISOString().slice(0,10); // yyyy-mm-dd for DATE
+  const nowIso = new Date().toISOString();
+
+  const [p1, p2] = await Promise.all([
+    supabase.from("profiles").upsert([{ id: userId, verified_until: until }], { onConflict: "id" }),
+    supabase.from("companies").update({ is_verified: true, verified_at: nowIso, verified_by: "admin" }).eq("id", companyId)
+  ]);
+
+  if (p1.error) throw p1.error;
+  if (p2.error) throw p2.error;
+}
+
+async function unverifyCompany(companyId, userId){
+  const [p1, p2] = await Promise.all([
+    // Clear verified_until (optional: set to yesterday instead)
+    supabase.from("profiles").upsert([{ id: userId, verified_until: null }], { onConflict: "id" }),
+    supabase.from("companies").update({ is_verified: false, verified_at: null, verified_by: null }).eq("id", companyId)
+  ]);
+  if (p1.error) throw p1.error;
+  if (p2.error) throw p2.error;
+}
+
+function wireCompanyButtons(){
+  companyResults.querySelectorAll(".job-card").forEach(card=>{
+    const companyId = card.dataset.companyId;
+    const userId    = card.dataset.userId;
+
+    card.querySelectorAll("button[data-action]").forEach(btn=>{
+      btn.addEventListener("click", async (e)=>{
+        const action = e.currentTarget.dataset.action;
+        e.currentTarget.disabled = true;
+        try {
+          if (action === "verify12") {
+            await verifyCompanyFor12Months(companyId, userId);
+          } else if (action === "unverify") {
+            if (!confirm("Remove verification for this company?")) return;
+            await unverifyCompany(companyId, userId);
+          }
+        } catch(err){
+          alert("Error: " + (err.message || err));
+        } finally {
+          await searchCompanies(companyQuery.value.trim());
+        }
+      });
+    });
+  });
+}
+
+function wireCompaniesUI(){
+  companySearchBtn.addEventListener("click", ()=>searchCompanies(companyQuery.value.trim()));
+  companyListBtn.addEventListener("click", ()=>searchCompanies("", true));
+}
+
+// Create / attach company for a user
+const companyCreateForm = document.getElementById("companyCreateForm");
+const companyCreateMsg  = document.getElementById("companyCreateMsg");
+
+companyCreateForm.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  companyCreateMsg.textContent = ""; companyCreateMsg.style.color = "";
+
+  const user_id = (document.getElementById("c_user_id").value || "").trim();
+  const name    = (document.getElementById("c_name").value || "").trim();
+  const email   = (document.getElementById("c_email").value || "").trim();
+
+  if (!user_id){ companyCreateMsg.textContent = "User ID is required."; companyCreateMsg.style.color = "red"; return; }
+
+  try{
+    const { error } = await supabase
+      .from("companies")
+      .upsert([{ user_id, name: name || null, email: email || null }], { onConflict: "user_id" });
+
+    if (error) throw error;
+
+    companyCreateMsg.textContent = "Company saved ✓";
+    companyCreateMsg.style.color = "green";
+    companyCreateForm.reset();
+
+    await searchCompanies(user_id); // show the fresh row
+  }catch(err){
+    companyCreateMsg.textContent = "Error: " + (err.message || err);
+    companyCreateMsg.style.color = "red";
+  }
+});
 
   const guardEl = document.getElementById("guard");
   const adminStatus = document.getElementById("adminStatus");
@@ -273,7 +434,12 @@
 
   (async ()=>{
     try {
-      await requireAdmin();
+           await requireAdmin();
+companySection.style.display = "block";   // <- show Companies tools
+wireCompaniesUI();                        // <- hook up buttons
+wireVerifyByIdForm();
+await Promise.all([loadPending(), loadRecent()]);
+
       wireVerifyByIdForm();
       await Promise.all([loadPending(), loadRecent()]);
     } catch (err) {
