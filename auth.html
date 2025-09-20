@@ -16,7 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <!-- Replace "mylink" with your full Supabase URL, e.g. https://abc.supabase.co -->
   <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a"/>
   <style>
@@ -44,6 +43,7 @@
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
+    <!-- Always present; nav.js gates the click if signed out -->
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn" class="active">Sign In</a>
   </nav>
@@ -220,7 +220,7 @@
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920a"></script>
+<script type="module" src="nav.js?v=20250920d"></script>
 <script>
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{}); }
 </script>
