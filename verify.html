@@ -10,7 +10,7 @@
 <body>
 <header>
   <a href="index.html" class="logo">
-    <img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
+    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
   <nav>
@@ -29,14 +29,20 @@
   <h1>Verified Employer Badge</h1>
   <p>Get a gold “Verified” badge on your listings for 12 months. One-off payment. No auto-renewal.</p>
 
-  <a id="verifyBtn" class="btn" href="#" rel="noopener">Continue to Checkout</a>
+  <a id="verifyBtn" class="btn" href="#" rel="noopener">Preparing…</a>
   <p id="note" style="margin-top:1rem;"></p>
+
+  <p style="margin-top:1rem;font-size:.95rem;opacity:.9">
+    After payment you’ll return to this site. Your badge is activated by our backend (Stripe webhook) and may take a short moment to appear on your listings.
+  </p>
 </main>
 
 <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/+esm";
+
+  // 🔧 Replace placeholders
   const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
   const PAYMENT_LINK = "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00"; // e.g. https://buy.stripe.com/abc123
@@ -47,26 +53,68 @@
 
   const btn = document.getElementById("verifyBtn");
   const note = document.getElementById("note");
-  (async ()=>{
-    const { data:{ session }} = await supabase.auth.getSession();
+
+  // Small helper
+  const esc = (s)=> (s??"").toString()
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
+  async function init(){
+    // Auth required
+    const { data:{ session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) {
       btn.textContent = "Sign in to continue";
       btn.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("verify.html");
       return;
     }
+
+    btn.textContent = "Continue to Checkout";
+
+    // Try to load company row (optional)
+    let company = null;
+    try {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id,name,email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!error && data) company = data;
+    } catch (_) {}
+
+    // Build Payment Link URL with identifiers for the webhook to read
     const url = new URL(PAYMENT_LINK);
-    url.searchParams.set("client_reference_id", user.id);
-    if (user.email) url.searchParams.set("prefilled_email", user.email);
+    // Strongest mapping: company id if present, else user id
+    url.searchParams.set("client_reference_id", company?.id || user.id);
+    // Prefill email (company email preferred)
+    const email = company?.email || user.email || "";
+    if (email) url.searchParams.set("prefilled_email", email);
+    // Extra metadata (helpful redundancy)
+    url.searchParams.set("prefilled_metadata[user_id]", user.id);
+    if (company?.id) url.searchParams.set("prefilled_metadata[company_id]", company.id);
+    if (company?.name) url.searchParams.set("prefilled_metadata[company_name]", company.name);
+    // Optional: label period
+    url.searchParams.set("prefilled_metadata[period]", "annual");
+    // Optional: your site hint
+    url.searchParams.set("prefilled_metadata[site]", location.origin);
+
+    // Wire button
     btn.href = url.toString();
-    note.textContent = "After payment, we’ll set the badge from the Admin page using your user ID (client_reference_id).";
-  })();
+
+    // UX note
+    const who = company?.name ? `company <strong>${esc(company.name)}</strong>` : "your account";
+    note.innerHTML = `We’ll associate the payment with ${who}. If that’s not right, update your company info first.`;
+  }
+
+  init();
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="/nav.js"></script>
+<script type="module" src="nav.js"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{}); }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+  }
 </script>
 </body>
 </html>
