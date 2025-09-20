@@ -1,41 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Force HTTPS outside localhost -->
   <script>
-    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    if (
+      location.protocol === 'http:' &&
+      location.hostname !== 'localhost' &&
+      location.hostname !== '127.0.0.1'
+    ) {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   </script>
+
+  <!-- Basic CSP: good for Payment Links (not embedding Stripe.js) -->
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
   <title>About HireSloth</title>
   <meta name="description" content="HireSloth is a privacy-first job board. No data selling — just honest listings for seekers and companies.">
   <link rel="canonical" href="https://hiresloth.com/about.html">
+
   <link rel="icon" href="favicon.ico">
 
   <!-- Fonts & perf -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- If you fetch from a CDN for JS/CSS, keep this one -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
+
+  <!-- Your stylesheet (versioned for cache-busting) -->
   <link rel="stylesheet" href="style.css?v=20250912a">
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
-    <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
-      onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
+    <img
+      src="logo.jpg?v=2"
+      alt="HireSloth Logo"
+      width="120"
+      height="120"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      onerror="this.onerror=null; this.src='logo.jpg?v=2';"
+    >
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
-    <a href="about.html" class="active">About</a>
+    <a href="about.html" class="active" aria-current="page">About</a>
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <!-- Always present; nav.js gates the click if signed out -->
-    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+
+    <!-- Always present; nav.js can gate the click if signed out -->
+    <a
+      href="https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00"
+      id="verifyBtnNav"
+      class="btn"
+      target="_blank"
+      rel="noopener"
+    >Get Verified</a>
+
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
 </header>
@@ -59,14 +89,19 @@
   <p>🦥 Slow, steady, and safe — that’s the HireSloth way.</p>
 </main>
 
-<footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+<footer>
+  <p>&copy; 2025 HireSloth. All rights reserved.</p>
+</footer>
 
 <!-- Shared nav/auth logic -->
 <script type="module" src="nav.js?v=20250920d"></script>
+
+<!-- Service worker: keep it updated; nav.js can handle gating the verify click -->
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
   }
 </script>
+
 </body>
 </html>
