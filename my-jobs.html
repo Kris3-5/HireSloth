@@ -16,7 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
   <style>
     .page-title{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
@@ -25,16 +24,16 @@
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
-      onerror="if (!this.dataset.fallbackTried){this.dataset.fallbackTried='1';this.src='logo.jpg?v=2';}else{this.onerror=null;}">
+      onerror="if(!this.dataset.fallbackTried){this.dataset.fallbackTried='1';this.src='logo.jpg?v=2';}else{this.onerror=null;}">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
-    <a href="my-jobs.html" class="active" id="myJobsBtn">My Jobs</a>
+    <a href="my-jobs.html" class="active" aria-current="page" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
     <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
@@ -42,10 +41,10 @@
 </header>
 
 <main class="content">
-  <div class="page-title" style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
-  <h1>My Job Listings</h1>
-  <a href="verify.html" id="verifyBtnInline" class="btn">Get Verified</a>
-</div>
+  <div class="page-title">
+    <h1>My Job Listings</h1>
+    <a href="verify.html" id="verifyBtnInline" class="btn">Get Verified</a>
+  </div>
   <p>Here you can see and manage the jobs your company has posted.</p>
 
   <div id="verifyBanner" class="job-card" style="margin-top:1rem; text-align:left;"></div>
@@ -69,23 +68,27 @@
   const inlineBtn = document.getElementById("verifyBtnInline");
   const navBtn    = document.getElementById("verifyBtnNav");
 
-  // Require auth
-  let session; try{ ({ data:{ session } } = await supabase.auth.getSession()); } catch {}
-  const currentUser = session?.user || null;
-  if (!currentUser) {
-    localStorage.setItem("hs_authed","0");
-    location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
-    throw new Error("Redirecting to auth");
-  }
-  localStorage.setItem("hs_authed","1");
-
-  // Belt-and-braces: force-show nav CTA if logged in
-  if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
-
-  // Helper
   const esc = (s)=> (s ?? "").toString()
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
+  async function requireAuth() {
+    try{
+      const { data:{ session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+      if (!user) {
+        localStorage.setItem("hs_authed","0");
+        location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
+        throw new Error("Redirecting to auth");
+      }
+      localStorage.setItem("hs_authed","1");
+      // Ensure nav CTA is visible immediately
+      if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
+      return user;
+    } catch (e) {
+      throw e;
+    }
+  }
 
   // Check verification (RPC first, then companies fallback)
   async function isUserVerified(userId){
@@ -94,35 +97,19 @@
       if (!rpcErr && Array.isArray(rpcData) && rpcData.length) return true;
     }catch{}
     try{
-      const { data: comp, error } = await supabase
+      const { data: comp } = await supabase
         .from("companies")
         .select("is_verified")
         .eq("user_id", userId)
         .maybeSingle();
-      if (!error && comp?.is_verified) return true;
+      if (comp?.is_verified) return true;
     }catch{}
     return false;
   }
-  const { data:{ session } } = await supabase.auth.getSession();
-const currentUser = session?.user || null;
-if (!currentUser) {
-  localStorage.setItem("hs_authed","0");
-  location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
-  throw new Error("Redirecting to auth");
-}
-localStorage.setItem("hs_authed","1");
 
-// ✅ Ensure nav CTA appears, even if nav.js hasn't executed yet
-document.documentElement.classList.add("authed");
-const navBtn = document.getElementById("verifyBtnNav");
-if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
-
-  // Banner + inline CTA
-  async function updateVerificationUI(){
-    const verified = await isUserVerified(currentUser.id);
-
+  async function updateVerificationUI(currentUserId){
+    const verified = await isUserVerified(currentUserId);
     if (verified){
-      // Banner
       bannerEl.innerHTML = `
         <p>
           <span class="badge badge--verified">
@@ -131,25 +118,21 @@ if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
           </span>
           &nbsp;Your employer badge is active.
         </p>`;
-      // Inline button hidden when already verified
-      inlineBtn.style.display = "none";
+      if (inlineBtn) inlineBtn.style.display = "none";
     } else {
       bannerEl.innerHTML = `
         <p><strong>No active employer verification.</strong>
         &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
-      inlineBtn.style.display = "inline-block";
+      if (inlineBtn) inlineBtn.style.display = "inline-block";
     }
   }
 
-  await updateVerificationUI();
-
-  // Load user's jobs
-  async function loadJobs() {
+  async function loadJobs(currentUserId) {
     jobsList.innerHTML = "<p>Loading jobs…</p>";
     const { data, error } = await supabase
       .from("jobs")
       .select("*")
-      .eq("user_id", currentUser.id)
+      .eq("user_id", currentUserId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -181,13 +164,18 @@ if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
       btn.addEventListener("click", async (e) => {
         const jobId = e.currentTarget.dataset.id;
         if (!confirm("Delete this job permanently?")) return;
-        const { error } = await supabase.from("jobs").delete().eq("id", jobId).eq("user_id", currentUser.id);
+        const { error } = await supabase.from("jobs").delete().eq("id", jobId).eq("user_id", currentUserId);
         if (error) alert("❌ " + error.message);
-        else loadJobs();
+        else loadJobs(currentUserId);
       });
     });
   }
-  loadJobs();
+
+  (async ()=>{
+    const user = await requireAuth();
+    await updateVerificationUI(user.id);
+    await loadJobs(user.id);
+  })();
 </script>
 
 <!-- Shared nav/auth logic -->
