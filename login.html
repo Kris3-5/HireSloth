@@ -2,26 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HireSloth – Redirecting to Sign In…</title>
+  <title>HireSloth – Redirecting…</title>
   <meta name="robots" content="noindex,follow">
   <link rel="canonical" href="auth.html?mode=signin">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="style.css?v=20250912a">
-  <!-- Optional meta refresh as a fallback -->
   <meta http-equiv="refresh" content="2; url=auth.html?mode=signin">
 </head>
 <body>
   <p>Redirecting to sign in… If you’re not redirected, <a id="fallbackLink" href="auth.html?mode=signin">click here</a>.</p>
-
-  <noscript>
-    <p><strong>Note:</strong> JavaScript is required. Continue to
-      <a href="auth.html?mode=signin">Sign In</a>.
-    </p>
-  </noscript>
-
+  <noscript><p><strong>Note:</strong> JavaScript is required. Continue to <a href="auth.html?mode=signin">Sign In</a>.</p></noscript>
   <script>
     (function () {
-      // Build a safe, relative URL that preserves ?returnTo=
       const base = new URL(window.location.href);
       const target = new URL('auth.html', base);
       const params = new URLSearchParams();
@@ -29,19 +19,10 @@
       const returnTo = new URLSearchParams(base.search).get('returnTo');
       if (returnTo) params.set('returnTo', returnTo);
       target.search = params.toString();
-
-      // Update visible fallback link and redirect immediately
       const link = document.getElementById('fallbackLink');
       if (link) link.href = target.toString();
-      // Prefer replace() to avoid adding to history
       window.location.replace(target.toString());
     })();
-  </script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
-    }
   </script>
 </body>
 </html>
