@@ -4,21 +4,114 @@
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Checkout cancelled – HireSloth</title>
   <meta name="robots" content="noindex,follow"/>
-  <link rel="stylesheet" href="/style.css?v=20250912a">
+  <link rel="stylesheet" href="style.css?v=20250912a">
+  <style>
+    .muted{opacity:.85}
+  </style>
 </head>
 <body>
   <header>
-    <a href="/index.html" class="logo"><img src="/logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120"></a>
+    <a href="index.html" class="logo"><img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" decoding="async"></a>
     <nav>
-      <a href="/index.html">Home</a>
-      <a href="/verify.html">Try Again</a>
-      <a href="/jobs.html">Vacancies</a>
+      <a href="index.html">Home</a>
+      <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
+      <a href="jobs.html">Vacancies</a>
+      <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
+      <a href="auth.html" id="authBtn">Sign In</a>
     </nav>
   </header>
+
   <main class="content">
     <h1>Checkout cancelled</h1>
-    <p>No worries. You can try again any time.</p>
-    <p><a class="btn" href="/verify.html">Get Verified</a></p>
+    <p class="muted">No worries — you can try again any time.</p>
+
+    <p id="cta">
+      <a class="btn" id="tryAgain" href="verify.html">Try again</a>
+      <a class="btn" id="toMyJobs" href="my-jobs.html" style="display:none">Go to My Jobs</a>
+      <a class="btn btn-alt" id="signIn" href="auth.html?mode=signin&returnTo=verify.html" style="display:none">Sign in</a>
+    </p>
+
+    <p id="hint" class="muted"></p>
   </main>
+
+  <footer><p>&copy; 2025 HireSloth. All rights reserved.</p></footer>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // 🔧 Replace with your real values
+    const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+    });
+
+    const el = (id)=>document.getElementById(id);
+    const tryAgain = el('tryAgain');
+    const toMyJobs = el('toMyJobs');
+    const signIn   = el('signIn');
+    const hint     = el('hint');
+
+    function profileIsVerified(p){
+      if (!p) return false;
+      if ('is_verified' in p) return !!p.is_verified;
+      if (p.verified_until){
+        const today = new Date(); today.setHours(0,0,0,0);
+        return new Date(p.verified_until) >= today;
+      }
+      return false;
+    }
+
+    (async ()=>{
+      const { data:{ session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user){
+        localStorage.setItem('hs_authed','0');
+        signIn.style.display = '';
+        hint.textContent = "Sign in to complete verification when you’re ready.";
+        return;
+      }
+
+      localStorage.setItem('hs_authed','1');
+
+      // See if they’re already verified (maybe payment completed earlier)
+      let verified = false;
+      try{
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('verified_until')
+          .eq('id', user.id).maybeSingle();
+        if (profileIsVerified(prof)) verified = true;
+      }catch{}
+
+      if (!verified){
+        try{
+          const { data: comp } = await supabase
+            .from('companies')
+            .select('is_verified')
+            .eq('user_id', user.id).maybeSingle();
+          if (profileIsVerified(comp)) verified = true;
+        }catch{}
+      }
+
+      if (verified){
+        tryAgain.style.display = 'none';
+        toMyJobs.style.display = '';
+        hint.textContent = "Looks like your badge is already active. You can view it on your listings.";
+      } else {
+        hint.textContent = "You can restart checkout when you’re ready.";
+      }
+    })();
+  </script>
+
+  <!-- Shared nav/auth logic -->
+  <script type="module" src="nav.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(()=>{});
+    }
+  </script>
 </body>
 </html>
