@@ -8,15 +8,14 @@
     }
   </script>
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <title>HireSloth - My Jobs</title>
+  <title>HireSloth - My Vacancies</title>
   <link rel="canonical" href="https://hiresloth.com/my-jobs.html">
   <meta name="description" content="Manage the jobs your company has posted on HireSloth.">
   <link rel="icon" href="favicon.ico">
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="style.css?v=20250912c">
+  <link rel="stylesheet" href="style.css?v=20250912b">
   <style>
     .page-title{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
     .page-title h1{margin:0}
@@ -33,16 +32,16 @@
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
-    <a href="my-jobs.html" class="active" aria-current="page" id="myJobsBtn">My Jobs</a>
+    <a href="my-jobs.html" class="active" aria-current="page" id="myJobsBtn">My Vacancies</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <a href="verify.html" id="verifyBtnNav" class="btn">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
 </header>
 
 <main class="content">
   <div class="page-title">
-    <h1>My Job Listings</h1>
+    <h1>My Vacancies</h1>
+    <!-- This is the ONLY verify CTA you asked to keep -->
     <a href="verify.html" id="verifyBtnInline" class="btn" rel="noopener">Get Verified</a>
   </div>
   <p>Here you can see and manage the jobs your company has posted.</p>
@@ -66,19 +65,17 @@
   const jobsList  = document.getElementById("jobsList");
   const bannerEl  = document.getElementById("verifyBanner");
   const inlineBtn = document.getElementById("verifyBtnInline");
-  const navBtn    = document.getElementById("verifyBtnNav");
 
   const esc = (s)=> (s ?? "").toString()
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-  // ---------- Helpers for Stripe link ----------
+  // Stripe link helpers (inline button only; no nav button anymore)
   function pickPaymentLink(){
     const fromBtn = inlineBtn?.dataset?.link?.trim();
-    const fromNav = navBtn?.dataset?.link?.trim();
     const fromWin = (typeof window !== "undefined" && window.STRIPE_PAYMENT_LINK)
       ? String(window.STRIPE_PAYMENT_LINK).trim() : "";
-    return fromBtn || fromNav || fromWin || "";
+    return fromBtn || fromWin || "";
   }
   function buildCheckoutUrl(base, user, company){
     try{
@@ -105,12 +102,9 @@
       throw new Error("Redirecting to auth");
     }
     localStorage.setItem("hs_authed","1");
-    // Ensure nav CTA is visible immediately
-    if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
     return user;
   }
 
-  // Check verification (RPC first, then companies fallback)
   async function isUserVerified(userId){
     try{
       const { data: rpcData, error: rpcErr } = await supabase.rpc("get_verified_profiles", { ids: [userId] });
@@ -151,7 +145,6 @@
     const baseLink = pickPaymentLink();
     if (!baseLink) return; // fall back to verify.html
 
-    // Fetch company context (if exists) to enrich the link
     let company = null;
     try{
       const { data } = await supabase
@@ -165,8 +158,7 @@
     const built = buildCheckoutUrl(baseLink, user, company);
     if (built){
       inlineBtn.href = built;
-      inlineBtn.dataset.link = baseLink;        // also expose for nav.js
-      if (navBtn) navBtn.dataset.link = baseLink;
+      inlineBtn.dataset.link = baseLink;
     }
   }
 
@@ -217,13 +209,12 @@
   (async ()=>{
     const user = await requireAuth();
     await updateVerificationUI(user.id);
-    await setStripeLinkForInline(user);   // point inline CTA straight to Stripe if link is configured
+    await setStripeLinkForInline(user);   // single CTA points straight to Stripe if configured
     await loadJobs(user.id);
   })();
 </script>
 
-<!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920g"></script>
+<script type="module" src="nav.js?v=20250920f"></script>
 <script>
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js?v=16', { scope: './' }).catch(()=>{}); }
 </script>
