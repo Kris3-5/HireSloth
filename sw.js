@@ -1,5 +1,5 @@
 // sw.js
-const VERSION = 'v11'; // bump on every deploy to force update
+const VERSION = 'v12'; // bump on every deploy to force update
 const STATIC_CACHE = `static-${VERSION}`;
 const IMG_CACHE    = `images-${VERSION}`;
 
