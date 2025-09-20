@@ -2,25 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Get Verified – HireSloth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Get Verified – HireSloth</title>
+
+  <!-- Force HTTPS outside localhost -->
+  <script>
+    if (location.protocol === 'http:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <meta name="robots" content="noindex,follow"/>
+
   <link rel="stylesheet" href="style.css?v=20250912a"/>
+  <!-- (Optional perf) -->
+  <link rel="preconnect" href="https://buy.stripe.com" crossorigin>
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
     <a href="post-job.html" id="postJobBtn">Post a Job</a>
-    <a href="verify.html" id="verifyBtnNav" class="btn active">Get Verified</a>
+    <a href="verify.html" id="verifyBtnNav" class="btn active" aria-current="page">Get Verified</a>
     <a href="auth.html" id="authBtn">Sign In</a>
   </nav>
 </header>
@@ -29,7 +42,8 @@
   <h1>Verified Employer Badge</h1>
   <p>Get a gold “Verified” badge on your listings for 12 months. One-off payment. No auto-renewal.</p>
 
-  <a id="verifyBtn" class="btn" href="#" rel="noopener">Preparing…</a>
+  <!-- You may also set data-link here to your Stripe Payment Link -->
+  <a id="verifyBtn" class="btn" href="#" rel="noopener" data-link="">Preparing…</a>
   <p id="note" style="margin-top:1rem;"></p>
 
   <p style="margin-top:1rem;font-size:.95rem;opacity:.9">
@@ -45,63 +59,97 @@
   // 🔧 Replace placeholders
   const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
-  const PAYMENT_LINK = "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00"; // e.g. https://buy.stripe.com/abc123
+  const PAYMENT_LINK_CONST = "https://buy.stripe.com/7sY7sMc69g2XggbelNeEo00"; // e.g. https://buy.stripe.com/abc123  (optional if using data-link or window.STRIPE_PAYMENT_LINK)
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
   });
 
-  const btn = document.getElementById("verifyBtn");
+  const btn  = document.getElementById("verifyBtn");
   const note = document.getElementById("note");
 
-  // Small helper
   const esc = (s)=> (s??"").toString()
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
+  function pickPaymentLink(){
+    // priority: element data-link → nav data-link → window.STRIPE_PAYMENT_LINK → constant
+    const nav = document.getElementById("verifyBtnNav");
+    const fromBtn = btn?.dataset?.link?.trim();
+    const fromNav = nav?.dataset?.link?.trim();
+    const fromWin = (typeof window !== "undefined" && window.STRIPE_PAYMENT_LINK) ? String(window.STRIPE_PAYMENT_LINK).trim() : "";
+    const fromConst = (PAYMENT_LINK_CONST && PAYMENT_LINK_CONST !== "mylink") ? PAYMENT_LINK_CONST.trim() : "";
+
+    return fromBtn || fromNav || fromWin || fromConst || "";
+  }
+
+  function buildCheckoutUrl(base, user, company){
+    // Accept relative or absolute; prefer absolute Stripe link
+    let u;
+    try { u = new URL(base, location.origin); } catch { return null; }
+
+    // Stripe Payment Links accept these standard params for Checkout:
+    // client_reference_id, prefilled_email, and metadata via prefilled_metadata[...]
+    const email = company?.email || user?.email || "";
+    const refId = company?.id || user?.id || "";
+
+    if (refId) u.searchParams.set("client_reference_id", refId);
+    if (email) u.searchParams.set("prefilled_email", email);
+
+    if (user?.id) u.searchParams.set("prefilled_metadata[user_id]", user.id);
+    if (company?.id) u.searchParams.set("prefilled_metadata[company_id]", company.id);
+    if (company?.name) u.searchParams.set("prefilled_metadata[company_name]", company.name);
+    u.searchParams.set("prefilled_metadata[period]", "annual");
+    u.searchParams.set("prefilled_metadata[site]", location.origin);
+
+    return u.toString();
+  }
+
   async function init(){
-    // Auth required
+    // Always show a usable button
+    btn.textContent = "Continue";
+    btn.href = "#";
+
     const { data:{ session } } = await supabase.auth.getSession();
-    const user = session?.user;
+    const user = session?.user || null;
+
     if (!user) {
       btn.textContent = "Sign in to continue";
       btn.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("verify.html");
+      note.textContent = "";
       return;
     }
-
-    btn.textContent = "Continue to Checkout";
 
     // Try to load company row (optional)
     let company = null;
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("companies")
         .select("id,name,email")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (!error && data) company = data;
-    } catch (_) {}
+      if (data) company = data;
+    } catch {}
 
-    // Build Payment Link URL with identifiers for the webhook to read
-    const url = new URL(PAYMENT_LINK);
-    // Strongest mapping: company id if present, else user id
-    url.searchParams.set("client_reference_id", company?.id || user.id);
-    // Prefill email (company email preferred)
-    const email = company?.email || user.email || "";
-    if (email) url.searchParams.set("prefilled_email", email);
-    // Extra metadata (helpful redundancy)
-    url.searchParams.set("prefilled_metadata[user_id]", user.id);
-    if (company?.id) url.searchParams.set("prefilled_metadata[company_id]", company.id);
-    if (company?.name) url.searchParams.set("prefilled_metadata[company_name]", company.name);
-    // Optional: label period
-    url.searchParams.set("prefilled_metadata[period]", "annual");
-    // Optional: your site hint
-    url.searchParams.set("prefilled_metadata[site]", location.origin);
+    const baseLink = pickPaymentLink();
+    if (!baseLink) {
+      btn.textContent = "Payment link not set";
+      btn.href = "#";
+      note.innerHTML = `Add your Stripe Payment Link via <code>data-link</code> on this button or nav, or set <code>window.STRIPE_PAYMENT_LINK</code>.`;
+      return;
+    }
 
-    // Wire button
-    btn.href = url.toString();
+    const url = buildCheckoutUrl(baseLink, user, company);
+    if (!url) {
+      btn.textContent = "Invalid payment link";
+      btn.href = "#";
+      note.textContent = "The Payment Link is malformed. Please double-check the URL.";
+      return;
+    }
 
-    // UX note
+    btn.textContent = "Continue to Checkout";
+    btn.href = url;
+
     const who = company?.name ? `company <strong>${esc(company.name)}</strong>` : "your account";
     note.innerHTML = `We’ll associate the payment with ${who}. If that’s not right, update your company info first.`;
   }
