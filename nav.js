@@ -1,7 +1,6 @@
 // nav.js
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// 🔧 Your real Supabase values
 const SUPABASE_URL = "https://arzddicguiydfvtwewlq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyemRkaWNndWl5ZGZ2dHdld2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MzA5NDcsImV4cCI6MjA3MzAwNjk0N30.UjZj0XeB8BtjSDsFyf9swxHA26OniI1Mk1ddgSTUXYg";
 
@@ -12,7 +11,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 const authBtn   = document.getElementById("authBtn");
 const myJobsBtn = document.getElementById("myJobsBtn");
 const postBtn   = document.getElementById("postJobBtn");
-const verifyBtn = document.getElementById("verifyBtnNav"); // <-- we toggle this
+const verifyBtn = document.getElementById("verifyBtnNav");
 
 function applyUI(isLoggedIn){
   if (authBtn){
@@ -28,7 +27,7 @@ function applyUI(isLoggedIn){
   }
 
   if (verifyBtn){
-    // Force a concrete display value so we override any CSS defaults
+    // Force visibility (override any CSS) when logged in
     verifyBtn.hidden = !isLoggedIn;
     verifyBtn.style.display = isLoggedIn ? "inline-block" : "none";
   }
@@ -45,11 +44,10 @@ function applyUI(isLoggedIn){
   gate(postBtn,   "post-job.html");
 }
 
-// 🔹 Anti-flicker: optimistic state from last session
-const cached = localStorage.getItem("hs_authed") === "1";
-applyUI(cached);
+// Anti-flicker
+applyUI(localStorage.getItem("hs_authed")==="1");
 
-// 🔹 Real state from Supabase; then keep cache in sync
+// Real state
 (async ()=>{
   try{
     const { data:{ session } } = await supabase.auth.getSession();
@@ -62,7 +60,7 @@ applyUI(cached);
   }
 })();
 
-// Keep UI fresh if auth changes on-page
+// React to changes
 supabase.auth.onAuthStateChange((_e, session)=>{
   const isLoggedIn = !!session?.user;
   applyUI(isLoggedIn);
