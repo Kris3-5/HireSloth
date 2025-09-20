@@ -18,11 +18,11 @@
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
     <a href="jobs.html">Vacancies</a>
     <a href="about.html">About</a>
@@ -76,11 +76,11 @@
 
     <h3 style="margin-top:2rem;">Create / attach company to a user</h3>
     <form id="companyCreateForm" style="max-width:560px;margin:1rem 0;">
-      <label>User ID</label>
+      <label for="c_user_id">User ID</label>
       <input id="c_user_id" required placeholder="auth.users.id (uuid)">
-      <label>Company name</label>
+      <label for="c_name">Company name</label>
       <input id="c_name" placeholder="Acme Inc.">
-      <label>Company email</label>
+      <label for="c_email">Company email</label>
       <input id="c_email" type="email" placeholder="hr@acme.com">
       <button type="submit">Save</button>
     </form>
@@ -121,7 +121,7 @@
   function companyCard(c){
     const when = c.verified_at ? new Date(c.verified_at).toLocaleString() : "—";
     return `
-      <div class="job-card" data-company-id="${c.id}" data-user-id="${c.user_id}">
+      <div class="job-card" data-company-id="${esc(c.id)}" data-user-id="${esc(c.user_id)}">
         <h3>${esc(c.name || "(no name)")}</h3>
         <p><strong>Company ID:</strong> ${esc(c.id)}</p>
         <p><strong>User ID:</strong> ${esc(c.user_id)}</p>
@@ -192,12 +192,18 @@
       card.querySelectorAll("button[data-action]").forEach(btn=>{
         btn.addEventListener("click", async (e)=>{
           const action = e.currentTarget.dataset.action;
+
+          // ✅ Ask first; only disable if proceeding
+          if (action === "unverify") {
+            const ok = confirm("Remove verification for this company?");
+            if (!ok) return;
+          }
+
           e.currentTarget.disabled = true;
           try {
             if (action === "verify12") {
               await verifyCompanyFor12Months(companyId, userId);
             } else if (action === "unverify") {
-              if (!confirm("Remove verification for this company?")) return;
               await unverifyCompany(companyId, userId);
             }
           } catch(err){
@@ -213,72 +219,60 @@
   function wireCompaniesUI(){
     companySearchBtn.addEventListener("click", ()=>searchCompanies(companyQuery.value.trim()));
     companyListBtn.addEventListener("click", ()=>searchCompanies("", true));
+    companyQuery.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); companySearchBtn.click(); }});
   }
 
-  // Create / attach company for a user
-  const companyCreateForm = document.getElementById("companyCreateForm");
-  const companyCreateMsg  = document.getElementById("companyCreateMsg");
+  // ===== Verify-by-User-ID form (MISSING BEFORE — now implemented) =====
+  function wireVerifyByIdForm(){
+    const form = document.getElementById("verifyByIdForm");
+    const msg  = document.getElementById("verifyByIdMsg");
+    const userInput  = document.getElementById("verifUserId");
+    const untilInput = document.getElementById("verifUntilId");
 
-  companyCreateForm.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    companyCreateMsg.textContent = ""; companyCreateMsg.style.color = "";
+    if (!form) return;
 
-    const user_id = (document.getElementById("c_user_id").value || "").trim();
-    const name    = (document.getElementById("c_name").value || "").trim();
-    const email   = (document.getElementById("c_email").value || "").trim();
+    form.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      msg.textContent = ""; msg.style.color = "";
 
-    if (!user_id){ companyCreateMsg.textContent = "User ID is required."; companyCreateMsg.style.color = "red"; return; }
+      const user_id = (userInput.value || "").trim();
+      const until   = (untilInput.value || "").trim(); // yyyy-mm-dd
 
-    try{
-      const { error } = await supabase
-        .from("companies")
-        .upsert([{ user_id, name: name || null, email: email || null }], { onConflict: "user_id" });
+      if (!user_id){ msg.textContent = "User ID is required."; msg.style.color = "red"; return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(until)){ msg.textContent = "Date must be YYYY-MM-DD."; msg.style.color = "red"; return; }
 
-      if (error) throw error;
+      try {
+        // 1) Set/extend the user’s verified_until
+        const p1 = await supabase
+          .from("profiles")
+          .upsert([{ id: user_id, verified_until: until }], { onConflict: "id" });
 
-      companyCreateMsg.textContent = "Company saved ✓";
-      companyCreateMsg.style.color = "green";
-      companyCreateForm.reset();
+        if (p1.error) throw p1.error;
 
-      await searchCompanies(user_id); // show the fresh row
-    }catch(err){
-      companyCreateMsg.textContent = "Error: " + (err.message || err);
-      companyCreateMsg.style.color = "red";
-    }
-  });
+        // 2) (Optional) Mark all that user’s companies as verified
+        const nowIso = new Date().toISOString();
+        const p2 = await supabase
+          .from("companies")
+          .update({ is_verified: true, verified_at: nowIso, verified_by: "admin" })
+          .eq("user_id", user_id);
 
-  async function requireAdmin() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
-    if (!user) {
-      location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("admin.html");
-      throw new Error("Redirecting to sign in");
-    }
-    const { data, error } = await supabase
-      .from("admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
+        if (p2.error) throw p2.error;
 
-    if (error) {
-      guardEl.innerHTML = `<p style="color:#a33;"><strong>Error:</strong> ${esc(error.message)}</p>`;
-      throw error;
-    }
-    if (!data) {
-      guardEl.innerHTML = `
-        <p style="color:#a33;"><strong>Access denied.</strong> You’re signed in, but not an admin.</p>
-        <p><a class="btn" href="index.html">Back to site</a></p>
-      `;
-      throw new Error("Not admin");
-    }
+        msg.textContent = "Verification saved ✓";
+        msg.style.color = "green";
+        form.reset();
 
-    pendingSection.style.display = "block";
-    recentSection.style.display = "block";
-    companySection.style.display = "block";
-    guardEl.innerHTML = "";
-    return user;
+        // Refresh visible company list if the admin is currently looking at that user
+        const q = companyQuery.value.trim();
+        if (q && q === user_id) { await searchCompanies(user_id); }
+      } catch(err){
+        msg.textContent = "Error: " + (err.message || err);
+        msg.style.color = "red";
+      }
+    });
   }
 
+  // ===== Jobs UI =====
   function jobCard(job, adminActions = true){
     const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
     const resp = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
@@ -291,13 +285,13 @@
     `;
     const actions = adminActions ? `
       <div class="actions" style="margin-top:.5rem">
-        <button class="btn" data-action="approve" data-id="${job.id}">Approve</button>
-        <button class="btn" data-action="deactivate" data-id="${job.id}">Deactivate</button>
-        <button class="btn secondary" data-action="delete" data-id="${job.id}">Delete</button>
+        <button class="btn" data-action="approve" data-id="${esc(job.id)}">Approve</button>
+        <button class="btn" data-action="deactivate" data-id="${esc(job.id)}">Deactivate</button>
+        <button class="btn secondary" data-action="delete" data-id="${esc(job.id)}">Delete</button>
       </div>
     ` : "";
     return `
-      <div class="job-card" id="job-${job.id}">
+      <div class="job-card" id="job-${esc(job.id)}">
         <h3>${esc(job.title)}</h3>
         <p><strong>Company:</strong> ${esc(job.company || "")}</p>
         <p><strong>Location:</strong> ${esc(job.location || "N/A")} ${job.remote ? "(Remote)" : ""}</p>
@@ -347,12 +341,15 @@
         const action = el.dataset.action;
         const id = el.dataset.id;
 
-        try {
-          if (action === "delete") {
-            if (!confirm("Delete this job permanently?")) return;
-          }
-          el.disabled = true;
+        // Ask first for destructive action
+        if (action === "delete") {
+          const ok = confirm("Delete this job permanently?");
+          if (!ok) return;
+        }
 
+        el.disabled = true;
+
+        try {
           if (action === "approve") {
             const { error } = await supabase.from("jobs").update({ approved: true, is_active: true }).eq("id", id);
             if (error) throw error;
@@ -375,11 +372,45 @@
     });
   }
 
+  // ===== Admin gate =====
+  async function requireAdmin() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) {
+      location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("admin.html");
+      throw new Error("Redirecting to sign in");
+    }
+    const { data, error } = await supabase
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      guardEl.innerHTML = `<p style="color:#a33;"><strong>Error:</strong> ${esc(error.message)}</p>`;
+      throw error;
+    }
+    if (!data) {
+      guardEl.innerHTML = `
+        <p style="color:#a33;"><strong>Access denied.</strong> You’re signed in, but not an admin.</p>
+        <p><a class="btn" href="index.html">Back to site</a></p>
+      `;
+      throw new Error("Not admin");
+    }
+
+    pendingSection.style.display = "block";
+    recentSection.style.display = "block";
+    companySection.style.display = "block";
+    guardEl.innerHTML = "";
+    return user;
+  }
+
+  // ===== Boot =====
   (async ()=>{
     try {
       await requireAdmin();
       wireCompaniesUI();
-      wireVerifyByIdForm();
+      wireVerifyByIdForm();   // <-- now exists
       await Promise.all([loadPending(), loadRecent()]);
     } catch (err) {
       console.warn(err?.message || err);
