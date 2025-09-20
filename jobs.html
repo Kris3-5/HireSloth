@@ -16,29 +16,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://arzddicguiydfvtwewlq.supabase.co" crossorigin>
   <link rel="stylesheet" href="style.css?v=20250912a">
   <style>
-    /* small, unobtrusive verified badge */
-    .badge--verified {
-      display:inline-flex; align-items:center; gap:.35rem;
-      padding:.15rem .55rem; border-radius:999px; font-size:.78rem;
-      border:1px solid #2ecc71; color:#2ecc71; vertical-align:middle;
-      line-height:1;
-    }
-    .badge--verified svg { width:14px; height:14px; }
-    .job-card { position:relative; }
+    .badge--verified{display:inline-flex;align-items:center;gap:.35rem;padding:.15rem .55rem;border-radius:999px;font-size:.78rem;border:1px solid #2ecc71;color:#2ecc71;vertical-align:middle;line-height:1}
+    .badge--verified svg{width:14px;height:14px}
+    .job-card{position:relative}
   </style>
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">
+  <a href="index.html" class="logo" aria-label="HireSloth Home">
     <img src="logo.jpg?v=2" alt="HireSloth Logo" width="120" height="120" loading="eager" fetchpriority="high" decoding="async"
       onerror="if (!this.dataset.fallbackTried) { this.dataset.fallbackTried='1'; this.src='logo.jpg?v=2'; } else { this.onerror=null; }">
   </a>
-  <nav>
+  <nav aria-label="Primary">
     <a href="index.html">Home</a>
-    <a href="jobs.html" class="active">Vacancies</a>
+    <a href="jobs.html" class="active" aria-current="page">Vacancies</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="my-jobs.html" id="myJobsBtn">My Jobs</a>
@@ -89,7 +82,7 @@
 
   function isProfileVerifiedRow(row){
     if (!row) return false;
-    if ('is_verified' in row) return !!row.is_verified; // if using companies
+    if ('is_verified' in row) return !!row.is_verified;
     if ('verified_until' in row && row.verified_until){
       const today = new Date(); today.setHours(0,0,0,0);
       const until = new Date(row.verified_until);
@@ -98,12 +91,9 @@
     return false;
   }
 
-  // Use RPC to respect RLS (your SECURITY DEFINER function)
   async function getVerifiedProfilesMap(userIds){
     const map = {};
     if (!userIds.length) return map;
-
-    // Try RPC first
     let rpcOk = false;
     try {
       const { data, error } = await supabase.rpc("get_verified_profiles", { ids: userIds });
@@ -111,33 +101,25 @@
         data.forEach(r => { map[r.id] = { id: r.id, verified_until: r.verified_until }; });
         rpcOk = true;
       }
-    } catch (_) {}
-
+    } catch {}
     if (rpcOk) return map;
-
-    // Fallback: direct select (only if your profiles RLS permits it)
     try {
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("id, verified_until")
-        .in("id", userIds);
-      if (!error && profiles) profiles.forEach(p => { map[p.id] = p; });
-    } catch (_) {}
-
+      const { data: profiles } = await supabase.from("profiles").select("id, verified_until").in("id", userIds);
+      if (profiles) profiles.forEach(p => { map[p.id] = p; });
+    } catch {}
     return map;
   }
 
-  // Optional companies table support
   async function getCompaniesMap(companyIds){
     const map = {};
     if (!companyIds.length) return map;
     try {
-      const { data: companies, error } = await supabase
+      const { data: companies } = await supabase
         .from("companies")
         .select("id, user_id, is_verified")
         .in("id", companyIds);
-      if (!error && companies) companies.forEach(c => { map[c.id] = c; });
-    } catch (_) {}
+      if (companies) companies.forEach(c => { map[c.id] = c; });
+    } catch {}
     return map;
   }
 
@@ -181,9 +163,13 @@
 
       const salary = job.salary ? `<p><strong>Salary:</strong> ${esc(job.salary)}</p>` : "";
       const resp   = job.responsibilities ? `<p><strong>Responsibilities:</strong> ${esc(job.responsibilities)}</p>` : "";
-      const apply  = job.contact_email
-        ? `<a class="btn" href="mailto:${esc(job.contact_email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}">Apply via Email</a>`
+
+      const email = (job.contact_email || "").trim();
+      const mailHref = email
+        ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent("Application: " + (job.title || "Position"))}`
         : "";
+      const apply  = email ? `<a class="btn" href="${mailHref}">Apply via Email</a>` : "";
+
       const report = `<a class="btn secondary" href="contact.html?report_job=${encodeURIComponent(job.id)}&title=${encodeURIComponent(job.title||"")}&company=${encodeURIComponent(job.company||"")}">Report</a>`;
 
       return `
@@ -208,9 +194,9 @@
     const r = document.getElementById("remote").checked;
     loadJobs(k, l, r);
   }
+  const inputs = [document.getElementById("keyword"), document.getElementById("location")];
+  inputs.forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doSearch(); }}));
   searchBtn.addEventListener("click", doSearch);
-  document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doSearch(); }});
-  document.getElementById("location").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doSearch(); }});
 </script>
 
 <!-- Shared nav/auth logic -->
