@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="style.css?v=20250912b">
+  <link rel="stylesheet" href="style.css?v=20250912c">
   <style>
     .page-title{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
     .page-title h1{margin:0}
@@ -43,7 +43,7 @@
 <main class="content">
   <div class="page-title">
     <h1>My Job Listings</h1>
-    <a href="verify.html" id="verifyBtnInline" class="btn">Get Verified</a>
+    <a href="verify.html" id="verifyBtnInline" class="btn" rel="noopener">Get Verified</a>
   </div>
   <p>Here you can see and manage the jobs your company has posted.</p>
 
@@ -72,22 +72,42 @@
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
-  async function requireAuth() {
+  // ---------- Helpers for Stripe link ----------
+  function pickPaymentLink(){
+    const fromBtn = inlineBtn?.dataset?.link?.trim();
+    const fromNav = navBtn?.dataset?.link?.trim();
+    const fromWin = (typeof window !== "undefined" && window.STRIPE_PAYMENT_LINK)
+      ? String(window.STRIPE_PAYMENT_LINK).trim() : "";
+    return fromBtn || fromNav || fromWin || "";
+  }
+  function buildCheckoutUrl(base, user, company){
     try{
-      const { data:{ session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
-      if (!user) {
-        localStorage.setItem("hs_authed","0");
-        location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
-        throw new Error("Redirecting to auth");
-      }
-      localStorage.setItem("hs_authed","1");
-      // Ensure nav CTA is visible immediately
-      if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
-      return user;
-    } catch (e) {
-      throw e;
+      const url = new URL(base, location.origin);
+      const email = company?.email || user?.email || "";
+      const refId = company?.id || user?.id || "";
+      if (refId) url.searchParams.set("client_reference_id", refId);
+      if (email) url.searchParams.set("prefilled_email", email);
+      if (user?.id) url.searchParams.set("prefilled_metadata[user_id]", user.id);
+      if (company?.id) url.searchParams.set("prefilled_metadata[company_id]", company.id);
+      if (company?.name) url.searchParams.set("prefilled_metadata[company_name]", company.name);
+      url.searchParams.set("prefilled_metadata[period]", "annual");
+      url.searchParams.set("prefilled_metadata[site]", location.origin);
+      return url.toString();
+    }catch{ return null; }
+  }
+
+  async function requireAuth() {
+    const { data:{ session } } = await supabase.auth.getSession();
+    const user = session?.user || null;
+    if (!user) {
+      localStorage.setItem("hs_authed","0");
+      location.href = "auth.html?mode=signin&returnTo=" + encodeURIComponent("my-jobs.html");
+      throw new Error("Redirecting to auth");
     }
+    localStorage.setItem("hs_authed","1");
+    // Ensure nav CTA is visible immediately
+    if (navBtn){ navBtn.hidden = false; navBtn.style.display = "inline-block"; }
+    return user;
   }
 
   // Check verification (RPC first, then companies fallback)
@@ -122,8 +142,31 @@
     } else {
       bannerEl.innerHTML = `
         <p><strong>No active employer verification.</strong>
-        &nbsp;<a class="btn" href="verify.html">Get Verified</a></p>`;
+        &nbsp;<a class="btn" href="verify.html" id="bannerVerifyLink" rel="noopener">Get Verified</a></p>`;
       if (inlineBtn) inlineBtn.style.display = "inline-block";
+    }
+  }
+
+  async function setStripeLinkForInline(user){
+    const baseLink = pickPaymentLink();
+    if (!baseLink) return; // fall back to verify.html
+
+    // Fetch company context (if exists) to enrich the link
+    let company = null;
+    try{
+      const { data } = await supabase
+        .from("companies")
+        .select("id,name,email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) company = data;
+    }catch{}
+
+    const built = buildCheckoutUrl(baseLink, user, company);
+    if (built){
+      inlineBtn.href = built;
+      inlineBtn.dataset.link = baseLink;        // also expose for nav.js
+      if (navBtn) navBtn.dataset.link = baseLink;
     }
   }
 
@@ -174,14 +217,15 @@
   (async ()=>{
     const user = await requireAuth();
     await updateVerificationUI(user.id);
+    await setStripeLinkForInline(user);   // point inline CTA straight to Stripe if link is configured
     await loadJobs(user.id);
   })();
 </script>
 
 <!-- Shared nav/auth logic -->
-<script type="module" src="nav.js?v=20250920e"></script>
+<script type="module" src="nav.js?v=20250920g"></script>
 <script>
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js?v=15', { scope: './' }).catch(()=>{}); }
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js?v=16', { scope: './' }).catch(()=>{}); }
 </script>
 </body>
 </html>
